@@ -32,7 +32,7 @@ for key in nmea_fields:
 # Parse everything & dispatch in the appropriate categories
 skipped_fields = {}
 timestamp = None
-
+print("Parsing the NMEA file")
 for line in f:
     try:
         sample = nmea.parse(line)
@@ -58,61 +58,39 @@ for line in f:
         pass
 
 # Reorganize for faster processing afterwards :
+print("Reorganizing data per timestamp")
 boat_speed = []
 awa = []
 
 for ts in data['Speed'].keys():
-    try:
-        awa.append(data['ApparentWind'][ts][0])
+    if ts in data['ApparentWind'].keys():
+        awa.append(float(data['ApparentWind'][ts][0]) if data['ApparentWind'][ts][1] == 'L'
+                   else 360.-float(data['ApparentWind'][ts][0]))
+
         boat_speed.append(data['Speed'][ts][4])
 
-    except KeyError:
-        # Could not find matching data on the AWA
-        pass
-
 # Display some data
-# # - Linear traces
-# boat_speed = go.Scatter(
-#     y=[sample[4] for sample in data['Speed']],
-#     mode='markers',
-#     name='Boat Speed'
-# )
-#
-# wind_speed = go.Scatter(
-#     y=[sample[4] for sample in data['WindTrue']],
-#     mode='markers',
-#     name='Wind Speed'
-# )
-#
-# traces = [boat_speed, wind_speed]
-# py.plot(traces, filename='speed.html', auto_open=False)
-
-# - polar plot
-speed = go.Scatter(
+print("Plotting data")
+# - raw polar plot
+speed = go.Scattergl(
     r=boat_speed,
     t=awa,
     mode='markers',
-    name='Boat speed',
-    marker=dict(
-        color='rgb(27,158,119)',
-        size=110,
-        line=dict(
-            color='white'
-        ),
-        opacity=0.7
-    )
+    name='Boat speed'
 )
 
 traces = [speed]
 layout = go.Layout(
-    title='Speed relative to apparent wind direction',
+    title='Speed vs AWA',
     font=dict(
         size=15
     ),
     plot_bgcolor='rgb(223, 223, 223)',
     angularaxis=dict(
-        tickcolor='rgb(253,253,253)'
-    )
+        tickcolor='rgb(253,253,253)',
+        range=[0, 360]
+    ),
+    range=[0, 20]
 )
 fig = go.Figure(data=traces, layout=layout)
 py.plot(fig, filename='speed.html', auto_open=False)
