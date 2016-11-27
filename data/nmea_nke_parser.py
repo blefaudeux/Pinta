@@ -64,7 +64,7 @@ awa = []
 for ts in data['Speed'].keys():
     try:
         awa.append(data['ApparentWind'][ts][0])
-        boat_speed.append(data['Speed'][4])
+        boat_speed.append(data['Speed'][ts][4])
 
     except KeyError:
         # Could not find matching data on the AWA
