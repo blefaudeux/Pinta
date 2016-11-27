@@ -1,6 +1,7 @@
 import pynmea2 as nmea
 import plotly.offline as py
 import plotly.graph_objs as go
+import time
 
 filepath = "03_09_2016.nmea"
 
@@ -26,18 +27,24 @@ nmea_fields = {
 f = open(filepath)
 data = {}
 for key in nmea_fields:
-    data[nmea_fields[key]] = []
+    data[nmea_fields[key]] = {}
 
 # Parse everything & dispatch in the appropriate categories
 skipped_fields = {}
+timestamp = None
 
 for line in f:
     try:
         sample = nmea.parse(line)
         key = sample.identifier()[:-1]
 
+        if key == 'IIZDA':
+            timestamp = time.mktime(sample.datetime.timetuple())
+
         try:
-            data[nmea_fields[key]].append(sample.data)
+            if timestamp is not None:
+                # One measurement per timestamp, for now
+                data[nmea_fields[key]][timestamp] = sample.data
 
         except KeyError:
             # We discard this field for now
@@ -46,15 +53,22 @@ for line in f:
                 skipped_fields[key] = 1
             pass
 
-    except (nmea.ParseError, nmea.nmea.ChecksumError) as e:
+    except (nmea.ParseError, nmea.nmea.ChecksumError, TypeError) as e:
         # Corrupted data, skip
         pass
 
 # Reorganize for faster processing afterwards :
-speed = [sample[4] for sample in data['Speed']]
-awa = [sample[0] for sample in data['ApparentWind']]
-# awa_r = [sample[0] for sample in data['ApparentWind'] and sample[1] == 'R']
+boat_speed = []
+awa = []
 
+for ts in data['Speed'].keys():
+    try:
+        awa.append(data['ApparentWind'][ts][0])
+        boat_speed.append(data['Speed'][4])
+
+    except KeyError:
+        # Could not find matching data on the AWA
+        pass
 
 # Display some data
 # # - Linear traces
@@ -75,7 +89,7 @@ awa = [sample[0] for sample in data['ApparentWind']]
 
 # - polar plot
 speed = go.Scatter(
-    r=speed,
+    r=boat_speed,
     t=awa,
     mode='markers',
     name='Boat speed',
