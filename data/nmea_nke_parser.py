@@ -32,7 +32,7 @@ for key in nmea_fields:
 # Parse everything & dispatch in the appropriate categories
 skipped_fields = {}
 timestamp = None
-print("Parsing the NMEA file")
+print("\nParsing the NMEA file {}".format(filepath))
 for line in f:
     try:
         sample = nmea.parse(line)
@@ -58,7 +58,7 @@ for line in f:
         pass
 
 # Reorganize for faster processing afterwards :
-print("Reorganizing data per timestamp")
+print("\nReorganizing data per timestamp")
 boat_speed = []
 awa = []
 
@@ -70,18 +70,24 @@ for ts in data['Speed'].keys():
         boat_speed.append(data['Speed'][ts][4])
 
 # Display some data
-print("Plotting data")
+print("\nPlotting data")
 # - raw polar plot
-speed = go.Scattergl(
+speed = go.Scatter(
     r=boat_speed,
     t=awa,
     mode='markers',
-    name='Boat speed'
+    name='Boat speed',
+    marker=dict(
+        line=dict(
+            width=1,
+            color='#404040')
+    )
 )
 
 traces = [speed]
 layout = go.Layout(
     title='Speed vs AWA',
+    orientation=-90,
     font=dict(
         size=15
     ),
@@ -90,7 +96,12 @@ layout = go.Layout(
         tickcolor='rgb(253,253,253)',
         range=[0, 360]
     ),
-    range=[0, 20]
+    xaxis=dict(
+        range=[0, 20]
+    ),
+    yaxis=dict(
+        range=[0, 20]
+    )
 )
 fig = go.Figure(data=traces, layout=layout)
 py.plot(fig, filename='speed.html', auto_open=False)
