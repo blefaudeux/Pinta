@@ -63,8 +63,12 @@ twa = []
 
 for ts in data['Speed'].keys():
     if ts in data['WindTrue'].keys():
-        twa.append(float(data['WindTrue'][ts][0]))
-        boat_speed.append(data['Speed'][ts][4])
+        try:
+            twa.append(float(data['Speed'][ts][0]) - float(data['WindTrue'][ts][0]))
+            boat_speed.append(float(data['Speed'][ts][4]))
+        except ValueError:
+            # Corrupted data, once again
+            pass
 
 # Display some data
 print("\nPlotting data")
@@ -72,8 +76,8 @@ decimation = 10  # Stupid decimation to begin with
 
 # - raw polar plot
 speed = go.Scatter(
-    r=boat_speed[:decimation:],
-    t=twa[:decimation:],
+    r=boat_speed[::decimation],
+    t=twa[::decimation],
     mode='markers',
     name='Boat speed',
     marker=dict(
@@ -86,14 +90,14 @@ speed = go.Scatter(
 traces = [speed]
 layout = go.Layout(
     title='Speed vs TWA',
+    autosize=False,
+    width=1000,
+    height=1000,
     orientation=-90,
-    font=dict(
-        size=15
-    ),
     plot_bgcolor='rgb(223, 223, 223)',
     angularaxis=dict(
         tickcolor='rgb(253,253,253)',
-        range=[0, 360]
+        range=[-180, 180]
     ),
     xaxis=dict(
         range=[0, 20]
