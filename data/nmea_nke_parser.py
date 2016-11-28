@@ -60,12 +60,14 @@ for line in f:
 print("\nReorganizing data per timestamp")
 boat_speed = []
 twa = []
+ws = []
 
 for ts in data['Speed'].keys():
     if ts in data['WindTrue'].keys():
         try:
-            twa.append(float(data['Speed'][ts][0]) - float(data['WindTrue'][ts][0]))
+            twa.append((float(data['Speed'][ts][0]) - float(data['WindTrue'][ts][0])) % 360. - 180.)
             boat_speed.append(float(data['Speed'][ts][4]))
+            ws.append(float(data['WindTrue'][ts][4]))
         except ValueError:
             # Corrupted data, once again
             pass
@@ -81,9 +83,10 @@ speed = go.Scatter(
     mode='markers',
     name='Boat speed',
     marker=dict(
-        line=dict(
-            width=1,
-            color='#404040')
+        size=2,
+        color=ws,
+        colorscale='Viridis',
+        showscale=True
     )
 )
 
