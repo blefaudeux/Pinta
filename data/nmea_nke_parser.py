@@ -1,6 +1,7 @@
 import plotly.graph_objs as go
 import plotly.offline as py
 import pynmea2 as nmea
+import numpy as np
 import time
 
 filepath = "03_09_2016.nmea"
@@ -65,7 +66,7 @@ ws = []
 for ts in data['Speed'].keys():
     if ts in data['WindTrue'].keys():
         try:
-            twa.append((float(data['Speed'][ts][0]) - float(data['WindTrue'][ts][0])) % 360. - 180.)
+            twa.append((float(data['Speed'][ts][0]) - float(data['WindTrue'][ts][0]) + 180) % 360. - 180.)
             boat_speed.append(float(data['Speed'][ts][4]))
             ws.append(float(data['WindTrue'][ts][4]))
         except ValueError:
@@ -74,7 +75,7 @@ for ts in data['Speed'].keys():
 
 # Display some data
 print("\nPlotting data")
-decimation = 10  # Stupid decimation to begin with 
+decimation = 100  # Stupid decimation to begin with
 
 # - raw polar plot
 speed = go.Scatter(
@@ -83,31 +84,28 @@ speed = go.Scatter(
     mode='markers',
     name='Boat speed',
     marker=dict(
-        size=2,
+        size=20,
         color=ws,
         colorscale='Viridis',
-        showscale=True
+        showscale=True,
+        colorbar=go.ColorBar(
+            title="Wind speed"
+        ),
     )
 )
 
 traces = [speed]
 layout = go.Layout(
     title='Speed vs TWA',
+    orientation=90,
     autosize=False,
     width=1000,
     height=1000,
-    orientation=-90,
-    plot_bgcolor='rgb(223, 223, 223)',
     angularaxis=dict(
-        tickcolor='rgb(253,253,253)',
-        range=[-180, 180]
+        tickcolor='rgb(255,255,255)',
+        range=[-180., 180.]
     ),
-    xaxis=dict(
-        range=[0, 20]
-    ),
-    yaxis=dict(
-        range=[0, 20]
-    )
+    plot_bgcolor='rgb(223, 223, 223)'
 )
 fig = go.Figure(data=traces, layout=layout)
 py.plot(fig, filename='speed.html', auto_open=False)
