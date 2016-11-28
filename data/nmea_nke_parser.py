@@ -22,7 +22,8 @@ nmea_fields = {
     'IIZDA': 'Time',
     'IIGLL': 'Pose',
     'IIVGT': 'BottomHeading',
-    'IIXTE': 'CrossTrackError'
+    'IIXTE': 'CrossTrackError',
+    'IIRSA': 'RudderAngle'
 }
 
 f = open(filepath)
@@ -75,36 +76,39 @@ for ts in data['Speed'].keys():
 
 # Display some data
 print("\nPlotting data")
-decimation = 100  # Stupid decimation to begin with
+decimation = 10  # Stupid decimation to begin with
 
 # - raw polar plot
-speed = go.Scatter(
-    r=boat_speed[::decimation],
-    t=twa[::decimation],
+# we need to use x,y plots, plotly polar plots are broken
+twa_rad = np.radians(twa[::decimation])
+
+speed = go.Scattergl(
+    x=boat_speed[::decimation] * np.sin(twa_rad),
+    y=boat_speed[::decimation] * np.cos(twa_rad),
     mode='markers',
     name='Boat speed',
     marker=dict(
-        size=20,
-        color=ws,
-        colorscale='Viridis',
+        size=8,
+        line=dict(width=1),
+        color=ws[::decimation],
+        colorscale='Portland',
         showscale=True,
         colorbar=go.ColorBar(
             title="Wind speed"
         ),
-    )
+        opacity=0.8
+    ),
+    text=twa[::decimation]
 )
 
 traces = [speed]
+
 layout = go.Layout(
     title='Speed vs TWA',
     orientation=90,
     autosize=False,
     width=1000,
     height=1000,
-    angularaxis=dict(
-        tickcolor='rgb(255,255,255)',
-        range=[-180., 180.]
-    ),
     plot_bgcolor='rgb(223, 223, 223)'
 )
 fig = go.Figure(data=traces, layout=layout)
