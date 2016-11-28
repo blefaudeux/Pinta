@@ -1,6 +1,6 @@
-import pynmea2 as nmea
-import plotly.offline as py
 import plotly.graph_objs as go
+import plotly.offline as py
+import pynmea2 as nmea
 import time
 
 filepath = "03_09_2016.nmea"
@@ -50,8 +50,7 @@ for line in f:
             # We discard this field for now
             if key not in skipped_fields.keys():
                 print("Unknown field: {}".format(sample.identifier()[:-1]))
-                skipped_fields[key] = 1
-            pass
+                skipped_fields[key] = 1            
 
     except (nmea.ParseError, nmea.nmea.ChecksumError, TypeError) as e:
         # Corrupted data, skip
@@ -60,21 +59,21 @@ for line in f:
 # Reorganize for faster processing afterwards :
 print("\nReorganizing data per timestamp")
 boat_speed = []
-awa = []
+twa = []
 
 for ts in data['Speed'].keys():
-    if ts in data['ApparentWind'].keys():
-        awa.append(float(data['ApparentWind'][ts][0]) if data['ApparentWind'][ts][1] == 'L'
-                   else 360.-float(data['ApparentWind'][ts][0]))
-
+    if ts in data['WindTrue'].keys():
+        twa.append(float(data['WindTrue'][ts][0]))
         boat_speed.append(data['Speed'][ts][4])
 
 # Display some data
 print("\nPlotting data")
+decimation = 10  # Stupid decimation to begin with 
+
 # - raw polar plot
 speed = go.Scatter(
-    r=boat_speed,
-    t=awa,
+    r=boat_speed[:decimation:],
+    t=twa[:decimation:],
     mode='markers',
     name='Boat speed',
     marker=dict(
@@ -86,7 +85,7 @@ speed = go.Scatter(
 
 traces = [speed]
 layout = go.Layout(
-    title='Speed vs AWA',
+    title='Speed vs TWA',
     orientation=-90,
     font=dict(
         size=15
@@ -105,4 +104,3 @@ layout = go.Layout(
 )
 fig = go.Figure(data=traces, layout=layout)
 py.plot(fig, filename='speed.html', auto_open=False)
-
