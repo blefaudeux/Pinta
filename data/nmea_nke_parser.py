@@ -93,7 +93,6 @@ speed = go.Scattergl(
     mode='markers',
     marker=dict(
         size=6,
-        line=dict(width=1),
         color=ws[::decimation],
         colorscale='Portland',
         showscale=True,
@@ -108,7 +107,7 @@ speed = go.Scattergl(
 traces = [speed]
 
 layout = go.Layout(
-    title='Speed vs TWA',
+    title='Speed vs True Wind',
     orientation=90,
     autosize=False,
     width=1000,
