@@ -81,13 +81,13 @@ decimation = 10  # Stupid decimation to begin with
 # - raw polar plot
 # we need to use x,y plots, plotly polar plots are broken
 twa_rad = np.radians(twa[::decimation])
-labels = ['TWA: {}d \n Boat speed: {}kt'.format(w, b) for w, b in zip(twa[::decimation], boat_speed[::decimation])]
+labels = ['TWA: {}d \nBoat speed: {}kt'.format(w, b) for w, b in zip(twa[::decimation], boat_speed[::decimation])]
 
 speed = go.Scattergl(
     x=boat_speed[::decimation] * np.sin(twa_rad),
     y=boat_speed[::decimation] * np.cos(twa_rad),
     mode='markers',
-    name='Boat speed',
+    name='',
     marker=dict(
         size=8,
         line=dict(width=1),
@@ -113,5 +113,8 @@ layout = go.Layout(
     hovermode='closest',
     plot_bgcolor='rgb(223, 223, 223)'
 )
+layout.xaxis.showticklabels=False
+layout.yaxis.showticklabels=False
+
 fig = go.Figure(data=traces, layout=layout)
 py.plot(fig, filename='speed.html', auto_open=False)
