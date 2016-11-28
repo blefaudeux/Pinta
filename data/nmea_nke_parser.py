@@ -58,38 +58,41 @@ for line in f:
         # Corrupted data, skip
         pass
 
-# Reorganize for faster processing afterwards :
+# Reorganize for faster processing afterwards, align with timestamp:
 print("\nReorganizing data per timestamp")
-boat_speed = []
-twa = []
+bs = []
+wa = []
 ws = []
+ra = []
 
 for ts in data['Speed'].keys():
-    if ts in data['WindTrue'].keys():
+    if ts in data['WindTrue'].keys() and ts in data['Speed'].keys() and ts in data['RudderAngle'].keys():
         try:
-            twa.append((float(data['Speed'][ts][0]) - float(data['WindTrue'][ts][0]) + 180) % 360. - 180.)
-            boat_speed.append(float(data['Speed'][ts][4]))
+            wa.append((float(data['Speed'][ts][0]) - float(data['WindTrue'][ts][0]) + 180) % 360. - 180.)
+            bs.append(float(data['Speed'][ts][4]))
             ws.append(float(data['WindTrue'][ts][4]))
+            ra.append(float(data['RudderAngle'][ts][0]))
+
         except ValueError:
-            # Corrupted data, once again
+            # Corrupted data or no matching data
             pass
 
 # Display some data
 print("\nPlotting data")
-decimation = 10  # Stupid decimation to begin with
+decimation = 2  # Stupid decimation to begin with
 
 # - raw polar plot
 # we need to use x,y plots, plotly polar plots are broken
-twa_rad = np.radians(twa[::decimation])
-labels = ['TWA: {}d \nBoat speed: {}kt'.format(w, b) for w, b in zip(twa[::decimation], boat_speed[::decimation])]
+twa_rad = np.radians(wa[::decimation])
+labels = ['Wind: {}deg - {}kt \nBoat speed: {}kt * Rudder: {}deg'.format(wa, ws, b, r) for wa, ws, b, r
+          in zip(wa[::decimation], ws[::decimation], bs[::decimation], ra[::decimation])]
 
 speed = go.Scattergl(
-    x=boat_speed[::decimation] * np.sin(twa_rad),
-    y=boat_speed[::decimation] * np.cos(twa_rad),
+    x=bs[::decimation] * np.sin(twa_rad),
+    y=bs[::decimation] * np.cos(twa_rad),
     mode='markers',
-    name='',
     marker=dict(
-        size=8,
+        size=6,
         line=dict(width=1),
         color=ws[::decimation],
         colorscale='Portland',
@@ -97,7 +100,7 @@ speed = go.Scattergl(
         colorbar=go.ColorBar(
             title="Wind speed"
         ),
-        opacity=0.7
+        opacity=0.5
     ),
     text=labels
 )
