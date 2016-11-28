@@ -81,6 +81,7 @@ decimation = 10  # Stupid decimation to begin with
 # - raw polar plot
 # we need to use x,y plots, plotly polar plots are broken
 twa_rad = np.radians(twa[::decimation])
+labels = ['TWA: {}d \n Boat speed: {}kt'.format(w, b) for w, b in zip(twa[::decimation], boat_speed[::decimation])]
 
 speed = go.Scattergl(
     x=boat_speed[::decimation] * np.sin(twa_rad),
@@ -96,9 +97,9 @@ speed = go.Scattergl(
         colorbar=go.ColorBar(
             title="Wind speed"
         ),
-        opacity=0.8
+        opacity=0.7
     ),
-    text=twa[::decimation]
+    text=labels
 )
 
 traces = [speed]
@@ -109,6 +110,7 @@ layout = go.Layout(
     autosize=False,
     width=1000,
     height=1000,
+    hovermode='closest',
     plot_bgcolor='rgb(223, 223, 223)'
 )
 fig = go.Figure(data=traces, layout=layout)
