@@ -5,7 +5,7 @@ from plot import speed_plot, rudder_plot
 df = load_json('3_09_2016.json')
 save_json(df, '3_09_2016.json')
 
-speed_plot(df)
+speed_plot(df, 1)
 rudder_plot(df)
 
 print("Done")

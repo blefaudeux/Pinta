@@ -9,7 +9,7 @@ def speed_plot(df, decimation=2):
 
     # - raw polar plot
     twa_rad = np.radians(df['wind_angle'][::decimation])
-    labels = ['Wind: {}deg - {}kt \nBoat speed: {}kt * Rudder: {}deg'.format(wa, ws, b, r) for wa, ws, b, r
+    labels = ['Wind: {}deg - {}kt ** Boat: {}kt ** Rudder: {}deg'.format(wa, ws, b, r) for wa, ws, b, r
               in zip(df['wind_angle'][::decimation],
                      df['wind_speed'][::decimation],
                      df['boat_speed'][::decimation],
