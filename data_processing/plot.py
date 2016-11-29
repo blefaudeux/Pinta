@@ -32,28 +32,56 @@ def speed_plot(df, decimation=2):
         text=labels
     )
 
-    traces = [speed]
+    r_x = [rr * np.cos(i / 180. * np.pi) for rr in range(0, 20, 2) for i in range(0, 361)]
+    r_y = [rr * np.sin(i / 180. * np.pi) for rr in range(0, 20, 2) for i in range(0, 361)]
+    circle_labels = [str(i) + ' knots' for i in range(0, 20, 2) for ii in range(0, 361)]
+
+    # Create a trace
+    isoSpeed = go.Scattergl(
+        x=r_x,
+        y=r_y,
+        mode='lines',
+        text=circle_labels,
+        line=dict(
+            width=1,
+            color='grey')
+
+    )
+
+    traces = [speed, isoSpeed]
 
     layout = go.Layout(
         title='Speed vs True Wind',
         orientation=90,
         autosize=False,
-        width=1000,
-        height=1000,
+        width=800,
+        height=800,
         hovermode='closest',
-        plot_bgcolor='rgb(223, 223, 223)'
+        plot_bgcolor='rgb(245, 245, 245)'
     )
     layout.xaxis.showticklabels=False
     layout.yaxis.showticklabels=False
+    layout.xaxis.showgrid = False
+    layout.yaxis.showgrid = False
+    layout.xaxis.range = [-13, 13]
+    layout.yaxis.range = [-13, 13]
 
     fig = go.Figure(data=traces, layout=layout)
     py.plot(fig, filename='speed.html', auto_open=False)
 
 
 def rudder_plot(df):
-    data = [
+    traces = [
         go.Histogram(
             x=df['rudder_angle']
         )
     ]
-    py.plot(data, filename='rudder_histogram.html', auto_open=False)
+
+    layout = go.Layout(
+        title='Rudder angle distribution',
+        hovermode='closest'
+    )
+
+    fig = go.Figure(data=traces, layout=layout)
+
+    py.plot(fig, filename='rudder_histogram.html', auto_open=False)
