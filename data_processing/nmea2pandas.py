@@ -24,7 +24,7 @@ nmea_fields = {
 }
 
 
-def parse_nmea(filepath):
+def parse_nmea(filepath, wind_bias=0):
     f = open(filepath)
     data = {}
     for key in nmea_fields:
@@ -34,7 +34,7 @@ def parse_nmea(filepath):
     skipped_fields = {}
     timestamp = None
     print("\nParsing the NMEA file {}".format(filepath))
-
+    print("Wind direction bias: {}".format(wind_bias))
     for line in f:
         try:
             sample = nmea.parse(line)
@@ -59,19 +59,20 @@ def parse_nmea(filepath):
             pass
 
     # Reorganize for faster processing afterwards, save in a pandas dataframe
+    print("\nReorganizing data per timestamp")
     wa = []
     wa_index = []
     for ts in data['Speed'].keys():
-        if ts in data['WindTrue'].keys() and ts in data['Speed'].keys() and ts in data['RudderAngle'].keys():
+        if ts in data['WindTrue'].keys():
             try:
-                wa.append((float(data['Speed'][ts][0]) - float(data['WindTrue'][ts][0]) + 180) % 360. - 180.)
+                wa.append((float(data['Speed'][ts][0]) - float(data['WindTrue'][ts][0]) + wind_bias + 180) % 360.
+                          - 180.)
                 wa_index.append(ts)
 
             except ValueError:
                 # Corrupted data, skip
                 pass
 
-    print("\nReorganizing data per timestamp")
     dataframe = {
         'wind_angle': pd.Series(wa, index=wa_index),
         'boat_speed': pd.Series([float(data['Speed'][ts][4]) for ts in data['Speed'].keys()],
@@ -79,7 +80,7 @@ def parse_nmea(filepath):
         'wind_speed': pd.Series([float(data['WindTrue'][ts][4]) for ts in data['WindTrue'].keys()],
                                 index=data['WindTrue'].keys()),
         'rudder_angle': pd.Series([float(data['RudderAngle'][ts][0]) for ts in data['RudderAngle'].keys()],
-                                  index=data['RudderAngle'].keys())
+                                       index=data['RudderAngle'].keys())
     }
 
     return pd.DataFrame(dataframe)
