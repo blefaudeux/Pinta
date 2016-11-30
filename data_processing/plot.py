@@ -4,7 +4,7 @@ import numpy as np
 
 
 # Display some data
-def speed_plot(df, decimation=2):
+def speed_plot(df, decimation=2, filename='speed_polar'):
     print("\nPlotting data")
 
     # - raw polar plot
@@ -67,10 +67,10 @@ def speed_plot(df, decimation=2):
     layout.yaxis.range = [-13, 13]
 
     fig = go.Figure(data=traces, layout=layout)
-    py.plot(fig, filename='speed.html', auto_open=False)
+    py.plot(fig, filename=filename+'.html', auto_open=False)
 
 
-def rudder_plot(df):
+def rudder_plot(df, filename='rudder_histogram'):
     traces = [
         go.Histogram(
             x=df['rudder_angle']
@@ -84,4 +84,8 @@ def rudder_plot(df):
 
     fig = go.Figure(data=traces, layout=layout)
 
-    py.plot(fig, filename='rudder_histogram.html', auto_open=False)
+    py.plot(fig, filename=filename+'.html', auto_open=False)
+
+
+def sequence_plot(df, filename='sequence'):
+    pass
