@@ -1,6 +1,7 @@
 import pandas as pd
 import pynmea2 as nmea
 import time
+import json
 
 nmea_fields = {
     'IIVHW': 'Speed',
@@ -23,7 +24,7 @@ nmea_fields = {
 }
 
 
-def parse_file(filepath):
+def parse_nmea(filepath):
     f = open(filepath)
     data = {}
     for key in nmea_fields:
@@ -84,12 +85,13 @@ def parse_file(filepath):
     return pd.DataFrame(dataframe)
 
 
-def save_df(df, filename):
-    import json
-
+def save_json(df, filename):
     with open(filename, 'w') as outfile:
         json.dump(df.to_json(), outfile)
 
 
-def load_df(filename):
-    return pd.read_json(filename)
+def load_json(filename):
+    with open(filename, 'r') as infile:
+        data = json.load(infile)
+
+    return pd.read_json(data)
