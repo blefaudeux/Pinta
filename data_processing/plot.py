@@ -70,6 +70,25 @@ def speed_plot(df, decimation=2, filename='speed_polar'):
     py.plot(fig, filename=filename+'.html', auto_open=False)
 
 
+def parrallel_plot(data1, data2, title=None):
+    traces = [
+        go.Scatter(
+            x=data1
+        ),
+        go.Scatter(
+            x=data2
+        )
+    ]
+
+    layout = go.Layout(
+        title=title if title is not None else "",
+        hovermode='closest'
+    )
+
+    fig = go.Figure(data=traces, layout=layout)
+    py.plot(fig, filename=title+'.html', auto_open=False)
+
+
 def rudder_plot(df, filename='rudder_histogram'):
     traces = [
         go.Histogram(
