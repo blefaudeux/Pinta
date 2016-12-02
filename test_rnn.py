@@ -15,8 +15,8 @@ test_size = len(df) - train_size
 train, test = df.iloc[:train_size], df.iloc[train_size:len(df), :]
 
 # Create and fit Multilayer Perceptron model
-train_inputs = [train['wind_speed'], train['wind_angle']]
-train_output = train['boat_speed']
+train_inputs = np.array([train['wind_speed'].values, train['wind_angle'].values]).transpose()
+train_output = train['boat_speed'].values
 model = Sequential()
 model.add(Dense(16, input_dim=2, activation='relu'))
 model.add(Dense(1))
@@ -27,7 +27,7 @@ model.fit(train_inputs, train_output, nb_epoch=200, batch_size=2, verbose=2)
 trainScore = model.evaluate(train_inputs, train_output, verbose=0)
 print('Train Score: %.2f MSE (%.2f RMSE)' % (trainScore, np.sqrt(trainScore)))
 
-test_inputs = [test['wind_speed'], test['wind_angle']]
-test_output = test['boat_speed']
+test_inputs = np.array([test['wind_speed'].values, test['wind_angle'].values]).transpose()
+test_output = test['boat_speed'].values
 testScore = model.evaluate(test_inputs, test_output, verbose=0)
 print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, np.sqrt(testScore)))
