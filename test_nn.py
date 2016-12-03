@@ -61,12 +61,11 @@ train_inputs = np.reshape(train_inputs, (train_inputs.shape[0], 1, train_inputs.
 model_ltsm.fit(train_inputs, train_output, batch_size=1, nb_epoch=100, verbose=2)
 
 # Estimate model performance
-trainScore = model_ltsm.evaluate(train_inputs, train_output, verbose=0)
-print('Train Score: %.2f MSE (%.2f RMSE)' % (trainScore, np.sqrt(trainScore)))
+# trainScore = model_ltsm.evaluate(train_inputs, train_output, verbose=0)
+# print('Train Score: %.2f MSE (%.2f RMSE)' % (trainScore, np.sqrt(trainScore)))
 
-testScore = model_ltsm.evaluate(test_inputs, test_output, verbose=0)
-print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, np.sqrt(testScore)))
-print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, np.sqrt(testScore)))
+# testScore = model_ltsm.evaluate(test_inputs, test_output, verbose=0)
+# print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, np.sqrt(testScore)))
 
 # Compare visually the outputs :
 pred_simple = model_simple.predict(test_inputs).flatten()
