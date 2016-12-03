@@ -5,6 +5,10 @@ from keras.layers import LSTM
 from data_processing.nmea2pandas import load_json
 import data_processing.plot as plt
 
+import tensorflow as tf   # Bugfix in between Keras and TensorFlow
+tf.python.control_flow_ops = tf
+
+
 # Load the dataset
 df = load_json('data/3_09_2016.json')
 df['rudder_angle'] -= df['rudder_angle'].mean()
@@ -48,7 +52,7 @@ max_features = 2000
 batch_size = 16
 model_ltsm = Sequential()
 model_ltsm.add(Embedding(max_features, 128, dropout=0.2))
-model_ltsm.add(LSTM(16, input_dim=2, dropout_W=0.2, dropout_U=0.2))
+model_ltsm.add(LSTM(output_dim=1, input_dim=2, dropout_W=0.2, dropout_U=0.2))
 model_ltsm.add(Activation('sigmoid'))
 
 model_ltsm.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
