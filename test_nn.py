@@ -25,15 +25,15 @@ train, test = df.iloc[:train_size], df.iloc[train_size:len(df), :]
 
 # Create and fit Multilayer Perceptron model
 train_inputs = np.array([train['wind_speed'].values, train['wind_angle'].values]).transpose()
-train_output = train['boat_speed'].values
+train_output = np.array(train['boat_speed'].values)
 
 test_inputs = np.array([test['wind_speed'].values, test['wind_angle'].values]).transpose()
-test_output = test['boat_speed'].values
+test_output = np.array(test['boat_speed'].values)
 
 #########################################################
 # Super basic NN
 model_simple = Sequential()
-model_simple.add(Dense(16, input_dim=2, activation='relu'))
+model_simple.add(Dense(32, input_dim=2, activation='relu'))
 model_simple.add(Dense(1))
 
 model_simple.compile(loss='mean_squared_error', optimizer='adam')
@@ -48,17 +48,17 @@ print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, np.sqrt(testScore)))
 
 #########################################################
 # Inject LTSM to the mix:
-max_features = 2000
-batch_size = 16
 model_ltsm = Sequential()
-model_ltsm.add(Embedding(max_features, 128, dropout=0.2))
-model_ltsm.add(LSTM(output_dim=1, input_dim=2, dropout_W=0.2, dropout_U=0.2))
-model_ltsm.add(Activation('sigmoid'))
+model_ltsm.add(LSTM(output_dim=16, input_dim=2))
+model_ltsm.add(Dense(1))
 
-model_ltsm.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+model_ltsm.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
 
 print('\n******\nTrain LSTM network...')
-model_ltsm.fit(train_inputs, train_output, batch_size=batch_size, nb_epoch=15)
+# Reshape inputs, timesteps must be in the training data
+train_inputs = np.reshape(train_inputs, (train_inputs.shape[0], 1, train_inputs.shape[1]))
+
+model_ltsm.fit(train_inputs, train_output, batch_size=1, nb_epoch=100, verbose=2)
 
 # Estimate model performance
 trainScore = model_ltsm.evaluate(train_inputs, train_output, verbose=0)
@@ -70,8 +70,9 @@ print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, np.sqrt(testScore)))
 
 # Compare visually the outputs :
 pred_simple = model_simple.predict(test_inputs).flatten()
+test_inputs = np.reshape(test_inputs, (test_inputs.shape[0], 1, test_inputs.shape[1]))
 pred_ltsm = model_ltsm.predict(test_inputs).flatten()
 
-plt.parrallel_plot([test_output, pred_simple, pred_ltsm],
-                   ["Ground truth", "Simple NN", "LTSM"],
+plt.parrallel_plot([test_output, pred_ltsm, pred_simple],
+                   ["Ground truth", "LTSM", "Simple NN"],
                    "Ref against predictions")
