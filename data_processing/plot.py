@@ -37,7 +37,7 @@ def speed_plot(df, decimation=2, filename='speed_polar'):
     circle_labels = [str(i) + ' knots' for i in range(0, 20, 2) for ii in range(0, 361)]
 
     # Create a trace
-    isoSpeed = go.Scattergl(
+    iso_speed = go.Scattergl(
         x=r_x,
         y=r_y,
         mode='lines',
@@ -48,7 +48,7 @@ def speed_plot(df, decimation=2, filename='speed_polar'):
 
     )
 
-    traces = [speed, isoSpeed]
+    traces = [speed, iso_speed]
 
     layout = go.Layout(
         title='Speed vs True Wind',
@@ -70,15 +70,16 @@ def speed_plot(df, decimation=2, filename='speed_polar'):
     py.plot(fig, filename=filename+'.html', auto_open=False)
 
 
-def parrallel_plot(data1, data2, title=None):
-    traces = [
-        go.Scatter(
-            x=data1
-        ),
-        go.Scatter(
-            x=data2
+def parrallel_plot(data_list, legend_list, title=None):
+    traces = []
+
+    for data, name in zip(data_list, legend_list):
+        traces.append(
+            go.Scatter(
+                y=data,
+                name=name
+                )
         )
-    ]
 
     layout = go.Layout(
         title=title if title is not None else "",
