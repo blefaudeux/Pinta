@@ -57,9 +57,15 @@ model_ltsm.add(Activation('sigmoid'))
 
 model_ltsm.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-print('Train...')
-model_ltsm.fit(train_inputs, train_output, batch_size=batch_size, nb_epoch=15,validation_data=test_output)
+print('\n******\nTrain LSTM network...')
+model_ltsm.fit(train_inputs, train_output, batch_size=batch_size, nb_epoch=15)
 
+# Estimate model performance
+trainScore = model_ltsm.evaluate(train_inputs, train_output, verbose=0)
+print('Train Score: %.2f MSE (%.2f RMSE)' % (trainScore, np.sqrt(trainScore)))
+
+testScore = model_ltsm.evaluate(test_inputs, test_output, verbose=0)
+print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, np.sqrt(testScore)))
 print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, np.sqrt(testScore)))
 
 # Compare visually the outputs :
