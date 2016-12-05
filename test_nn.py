@@ -1,6 +1,6 @@
 import numpy as np
-from keras.models import Sequential
-from keras.layers import Dense, Activation, Embedding
+from keras.models import Sequential, load_model
+from keras.layers import Dense
 from keras.layers import LSTM
 from data_processing.nmea2pandas import load_json
 import data_processing.plot as plt
@@ -32,12 +32,19 @@ test_output = np.array(test['boat_speed'].values)
 
 #########################################################
 # Super basic NN
-model_simple = Sequential()
-model_simple.add(Dense(32, input_dim=2, activation='relu'))
-model_simple.add(Dense(1))
+simple_name = "simple_nn.hf5"
 
-model_simple.compile(loss='mean_squared_error', optimizer='adam')
-model_simple.fit(train_inputs, train_output, nb_epoch=100, batch_size=2, verbose=2)
+try:
+    model_simple = load_model(simple_name)
+except (ValueError, OSError) as e:
+    print("Could not find existing network, computing it on the fly")
+    model_simple = Sequential()
+    model_simple.add(Dense(32, input_dim=2, activation='relu'))
+    model_simple.add(Dense(1))
+
+    model_simple.compile(loss='mean_squared_error', optimizer='adam')
+    model_simple.fit(train_inputs, train_output, nb_epoch=100, batch_size=2, verbose=2)
+    model_simple.save(simple_name)
 
 # Estimate model performance
 trainScore = model_simple.evaluate(train_inputs, train_output, verbose=0)
@@ -50,6 +57,7 @@ print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, np.sqrt(testScore)))
 # Inject LTSM to the mix:
 model_ltsm = Sequential()
 model_ltsm.add(LSTM(output_dim=16, input_dim=2))
+model_ltsm.add(LSTM(16))
 model_ltsm.add(Dense(1))
 
 model_ltsm.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
