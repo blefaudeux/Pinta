@@ -47,7 +47,7 @@ except (ValueError, OSError) as e:
 
     model_simple = Sequential()
     model_simple.add(Dense(32, input_dim=3, activation='relu'))
-    model_simple.add(Dense(16))
+    # model_simple.add(Dense(16))
     model_simple.add(Dense(1))
 
     model_simple.compile(loss='mean_squared_error', optimizer='adam')
@@ -101,4 +101,4 @@ pred_ltsm = model_ltsm.predict(test_inputs).flatten()
 
 plt.parrallel_plot([test_output, pred_ltsm, pred_simple],
                    ["Ground truth", "LTSM", "Simple NN"],
-                   "Ref against predictions")
+                   "Testing neural network predictions against ground truth")
