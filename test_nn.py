@@ -12,11 +12,15 @@ tf.python.control_flow_ops = tf
 # Load the dataset
 df = load_json('data/3_09_2016.json')
 df['rudder_angle'] -= df['rudder_angle'].mean()
-df = df.iloc[-6000:-2000].dropna()  # Last part, valid data
+df = df.iloc[-7000:-1000].dropna()  # Last part, valid data
 
-# Split in between training and test
+plt.parrallel_plot([df['wind_speed'], df['boat_speed']],
+                   ["Wind speed", "Boat speed"],
+                   "Dataset plot")  # Split in between training and test
+
 training_ratio = 0.67   # Train on 2/3rds, test on the rest
 train_size = int(len(df) * training_ratio)
+print("Training set is {} samples long".format(train_size))
 test_size = len(df) - train_size
 train, test = df.iloc[:train_size], df.iloc[train_size:len(df), :]
 
@@ -42,7 +46,7 @@ try:
     model_simple = load_model(name_simple)
     print("Network {} loaded".format(name_simple))
 except (ValueError, OSError) as e:
-    print("Could not find existing network, computing it on the fly")
+    print("Could not find existing network, computing it on the fly\nThis may take time..")
     print('\n******\nTrain Simple NN...')
 
     model_simple = Sequential()
@@ -69,7 +73,7 @@ try:
     model_ltsm = load_model(name_lstm)
     print("Network {} loaded".format(name_lstm))
 except (ValueError, OSError) as e:
-    print("Could not find existing network, computing it on the fly")
+    print("Could not find existing network, computing it on the fly\nThis may take time..")
     print('\n******\nTrain LSTM network...')
 
     model_ltsm = Sequential()
@@ -82,7 +86,7 @@ except (ValueError, OSError) as e:
     # Reshape inputs, timesteps must be in the training data
     train_inputs = np.reshape(train_inputs, (train_inputs.shape[0], 1, train_inputs.shape[1]))
 
-    model_ltsm.fit(train_inputs, train_output, batch_size=1, nb_epoch=100, verbose=2)
+    model_ltsm.fit(train_inputs, train_output, batch_size=1, nb_epoch=50, verbose=2)
 
     # Estimate model performance
     # trainScore = model_ltsm.evaluate(train_inputs, train_output, verbose=0)
@@ -95,6 +99,7 @@ except (ValueError, OSError) as e:
 
 
 # Compare visually the outputs :
+print('Quality evaluation')
 pred_simple = model_simple.predict(test_inputs).flatten()
 test_inputs = np.reshape(test_inputs, (test_inputs.shape[0], 1, test_inputs.shape[1]))
 pred_ltsm = model_ltsm.predict(test_inputs).flatten()
@@ -102,3 +107,5 @@ pred_ltsm = model_ltsm.predict(test_inputs).flatten()
 plt.parrallel_plot([test_output, pred_ltsm, pred_simple],
                    ["Ground truth", "LTSM", "Simple NN"],
                    "Testing neural network predictions against ground truth")
+
+print('Done')
