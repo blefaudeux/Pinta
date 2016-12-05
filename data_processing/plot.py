@@ -83,7 +83,9 @@ def parrallel_plot(data_list, legend_list, title=None):
 
     layout = go.Layout(
         title=title if title is not None else "",
-        hovermode='closest'
+        hovermode='closest',
+        width=1000,
+        height=1000
     )
 
     fig = go.Figure(data=traces, layout=layout)
