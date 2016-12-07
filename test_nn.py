@@ -51,14 +51,12 @@ except (ValueError, OSError) as e:
     print('\n******\nTrain Simple NN...')
 
     model_simple = Sequential()
-    model_simple.add(Dense(8, input_dim=3, activation='relu'))
-    model_simple.add(Dense(8, activation='relu'))
-    model_simple.add(Dense(8, activation='relu'))
+    model_simple.add(Dense(8, input_dim=3))
     model_simple.add(Dense(8, activation='relu'))
     model_simple.add(Dense(1))
 
     model_simple.compile(loss='mean_squared_error', optimizer='adam')
-    model_simple.fit(train_inputs, train_output, nb_epoch=100, batch_size=1, verbose=2)
+    model_simple.fit(train_inputs, train_output, nb_epoch=50, batch_size=1, verbose=2)
     model_simple.save(name_simple)
 
 # Estimate model performance
