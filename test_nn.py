@@ -12,7 +12,7 @@ tf.python.control_flow_ops = tf
 # Load the dataset
 df = load_json('data/3_09_2016.json')
 df['rudder_angle'] -= df['rudder_angle'].mean()
-df = df.iloc[-7000:-1000].dropna()  # Last part, valid data
+df = df.iloc[7000:12500].dropna()  # Last part, valid data
 
 plt.parrallel_plot([df['wind_speed'], df['boat_speed']],
                    ["Wind speed", "Boat speed"],
@@ -25,7 +25,8 @@ test_size = len(df) - train_size
 train, test = df.iloc[:train_size], df.iloc[train_size:len(df), :]
 
 # Create lookback data window
-# TODO: Ben. Allows for a time dependence of the predictions
+# TODO: Ben. Allows for a time dependence of the predictions without LSTM
+# Worth trying ?
 
 # Create and fit Multilayer Perceptron model
 train_inputs = np.array([train['wind_speed'].values, train['wind_angle'].values,
@@ -50,8 +51,7 @@ except (ValueError, OSError) as e:
     print('\n******\nTrain Simple NN...')
 
     model_simple = Sequential()
-    model_simple.add(Dense(32, input_dim=3, activation='relu'))
-    # model_simple.add(Dense(16))
+    model_simple.add(Dense(16, input_dim=3, activation='relu'))
     model_simple.add(Dense(1))
 
     model_simple.compile(loss='mean_squared_error', optimizer='adam')
@@ -77,11 +77,10 @@ except (ValueError, OSError) as e:
     print('\n******\nTrain LSTM network...')
 
     model_ltsm = Sequential()
-    model_ltsm.add(LSTM(output_dim=32, input_dim=3))
-    # model_ltsm.add(LSTM(16))
+    model_ltsm.add(LSTM(output_dim=16, input_dim=3))
     model_ltsm.add(Dense(1))
 
-    model_ltsm.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
+    model_ltsm.compile(loss='mean_squared_error', optimizer='sgd')
 
     # Reshape inputs, timesteps must be in the training data
     train_inputs = np.reshape(train_inputs, (train_inputs.shape[0], 1, train_inputs.shape[1]))
