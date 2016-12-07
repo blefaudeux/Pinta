@@ -2,8 +2,10 @@ import plotly.graph_objs as go
 import plotly.offline as py
 import numpy as np
 
+""" Several helper functions to produce plots, pretty self-explanatory """
 
-# Display some data
+
+# Speed polar plot
 def speed_plot(df, decimation=2, filename='speed_polar'):
     print("\nPlotting data")
 
@@ -70,6 +72,7 @@ def speed_plot(df, decimation=2, filename='speed_polar'):
     py.plot(fig, filename=filename+'.html', auto_open=False)
 
 
+# Plot any traces in parallel
 def parrallel_plot(data_list, legend_list, title=None):
     traces = []
 
@@ -107,5 +110,22 @@ def rudder_plot(df, filename='rudder_histogram'):
     py.plot(fig, filename=filename+'.html', auto_open=False)
 
 
-def sequence_plot(df, filename='sequence'):
-    pass
+def scatter_plot(data, axes, title=None):
+    trace = go.Scattergl(
+        x=data[0],
+        y=data[1],
+        mode='markers'
+    )
+
+    layout = go.Layout(
+        title=title,
+        hovermode='closest',
+        xaxis=dict(
+            title=axes[0]
+        ),
+        yaxis=dict(
+            title=axes[1]
+        )
+    )
+
+    py.plot(go.Figure(data=[trace], layout=layout), filename=title+'.html', auto_open=False)

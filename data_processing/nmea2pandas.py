@@ -3,6 +3,13 @@ import pynmea2 as nmea
 import time
 import json
 
+"""
+    Parse linear NMEA logs, return a Pandas dataframe.
+    Extra functions to load/save json files to speed up subsequent uses.
+"""
+
+
+# Add here any field that you would like to be parsed into the dataframe
 nmea_fields = {
     'IIVHW': 'Speed',
     'IIVLW': 'Log',
@@ -91,8 +98,9 @@ def save_json(df, filename):
         json.dump(df.to_json(), outfile)
 
 
-def load_json(filename):
+def load_json(filename, skip_zeros=True):
     with open(filename, 'r') as infile:
         data = json.load(infile)
 
-    return pd.read_json(data)
+    df = pd.read_json(data)
+    return df if not skip_zeros else df[df.boat_speed > 0].dropna()
