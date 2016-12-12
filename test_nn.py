@@ -1,6 +1,6 @@
 import numpy as np
 from keras.models import Sequential, load_model
-from keras.layers import Dense
+from keras.layers import Dense, Activation
 from keras.layers import LSTM
 from data_processing.nmea2pandas import load_json
 import data_processing.plot as plt
@@ -69,24 +69,25 @@ print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, np.sqrt(testScore)))
 #########################################################
 # Inject LTSM to the mix:
 name_lstm = "lstm_nn.hf5"
+hidden_neurons = 300
 
 try:
     model_ltsm = load_model(name_lstm)
     print("Network {} loaded".format(name_lstm))
+
 except (ValueError, OSError) as e:
     print("Could not find existing network, computing it on the fly\nThis may take time..")
     print('\n******\nTrain LSTM network...')
 
     model_ltsm = Sequential()
-    model_ltsm.add(LSTM(output_dim=16, input_dim=3))
-    model_ltsm.add(Dense(16, activation='relu'))
-    model_ltsm.add(Dense(1))
-
-    model_ltsm.compile(loss='mean_squared_error', optimizer='sgd')
+    model_ltsm.add(LSTM(input_dim=3, output_dim=hidden_neurons, return_sequences=False))
+    model_ltsm.add(Dense(hidden_neurons, 1))
+    model_ltsm.add(Activation("linear"))
+    model_ltsm.compile(loss="mean_squared_error", optimizer="rmsprop")
 
     # Reshape inputs, timesteps must be in the training data
     train_inputs = np.reshape(train_inputs, (train_inputs.shape[0], 1, train_inputs.shape[1]))
-    model_ltsm.fit(train_inputs, train_output, batch_size=1, nb_epoch=50, verbose=2)
+    model_ltsm.fit(train_inputs, train_output, nb_epoch=20, verbose=2)
 
     model_ltsm.save(name_lstm)
 
