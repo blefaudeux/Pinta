@@ -1,6 +1,6 @@
+import numpy as np
 import plotly.graph_objs as go
 import plotly.offline as py
-import numpy as np
 
 """ Several helper functions to produce plots, pretty self-explanatory """
 
@@ -91,6 +91,27 @@ def parrallel_plot(data_list, legend_list, title=None):
 
     fig = go.Figure(data=traces, layout=layout)
     py.plot(fig, filename=title+'.html', auto_open=False)
+
+
+def multi_plot(df, fields_to_plot, title, filename='multi_plot', auto_open=False):
+    # FIXME: Look up on how to draw multiple plots on a grid
+    traces = []
+
+    for field in fields_to_plot:
+        traces.append(
+            go.Scatter(
+                y=df[field],
+                name=field
+            )
+        )
+
+    layout = go.Layout(
+        title=title if title is not None else "Placeholder",
+        hovermode='closest'
+    )
+
+    fig = go.Figure(data=traces, layout=layout)
+    py.plot(fig, filename=filename+'.html', auto_open=auto_open)
 
 
 def rudder_plot(df, filename='rudder_histogram'):

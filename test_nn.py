@@ -1,11 +1,12 @@
 import numpy as np
-from keras.models import Sequential, load_model
+import tensorflow as tf   # Bugfix in between Keras and TensorFlow
 from keras.layers import Dense, Activation
 from keras.layers import LSTM
-from data_processing.nmea2pandas import load_json
-import data_processing.plot as plt
+from keras.models import Sequential, load_model
 
-import tensorflow as tf   # Bugfix in between Keras and TensorFlow
+import data_processing.plot as plt
+from data_processing.nmea2pandas import load_json
+
 tf.python.control_flow_ops = tf
 
 
@@ -24,9 +25,6 @@ train_size = int(len(df) * training_ratio)
 print("Training set is {} samples long".format(train_size))
 test_size = len(df) - train_size
 train, test = df.iloc[:train_size], df.iloc[train_size:len(df), :]
-
-# Create lookback data window
-# TODO: Ben. Allows for a time dependence of the predictions without LSTM
 
 # Create and fit Multilayer Perceptron model
 train_inputs = np.array([train['wind_speed'].values, train['wind_angle'].values,
