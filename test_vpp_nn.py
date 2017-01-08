@@ -74,12 +74,12 @@ try:
     print("Network {} loaded".format(name_lstm))
 
 except (ValueError, OSError) as e:
-    print("Could not find existing network, computing it on the fly\nThis may take time..")
+    print("Could not find existing LSTM network, computing it on the fly\nThis may take time..")
     print('\n******\nTrain LSTM network...')
 
     model_ltsm = Sequential()
     model_ltsm.add(LSTM(input_dim=3, output_dim=hidden_neurons, return_sequences=False))
-    model_ltsm.add(Dense(hidden_neurons, 1))
+    model_ltsm.add(Dense(1, input_dim=hidden_neurons))
     model_ltsm.add(Activation("linear"))
     model_ltsm.compile(loss="mean_squared_error", optimizer="rmsprop")
 
