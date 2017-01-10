@@ -15,8 +15,8 @@ df = load_json('data/31_08_2016.json', skip_zeros=True)
 df['rudder_angle'] -= df['rudder_angle'].mean()
 df = df.iloc[6000:-2000]
 
-plt.parrallel_plot([df['wind_speed'], df['boat_speed']],
-                   ["Wind speed", "Boat speed"],
+plt.parrallel_plot([df['wind_speed'], df['boat_speed'], df['wind_angle']],
+                   ["Wind speed", "Boat speed", "Wind angle"],
                    "Dataset plot")
 
 # Split in between training and test
@@ -39,7 +39,7 @@ test_output = np.array(test['boat_speed'].values)
 
 #########################################################
 # Super basic NN
-name_simple = "simple_nn.hf5"
+name_simple = "trained/simple_nn.hf5"
 
 try:
     model_simple = load_model(name_simple)
@@ -66,7 +66,7 @@ print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, np.sqrt(testScore)))
 
 #########################################################
 # Inject LTSM to the mix:
-name_lstm = "lstm_nn.hf5"
+name_lstm = "trained/lstm_nn.hf5"
 hidden_neurons = 300
 
 try:

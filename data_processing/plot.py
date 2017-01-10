@@ -1,8 +1,15 @@
 import numpy as np
 import plotly.graph_objs as go
 import plotly.offline as py
+import os
 
 """ Several helper functions to produce plots, pretty self-explanatory """
+
+def handle_save(filename):
+    if not os.path.isdir("plots/"):
+        os.mkdir("plots/")
+
+    return "plots/" + filename + ".html"
 
 
 # Speed polar plot
@@ -69,7 +76,7 @@ def speed_plot(df, decimation=2, filename='speed_polar'):
     layout.yaxis.range = [-13, 13]
 
     fig = go.Figure(data=traces, layout=layout)
-    py.plot(fig, filename=filename+'.html', auto_open=False)
+    py.plot(fig, filename=handle_save(filename), auto_open=False)
 
 
 # Plot any traces in parallel
@@ -85,12 +92,12 @@ def parrallel_plot(data_list, legend_list, title=None):
         )
 
     layout = go.Layout(
-        title=title if title is not None else "",
+        title=title if title is not None else "parallel_plot",
         hovermode='closest'
     )
 
     fig = go.Figure(data=traces, layout=layout)
-    py.plot(fig, filename=title+'.html', auto_open=False)
+    py.plot(fig, filename=handle_save(title), auto_open=False)
 
 
 def multi_plot(df, fields_to_plot, title, filename='multi_plot', auto_open=False):
@@ -111,7 +118,7 @@ def multi_plot(df, fields_to_plot, title, filename='multi_plot', auto_open=False
     )
 
     fig = go.Figure(data=traces, layout=layout)
-    py.plot(fig, filename=filename+'.html', auto_open=auto_open)
+    py.plot(fig, filename=handle_save(filename), auto_open=auto_open)
 
 
 def rudder_plot(df, filename='rudder_histogram'):
@@ -128,7 +135,7 @@ def rudder_plot(df, filename='rudder_histogram'):
 
     fig = go.Figure(data=traces, layout=layout)
 
-    py.plot(fig, filename=filename+'.html', auto_open=False)
+    py.plot(fig, filename=handle_save(filename), auto_open=False)
 
 
 def scatter_plot(data, axes, title=None):
@@ -149,4 +156,6 @@ def scatter_plot(data, axes, title=None):
         )
     )
 
-    py.plot(go.Figure(data=[trace], layout=layout), filename=title+'.html', auto_open=False)
+    py.plot(go.Figure(data=[trace], layout=layout),
+            filename=handle_save(title),
+            auto_open=False)
