@@ -15,7 +15,7 @@ df['rudder_angle'] -= df['rudder_angle'].mean()
 # Subselect the last part of the data
 df = df.iloc[-6000:-2000]
 
-multi_plot(df, ['rudder_angle', 'wind_speed'],"test multi plot", "multi_plot", True)
+multi_plot(df, ['rudder_angle', 'wind_speed', 'wind_angle'], "test multi plot", "multi_plot", True)
 
 # Test an effect of the rudder angle on speed
 # df.plot(x=df['boat_speed'][:-1]-df['boat_speed'][1:], y=df['rudder_angle'].iloc[:-1], style='*')

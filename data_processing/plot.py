@@ -1,6 +1,8 @@
 import numpy as np
 import plotly.graph_objs as go
 import plotly.offline as py
+from plotly import tools
+from math import ceil    
 import os
 
 """ Several helper functions to produce plots, pretty self-explanatory """
@@ -101,8 +103,8 @@ def parrallel_plot(data_list, legend_list, title=None):
 
 
 def multi_plot(df, fields_to_plot, title, filename='multi_plot', auto_open=False):
-    # FIXME: Look up on how to draw multiple plots on a grid
     traces = []
+    plot_titles = []
 
     for field in fields_to_plot:
         traces.append(
@@ -112,12 +114,22 @@ def multi_plot(df, fields_to_plot, title, filename='multi_plot', auto_open=False
             )
         )
 
-    layout = go.Layout(
-        title=title if title is not None else "Placeholder",
-        hovermode='closest'
-    )
+        plot_titles.append(field)
 
-    fig = go.Figure(data=traces, layout=layout)
+    plot_per_row = 2
+    rows = int(ceil(len(fields_to_plot) / float(plot_per_row)))
+
+    fig = tools.make_subplots(rows=rows, cols=plot_per_row, subplot_titles=plot_titles)
+
+    i = 0
+    for trace in traces:
+        fig.append_trace(trace, i // plot_per_row + 1, i % plot_per_row + 1)
+        i += 1
+
+    fig['layout'].update(height=1000, width=1000, 
+                         title=title if title is not None else "Placeholder",
+                         hovermode='closest')
+
     py.plot(fig, filename=handle_save(filename), auto_open=auto_open)
 
 
