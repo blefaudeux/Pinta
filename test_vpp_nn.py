@@ -9,7 +9,6 @@ from data_processing.nmea2pandas import load_json
 
 tf.python.control_flow_ops = tf
 
-
 # Load the dataset
 df = load_json('data/31_08_2016.json', skip_zeros=True)
 df['rudder_angle'] -= df['rudder_angle'].mean()
@@ -44,14 +43,18 @@ name_simple = "trained/simple_nn.hf5"
 try:
     model_simple = load_model(name_simple)
     print("Network {} loaded".format(name_simple))
-except (ValueError, OSError) as e:
+
+except (ValueError, OSError, IOError) as e:
     print("Could not find existing network, computing it on the fly\nThis may take time..")
     print('\n******\nTrain Simple NN...')
 
     model_simple = Sequential()
     model_simple.add(Dense(8, input_dim=3))
     model_simple.add(Dense(8, activation='relu'))
-    model_simple.add(Dense(1))
+    model_simple.add(Dense(8, activation='relu'))
+    model_simple.add(Dense(8, activation='relu'))
+    model_simple.add(Dense(1, activation='linear'))
+    print("Simple NN model, dense\n" + str(model_simple.summary()))
 
     model_simple.compile(loss='mean_squared_error', optimizer='adam')
     model_simple.fit(train_inputs, train_output, nb_epoch=50, batch_size=1, verbose=2)
@@ -67,21 +70,25 @@ print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, np.sqrt(testScore)))
 #########################################################
 # Inject LTSM to the mix:
 name_lstm = "trained/lstm_nn.hf5"
-hidden_neurons = 300
+hidden_neurons = 64
 
 try:
     model_ltsm = load_model(name_lstm)
     print("Network {} loaded".format(name_lstm))
 
-except (ValueError, OSError) as e:
+except (ValueError, OSError, IOError) as e:
     print("Could not find existing LSTM network, computing it on the fly\nThis may take time..")
     print('\n******\nTrain LSTM network...')
 
     model_ltsm = Sequential()
     model_ltsm.add(LSTM(input_dim=3, output_dim=hidden_neurons, return_sequences=False))
-    model_ltsm.add(Dense(1, input_dim=hidden_neurons))
-    model_ltsm.add(Activation("linear"))
+    model_lstm.add(Dense(hidden_neurons, activation='relu'))
+    model_lstm.add(Dense(hidden_neurons32, activation='relu'))
+    model_lstm.add(Dense(hidden_neurons, activation='relu'))
+    model_lstm.add(Dense(hidden_neurons, activation='relu'))
+    model_ltsm.add(Dense(1, input_dim=hidden_neurons, activation='linear'))
     model_ltsm.compile(loss="mean_squared_error", optimizer="rmsprop")
+    print("LSTM-based RNN\n" + str(model_ltsm.summary()))
 
     # Reshape inputs, timesteps must be in the training data
     train_inputs = np.reshape(train_inputs, (train_inputs.shape[0], 1, train_inputs.shape[1]))
