@@ -1,9 +1,9 @@
 import numpy as np
 import tensorflow as tf   # Bugfix in between Keras and TensorFlow
 from keras.models import load_model
-
+# import ../keras-rl/rl as rl
 from data_processing.nmea2pandas import load_json
-
+from data_processing.split import split
 tf.python.control_flow_ops = tf
 
 # --------------------------------------------------
@@ -14,22 +14,11 @@ df = df.iloc[6000:-2000]
 
 # Split in between training and test
 training_ratio = 0.67
-train_size = int(len(df) * training_ratio)
-print("Training set is {} samples long".format(train_size))
-test_size = len(df) - train_size
-train, test = df.iloc[:train_size], df.iloc[train_size:len(df), :]
-
-# Create and fit Multilayer Perceptron model
-train_inputs = np.array([train['wind_speed'].values, train['wind_angle'].values,
-                         train['rudder_angle'].values]).transpose()
-
-train_output = np.array(train['boat_speed'].values)
-
-test_inputs = np.array([test['wind_speed'].values, test['wind_angle'].values,
-                        test['rudder_angle'].values]).transpose()
-
-test_output = np.array(test['boat_speed'].values)
-
+train_in, train_out, test_in, test_out = split(df,
+                                               ['wind_speed', 'wind_angle', 'rudder_angle'],
+                                               ['boat_speed'], 
+                                               training_ratio)
+                                               
 # --------------------------------------------------
 # Load the NN simulating the boat
 boat_nn = "simple_nn.hf5"
@@ -44,5 +33,37 @@ except (ValueError, OSError) as e:
 
 # --------------------------------------------------
 # Learn how to steer..
+# - keras-rl needs the model to inherit from gym
+# TODO
 
-#TODO: Ben
+# - declare the keras-rl NN. Reuse a code sample for a start
+model = Sequential()
+model.add(Flatten(input_shape=(1,) + env.observation_space.shape))
+model.add(Dense(16))
+model.add(Activation('relu'))
+model.add(Dense(16))
+model.add(Activation('relu'))
+model.add(Dense(16))
+model.add(Activation('relu'))
+model.add(Dense(nb_actions))
+model.add(Activation('linear'))
+print(model.summary())
+
+# Compile the agent
+memory = SequentialMemory(limit=50000, window_length=1)
+policy = BoltzmannQPolicy()
+
+dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=10,
+               target_model_update=1e-2, policy=policy)
+
+dqn.compile(Adam(lr=1e-3), metrics=['mae'])
+
+# Try to learn something..
+dqn.fit(env, nb_steps=50000, visualize=False, verbose=2)
+
+# After training is done, we save the final weights.
+dqn.save_weights('dqn_{}_weights.h5f'.format(ENV_NAME), overwrite=True)
+
+# Finally, evaluate our algorithm for 5 episodes.
+dqn.test(env, nb_episodes=5, visualize=True)
+
