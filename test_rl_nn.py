@@ -18,7 +18,7 @@ train_in, train_out, test_in, test_out = split(df,
                                                ['wind_speed', 'wind_angle', 'rudder_angle'],
                                                ['boat_speed'], 
                                                training_ratio)
-                                               
+
 # --------------------------------------------------
 # Load the NN simulating the boat
 boat_nn = "simple_nn.hf5"
@@ -26,6 +26,8 @@ boat_nn = "simple_nn.hf5"
 try:
     model_simple = load_model(boat_nn)
     print("Network {} loaded".format(boat_nn))
+    print(model_simple.summary())ß
+
 
 except (ValueError, OSError) as e:
     print("Could not find existing network, cannot continue")
