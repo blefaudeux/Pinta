@@ -1,9 +1,15 @@
-import numpy as np
+#!/usr/bin/python3
 import tensorflow as tf   # Bugfix in between Keras and TensorFlow
-from keras.models import load_model
-# import ../keras-rl/rl as rl
+from keras.layers import Dense, Activation, Flatten
+from keras.models import Sequential, load_model
 from data_processing.nmea2pandas import load_json
 from data_processing.split import split
+import numpy as np
+import gym
+from rl.memory import SequentialMemory
+from rl.agents.dqn import DQNAgent
+from rl.policy import BoltzmannQPolicy
+from rl.optimizers import Adam
 tf.python.control_flow_ops = tf
 
 # --------------------------------------------------
@@ -14,10 +20,11 @@ df = df.iloc[6000:-2000]
 
 # Split in between training and test
 training_ratio = 0.67
-train_in, train_out, test_in, test_out = split(df,
-                                               ['wind_speed', 'wind_angle', 'rudder_angle'],
-                                               ['boat_speed'], 
-                                               training_ratio)
+train_in, train_out, test_in, test_out = split(
+    df,
+    ['wind_speed', 'wind_angle', 'rudder_angle'],
+    ['boat_speed'],
+    training_ratio)
 
 # --------------------------------------------------
 # Load the NN simulating the boat
@@ -26,8 +33,7 @@ boat_nn = "simple_nn.hf5"
 try:
     model_simple = load_model(boat_nn)
     print("Network {} loaded".format(boat_nn))
-    print(model_simple.summary())ß
-
+    print(model_simple.summary())
 
 except (ValueError, OSError) as e:
     print("Could not find existing network, cannot continue")
@@ -36,9 +42,14 @@ except (ValueError, OSError) as e:
 # --------------------------------------------------
 # Learn how to steer..
 # - keras-rl needs the model to inherit from gym
-# TODO
+ENV_NAME = 'vpp-nn'
+env = gym.make(ENV_NAME)
+np.random.seed(123)
+env.seed(123)
+nb_actions = env.action_space.n
 
 # - declare the keras-rl NN. Reuse a code sample for a start
+nb_actions = 1
 model = Sequential()
 model.add(Flatten(input_shape=(1,) + env.observation_space.shape))
 model.add(Dense(16))
