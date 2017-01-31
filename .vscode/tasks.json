@@ -1,7 +1,23 @@
 {
     "version": "0.1.0",
     "command": "python3",
-    "isShellCommand": true,
-    "args": ["${fileBasename}"],
-    "showOutput": "always"
+    "isShellCommand": false,
+    "args": [],
+    "showOutput": "always",
+    "echoCommand": true,
+    "suppressTaskName": true,
+    "tasks": [
+        {
+            "taskName": "VPP",
+            "args": ["${workspaceRoot}/test_vpp_nn.py"]
+        },
+        {
+            "taskName": "RL",
+            "args": ["${workspaceRoot}/test_rl_nn.py"]
+        },
+        {
+            "taskName": "Convert",
+            "args": ["${workspaceRoot}/convert_data.py"]
+        }
+    ]
 }
