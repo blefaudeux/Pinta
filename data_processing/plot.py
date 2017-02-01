@@ -1,9 +1,20 @@
+import numpy as np
 import plotly.graph_objs as go
 import plotly.offline as py
-import numpy as np
+from plotly import tools
+from math import ceil    
+import os
+
+""" Several helper functions to produce plots, pretty self-explanatory """
+
+def handle_save(filename):
+    if not os.path.isdir("plots/"):
+        os.mkdir("plots/")
+
+    return "plots/" + filename + ".html"
 
 
-# Display some data
+# Speed polar plot
 def speed_plot(df, decimation=2, filename='speed_polar'):
     print("\nPlotting data")
 
@@ -67,9 +78,10 @@ def speed_plot(df, decimation=2, filename='speed_polar'):
     layout.yaxis.range = [-13, 13]
 
     fig = go.Figure(data=traces, layout=layout)
-    py.plot(fig, filename=filename+'.html', auto_open=False)
+    py.plot(fig, filename=handle_save(filename), auto_open=False)
 
 
+# Plot any traces in parallel
 def parrallel_plot(data_list, legend_list, title=None):
     traces = []
 
@@ -82,12 +94,43 @@ def parrallel_plot(data_list, legend_list, title=None):
         )
 
     layout = go.Layout(
-        title=title if title is not None else "",
+        title=title if title is not None else "parallel_plot",
         hovermode='closest'
     )
 
     fig = go.Figure(data=traces, layout=layout)
-    py.plot(fig, filename=title+'.html', auto_open=False)
+    py.plot(fig, filename=handle_save(title), auto_open=False)
+
+
+def multi_plot(df, fields_to_plot, title, filename='multi_plot', auto_open=False):
+    traces = []
+    plot_titles = []
+
+    for field in fields_to_plot:
+        traces.append(
+            go.Scatter(
+                y=df[field],
+                name=field
+            )
+        )
+
+        plot_titles.append(field)
+
+    plot_per_row = 2
+    rows = int(ceil(len(fields_to_plot) / float(plot_per_row)))
+
+    fig = tools.make_subplots(rows=rows, cols=plot_per_row, subplot_titles=plot_titles)
+
+    i = 0
+    for trace in traces:
+        fig.append_trace(trace, i // plot_per_row + 1, i % plot_per_row + 1)
+        i += 1
+
+    fig['layout'].update(height=1000, width=1000, 
+                         title=title if title is not None else "Placeholder",
+                         hovermode='closest')
+
+    py.plot(fig, filename=handle_save(filename), auto_open=auto_open)
 
 
 def rudder_plot(df, filename='rudder_histogram'):
@@ -104,8 +147,27 @@ def rudder_plot(df, filename='rudder_histogram'):
 
     fig = go.Figure(data=traces, layout=layout)
 
-    py.plot(fig, filename=filename+'.html', auto_open=False)
+    py.plot(fig, filename=handle_save(filename), auto_open=False)
 
 
-def sequence_plot(df, filename='sequence'):
-    pass
+def scatter_plot(data, axes, title=None):
+    trace = go.Scattergl(
+        x=data[0],
+        y=data[1],
+        mode='markers'
+    )
+
+    layout = go.Layout(
+        title=title,
+        hovermode='closest',
+        xaxis=dict(
+            title=axes[0]
+        ),
+        yaxis=dict(
+            title=axes[1]
+        )
+    )
+
+    py.plot(go.Figure(data=[trace], layout=layout),
+            filename=handle_save(title),
+            auto_open=False)
