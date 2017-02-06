@@ -99,7 +99,7 @@ print('---\nQuality evaluation:')
 pred_simple = model_simple.predict(test_in).flatten()
 pred_ltsm = model_lstm.predict(test_inputs_ltsm).flatten()
 
-plt.parrallel_plot([test_out, pred_ltsm, pred_simple],
+plt.parrallel_plot([test_out.flatten(), pred_ltsm, pred_simple],
                    ["Ground truth", "LTSM", "Simple NN"],
                    "Testing neural network predictions against ground truth")
 

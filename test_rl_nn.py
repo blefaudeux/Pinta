@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/local/bin/python3
 import tensorflow as tf   # Bugfix in between Keras and TensorFlow
 from keras.layers import Dense, Activation, Flatten
 from keras.models import Sequential, load_model
