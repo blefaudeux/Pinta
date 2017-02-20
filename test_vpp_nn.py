@@ -1,15 +1,7 @@
 #!/usr/local/bin/python3
 import numpy as np
-import tensorflow as tf   # Bugfix in between Keras and TensorFlow
-from keras.layers import Dense, Activation
-from keras.layers import LSTM
-from keras.models import Sequential, load_model
-
-import data_processing.plot as plt
-from data_processing.split import split
-from data_processing.load import load
-
-tf.python.control_flow_ops = tf
+from data_processing import plt, split, load
+from train.behaviour import SimpleNN, MemoryNN
 
 # Load the dataset
 datafile = 'data/31_08_2016.json'
@@ -23,84 +15,46 @@ plt.parrallel_plot([df[i] for i in inputs], inputs, "Dataset plot")
 # Split in between training and test
 training_ratio = 0.67
 train_in, train_out, test_in, test_out = split(df, inputs,
-                                               ['boat_speed'], 
+                                               ['boat_speed'],
                                                training_ratio)
 
-#########################################################
-# Super basic NN
+# Super basic NN, FW stateless NN
 name_simple = "trained/simple_nn.hf5"
-hidden_neurons = 32
+snn = SimpleNN(name_simple)
+if not snn.valid:
+    snn.fit(train_in, train_out, nb_epoch=50, batch_size=1, verbose=2)
+    snn.save(name_simple)
 
-try:
-    model_simple = load_model(name_simple)
-    print("---\nNetwork {} loaded".format(name_simple))
-    print(model_simple.summary())
-
-except (ValueError, OSError, IOError) as e:
-    print("Could not find existing network, computing it on the fly\nThis may take time..")
-    print('\n******\nTrain Simple NN...')
-
-    model_simple = Sequential()
-    model_simple.add(Dense(hidden_neurons, input_dim=3))
-    model_simple.add(Dense(hidden_neurons, activation='relu'))
-    model_simple.add(Dense(hidden_neurons, activation='relu'))
-    model_simple.add(Dense(1, activation='linear'))
-    print("Simple NN model, dense\n" + str(model_simple.summary()))
-
-    model_simple.compile(loss='mean_squared_error', optimizer='adam')
-    model_simple.fit(train_in, train_out, nb_epoch=50, batch_size=1, verbose=2)
-    model_simple.save(name_simple)
-
-# Estimate model performance
-trainScore = model_simple.evaluate(train_in, train_out, verbose=0)
+trainScore = snn.model.evaluate(train_in, train_out, verbose=0)
 print('Train Score: %.2f MSE (%.2f RMSE)' % (trainScore, np.sqrt(trainScore)))
 
-testScore = model_simple.evaluate(test_in, test_out, verbose=0)
+testScore = snn.model.evaluate(test_in, test_out, verbose=0)
 print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, np.sqrt(testScore)))
 
-#########################################################
-# Inject LTSM to the mix:
-name_lstm = "trained/lstm_nn.hf5"
-hidden_neurons = 64
-train_inputs_ltsm = np.reshape(train_in, (train_in.shape[0], 1, train_in.shape[1]))
+# Test a more complex NN, LSTM
+train_inputs_ltsm = np.reshape(
+    train_in, (train_in.shape[0], 1, train_in.shape[1]))
 test_inputs_ltsm = np.reshape(test_in, (test_in.shape[0], 1, test_in.shape[1]))
 
-try:
-    model_lstm = load_model(name_lstm)
-    print("---\nNetwork {} loaded".format(name_lstm))
-    print(model_lstm.summary())
+name_lstm = "trained/lstm_nn.hf5"
+mnn = MemoryNN(name_lstm)
+if not mnn.valid:
+    mnn.fit(train_inputs_ltsm, train_out, nb_epoch=20, verbose=2)
+    mnn.save(name_lstm)
 
-except (ValueError, OSError, IOError) as e:
-    print("Could not find existing LSTM network, computing it on the fly\nThis may take time..")
-    print('\n******\nTrain LSTM network...')
-
-    model_lstm = Sequential()
-    model_lstm.add(LSTM(input_dim=3, output_dim=hidden_neurons, return_sequences=False))
-    model_lstm.add(Dense(hidden_neurons, activation='relu'))
-    model_lstm.add(Dense(hidden_neurons, activation='relu'))
-    model_lstm.add(Dense(hidden_neurons, activation='relu'))
-    model_lstm.add(Dense(1, input_dim=hidden_neurons, activation='linear'))
-    model_lstm.compile(loss="mean_squared_error", optimizer="rmsprop")
-    print("LSTM-based RNN\n" + str(model_lstm.summary()))
-
-    # Reshape inputs, timesteps must be in the training data
-    model_lstm.fit(train_inputs_ltsm, train_out, nb_epoch=20, verbose=2)
-    model_lstm.save(name_lstm)
-
-# Estimate model performance - arbitrary metric (LS probably)
-trainScore = model_lstm.evaluate(train_inputs_ltsm, train_out, verbose=0)
+trainScore = mnn.model.evaluate(train_inputs_ltsm, train_out, verbose=0)
 print('Train Score: %.2f MSE (%.2f RMSE)' % (trainScore, np.sqrt(trainScore)))
 
-testScore = model_lstm.evaluate(test_inputs_ltsm, test_out, verbose=0)
+testScore = mnn.model.evaluate(test_inputs_ltsm, test_out, verbose=0)
 print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, np.sqrt(testScore)))
 
 # Compare visually the outputs
 print('---\nQuality evaluation:')
-pred_simple = model_simple.predict(test_in).flatten()
-pred_ltsm = model_lstm.predict(test_inputs_ltsm).flatten()
+pred_simple = snn.model.predict(test_in).flatten()
+pred_ltsm = mnn.model.predict(test_inputs_ltsm).flatten()
 
 plt.parrallel_plot([test_out.flatten(), pred_ltsm, pred_simple],
                    ["Ground truth", "LTSM", "Simple NN"],
-                   "Testing neural network predictions against ground truth")
+                   "Neural network predictions vs ground truth")
 
 print('--Done')
