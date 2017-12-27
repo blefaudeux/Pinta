@@ -1,15 +1,10 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python3
 import numpy as np
-import tensorflow as tf   # Bugfix in between Keras and TensorFlow
-from keras.layers import Dense, Activation
-from keras.layers import LSTM
 from keras.models import Sequential, load_model
 
 import data_processing.plot as plt
-from data_processing.split import split
 from data_processing.load import load
-
-tf.python.control_flow_ops = tf
+from data_processing.split import split
 
 # Load the dataset
 datafile = 'data/31_08_2016.json'
@@ -42,6 +37,7 @@ except (ValueError, OSError, IOError) as e:
 
     model_simple = Sequential()
     model_simple.add(Dense(hidden_neurons, input_dim=3))
+    # model_simple.add(convolutional.Conv1D(hidden_neurons, input_dim=3))
     model_simple.add(Dense(hidden_neurons, activation='relu'))
     model_simple.add(Dense(hidden_neurons, activation='relu'))
     model_simple.add(Dense(1, activation='linear'))
