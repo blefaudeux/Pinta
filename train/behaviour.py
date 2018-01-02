@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.autograd import Variable
 
 
 class NN(nn.Module):
@@ -78,11 +79,42 @@ class NN(nn.Module):
         raise NotImplementedError
 
 
+class LSTM(NN):
+    def __init__(self):
+        super(LSTM, self).__init__()
+        self.lstm1 = nn.LSTMCell(1, 51)
+        self.lstm2 = nn.LSTMCell(51, 51)
+        self.linear = nn.Linear(51, 1)
+
+    def forward(self, input, future=0):
+        outputs = []
+        h_t = Variable(
+            torch.zeros(input.size(0), 51).double(), requires_grad=False)
+        c_t = Variable(
+            torch.zeros(input.size(0), 51).double(), requires_grad=False)
+        h_t2 = Variable(
+            torch.zeros(input.size(0), 51).double(), requires_grad=False)
+        c_t2 = Variable(
+            torch.zeros(input.size(0), 51).double(), requires_grad=False)
+
+        for i, input_t in enumerate(input.chunk(input.size(1), dim=1)):
+            h_t, c_t = self.lstm1(input_t, (h_t, c_t))
+            h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
+            output = self.linear(h_t2)
+            outputs += [output]
+        for i in range(future):  # if we should predict the future
+            h_t, c_t = self.lstm1(output, (h_t, c_t))
+            h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
+            output = self.linear(h_t2)
+            outputs += [output]
+        outputs = torch.stack(outputs, 1).squeeze(2)
+        return outputs
+
+
 # -----------------------
 #  Conv1D
 class ConvNN(NN):
-    def __init__(self, filename=None, input_size=3, conv_window=10,
-                 n_layers=3):
+    def __init__(self, filename=None, input_size=3, conv_window=10):
         super(ConvNN, self).__init__()
 
         # Load from trained NN if required
@@ -100,7 +132,10 @@ class ConvNN(NN):
         self.input_size = input_size
         self.hidden_size = input_size * 4
         self.output_size = 1
-        self.n_layers = n_layers
+
+        # >>> m = nn.Conv1d(16, 33, 3, stride=2)
+        # >>> input = autograd.Variable(torch.randn(20, 16, 50))
+        # >>> output = m(input)
 
         # First conv1d + pooling
         self.conv1 = nn.Conv1d(input_size, self.hidden_size, conv_window)
