@@ -8,9 +8,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
+import numpy as np
 
 
 class NN(nn.Module):
+
     """
     This is a generic NN implementation.
     This is an abstract class, a proper model needs to be implemented
@@ -35,9 +37,22 @@ class NN(nn.Module):
     def save(self, name):
         torch.save(self._model.state_dict(), name)
 
-    def fit(self, train, test, epoch=50, batch_size=1, verbose=2):
+    @staticmethod
+    def prepare_data(train, batch_size):
+        # TODO: Move to torch format here
+        n_batch = train[0].shape[0] // batch_size
+        n_samples = n_batch * batch_size
+        batched_data =  np.array(np.split(train[0][:n_samples,:], batch_size)), np.array(np.split(train[1][:n_samples,:], batch_size))
+        return np.moveaxis(batched_data[0], 1, 2), batched_data[1]
+
+    def fit(self, train, test, epoch=50, batch_size=100, verbose=2):
         optimizer = optim.Adam(self.parameters())
         criterion = nn.MSELoss()
+
+        # Prepare the data in batches
+        print("Preparing dataset...")
+        train_batch = self.prepare_data(train, batch_size)
+        test_batch = self.prepare_data(test, batch_size)
 
         print("Training the network...")
 
@@ -47,8 +62,8 @@ class NN(nn.Module):
             # Eval computation on the training data
             def closure():
                 optimizer.zero_grad()
-                out = self(train[0])
-                loss = criterion(out, train[1])
+                out = self(train_batch[0])
+                loss = criterion(out, train_batch[1])
                 print('Eval loss: {}'.format(loss.data.numpy()[0]))
                 loss.backward()
                 return loss
@@ -56,8 +71,8 @@ class NN(nn.Module):
             optimizer.step(closure)
 
             # Loss on the test data
-            pred = self(test[0])
-            loss = criterion(pred, test[1])
+            pred = self(test_batch[0])
+            loss = criterion(pred, test_batch[1])
             print("Test loss: {}".format(loss.data.numpy()[0]))
 
         print("... Done")
@@ -80,6 +95,7 @@ class NN(nn.Module):
 
 
 class LSTM(NN):
+
     def __init__(self):
         super(LSTM, self).__init__()
         self.lstm1 = nn.LSTMCell(1, 51)
@@ -90,23 +106,28 @@ class LSTM(NN):
         outputs = []
         h_t = Variable(
             torch.zeros(input.size(0), 51).double(), requires_grad=False)
+
         c_t = Variable(
             torch.zeros(input.size(0), 51).double(), requires_grad=False)
+
         h_t2 = Variable(
             torch.zeros(input.size(0), 51).double(), requires_grad=False)
+
         c_t2 = Variable(
             torch.zeros(input.size(0), 51).double(), requires_grad=False)
 
-        for i, input_t in enumerate(input.chunk(input.size(1), dim=1)):
+        for _, input_t in enumerate(input.chunk(input.size(1), dim=1)):
             h_t, c_t = self.lstm1(input_t, (h_t, c_t))
             h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
             output = self.linear(h_t2)
             outputs += [output]
-        for i in range(future):  # if we should predict the future
+
+        for _ in range(future):  # if we should predict the future
             h_t, c_t = self.lstm1(output, (h_t, c_t))
             h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
             output = self.linear(h_t2)
             outputs += [output]
+
         outputs = torch.stack(outputs, 1).squeeze(2)
         return outputs
 
@@ -114,6 +135,7 @@ class LSTM(NN):
 # -----------------------
 #  Conv1D
 class ConvNN(NN):
+
     def __init__(self, filename=None, input_size=3, conv_window=10):
         super(ConvNN, self).__init__()
 
@@ -130,26 +152,25 @@ class ConvNN(NN):
         # ----
         # Define the model
         self.input_size = input_size
-        self.hidden_size = input_size * 4
+        self.hidden_size = input_size * conv_window
         self.output_size = 1
-
-        # >>> m = nn.Conv1d(16, 33, 3, stride=2)
-        # >>> input = autograd.Variable(torch.randn(20, 16, 50))
-        # >>> output = m(input)
 
         # First conv1d + pooling
         self.conv1 = nn.Conv1d(input_size, self.hidden_size, conv_window)
         self.pool1 = nn.AvgPool1d(2)
 
         # Second conv1d + pooling - the time scale is effectively lengthened
-        self.conv2 = nn.Conv1d(input_size * 2, input_size * 2, conv_window)
+        self.conv2 = nn.Conv1d(input_size * 2, self.hidden_size, conv_window)
         self.pool2 = nn.AvgPool1d(2)
 
         self.out = nn.Linear(input_size, 1)
 
     def forward(self, inputs, hidden=None):
+        variable_input = Variable(
+            torch.from_numpy(inputs).float(), requires_grad=False)
+
         # Run through Conv1d and Pool layers
-        conv_results = self.conv1(inputs)
+        conv_results = self.conv1(variable_input)
         pool_results = self.pool1(conv_results)
         conv_results = self.conv2(pool_results)
         pool_results = self.pool2(conv_results)

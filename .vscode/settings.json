@@ -3,5 +3,5 @@
     "python.unitTest.pyTestEnabled": false,
     "python.unitTest.unittestEnabled": false,
     "python.unitTest.nosetestsEnabled": false,
-    "python.formatting.provider": "yapf"
+    "python.formatting.provider": "autopep8"
 }

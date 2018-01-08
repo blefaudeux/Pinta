@@ -26,7 +26,7 @@ cnn = ConvNN(name_simple)
 if not cnn.valid:
     cnn.fit([train_in, train_out], [test_in, test_out],
             epoch=50,
-            batch_size=16,
+            batch_size=1000,
             verbose=2)
     cnn.save(name_simple)
 
@@ -36,10 +36,11 @@ print('Train Score: %.2f RMSE' % np.sqrt(trainScore))
 testScore = cnn.evaluate(test_in, test_out, verbose=0)
 print('Test Score: %.2f RMSE' % np.sqrt(testScore))
 
-# # Test a more complex NN, LSTM
+# Test a more complex NN, LSTM
 # train_inputs_ltsm = np.reshape(train_in,
 #                                (train_in.shape[0], 1, train_in.shape[1]))
-# test_inputs_ltsm = np.reshape(test_in, (test_in.shape[0], 1, test_in.shape[1]))
+# test_inputs_ltsm = np.reshape(test_in, (test_in.shape[0], 1,
+# test_in.shape[1]))
 
 # name_lstm = "trained/lstm_nn.hf5"
 # mnn = MemoryNN(name_lstm)
