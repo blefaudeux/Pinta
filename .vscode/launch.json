@@ -12,6 +12,18 @@
             "debugOptions": [
                 "RedirectOutput"
             ]
+        },
+        {
+            "name": "VPP",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "pythonPath": "${config:python.pythonPath}",
+            "program": "${workspaceRoot}/test_vpp.py",
+            "cwd": "${workspaceRoot}",
+            "debugOptions": [
+                "RedirectOutput"
+            ]
         }
     ]
 }

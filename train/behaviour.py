@@ -42,10 +42,12 @@ class NN(nn.Module):
         # TODO: Move to torch format here
         n_batch = train[0].shape[0] // batch_size
         n_samples = n_batch * batch_size
-        batched_data =  np.array(np.split(train[0][:n_samples,:], batch_size)), np.array(np.split(train[1][:n_samples,:], batch_size))
-        return np.moveaxis(batched_data[0], 1, 2), batched_data[1]
+        batched_data = [np.array(np.split(train[0][:n_samples,:], batch_size)),
+                        np.array(np.split(train[1][:n_samples,:], batch_size))]
 
-    def fit(self, train, test, epoch=50, batch_size=100, verbose=2):
+        return np.moveaxis(batched_data[0], 0, 2), batched_data[1]
+
+    def fit(self, train, test, epoch=50, batch_size=100):
         optimizer = optim.Adam(self.parameters())
         criterion = nn.MSELoss()
 
@@ -81,17 +83,57 @@ class NN(nn.Module):
         return self(inputs)
 
     def forward(self, *inputs):
-        """Defines the computation performed at every call.
-
+        """
+        Defines the computation performed at every call.
         Should be overriden by all subclasses.
-
-        .. note::
-            Although the recipe for forward pass needs to be defined within
-            this function, one should call the :class:`Module` instance afterwards
-            instead of this since the former takes care of running the
-            registered hooks while the latter silently ignores them.
         """
         raise NotImplementedError
+
+# -----------------------
+#  Conv1D
+class ConvNN(NN):
+
+    def __init__(self, filename=None, input_size=3, conv_window=10):
+        super(ConvNN, self).__init__()
+
+        # Load from trained NN if required
+        if filename is not None:
+            self.valid = self.load(filename)
+            if self.valid:
+                return
+            else:
+                print(
+                    "Could not load the specified net, computing it from scratch"
+                )
+
+        # ----
+        # Define the model
+        self.input_size = input_size
+        self.hidden_size = input_size * conv_window
+        self.output_size = 1
+
+        # First conv1d + pooling
+        self.conv1 = nn.Conv1d(input_size, self.hidden_size, conv_window, groups=input_size)
+        self.pool1 = nn.AvgPool1d(2)
+
+        # Second conv1d + pooling - the time scale is effectively lengthened
+        self.conv2 = nn.Conv1d(self.hidden_size, self.hidden_size, conv_window, groups=input_size)
+        self.pool2 = nn.AvgPool1d(2)
+
+        self.out = nn.Linear(input_size, 1)
+
+    def forward(self, inputs, hidden=None):
+        variable_input = Variable(
+            torch.from_numpy(inputs).float(), requires_grad=False)
+
+        # Run through Conv1d and Pool layers
+        conv_results = self.conv1(variable_input)
+        pool_results = self.pool1(conv_results)
+        conv_results = self.conv2(pool_results)
+        pool_results = self.pool2(conv_results)
+        pool_results = F.tanh(pool_results)
+        return self.out(F.tanh(pool_results)), hidden
+
 
 
 class LSTM(NN):
@@ -131,50 +173,3 @@ class LSTM(NN):
         outputs = torch.stack(outputs, 1).squeeze(2)
         return outputs
 
-
-# -----------------------
-#  Conv1D
-class ConvNN(NN):
-
-    def __init__(self, filename=None, input_size=3, conv_window=10):
-        super(ConvNN, self).__init__()
-
-        # Load from trained NN if required
-        if filename is not None:
-            self.valid = self.load(filename)
-            if self.valid:
-                return
-            else:
-                print(
-                    "Could not load the specified net, computing it from scratch"
-                )
-
-        # ----
-        # Define the model
-        self.input_size = input_size
-        self.hidden_size = input_size * conv_window
-        self.output_size = 1
-
-        # First conv1d + pooling
-        self.conv1 = nn.Conv1d(input_size, self.hidden_size, conv_window)
-        self.pool1 = nn.AvgPool1d(2)
-
-        # Second conv1d + pooling - the time scale is effectively lengthened
-        self.conv2 = nn.Conv1d(input_size * 2, self.hidden_size, conv_window)
-        self.pool2 = nn.AvgPool1d(2)
-
-        self.out = nn.Linear(input_size, 1)
-
-    def forward(self, inputs, hidden=None):
-        variable_input = Variable(
-            torch.from_numpy(inputs).float(), requires_grad=False)
-
-        # Run through Conv1d and Pool layers
-        conv_results = self.conv1(variable_input)
-        pool_results = self.pool1(conv_results)
-        conv_results = self.conv2(pool_results)
-        pool_results = self.pool2(conv_results)
-
-        pool_results = F.tanh(pool_results)
-        output, hidden = self.gru(pool_results, hidden)
-        return F.tanh(self.out(output)), hidden

@@ -26,8 +26,7 @@ cnn = ConvNN(name_simple)
 if not cnn.valid:
     cnn.fit([train_in, train_out], [test_in, test_out],
             epoch=50,
-            batch_size=1000,
-            verbose=2)
+            batch_size=1000)
     cnn.save(name_simple)
 
 trainScore = cnn.evaluate(train_in, train_out, verbose=0)
