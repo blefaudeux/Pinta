@@ -89,8 +89,13 @@ class NN(nn.Module):
         """
         raise NotImplementedError
 
+    @staticmethod
+    def _conv_out(in_dim, kernel_size, stride=1, padding=0, dilation=1):
+        return np.floor((in_dim + 2*padding - dilation * (kernel_size - 1) - 1)/stride + 1)
+
 # -----------------------
 #  Conv1D
+#  Purely conv nn, the stride is used in place of the pooling layers
 class ConvNN(NN):
 
     def __init__(self, filename=None, input_size=3, conv_window=10):
@@ -112,14 +117,14 @@ class ConvNN(NN):
         self.hidden_size = input_size * conv_window
         self.output_size = 1
 
-        # First conv1d + pooling
+        self.relu = nn.ReLU()
+
         self.conv1 = nn.Conv1d(input_size, self.hidden_size, conv_window, groups=input_size)
-        self.pool1 = nn.AvgPool1d(2)
+        self.conv2 = nn.Conv1d(self.hidden_size, self.hidden_size * conv_window, conv_window, groups=1, stride=2)
+        self.conv3 = nn.Conv1d(self.hidden_size, self.hidden_size * conv_window, conv_window, groups=1, stride=2)
 
-        # Second conv1d + pooling - the time scale is effectively lengthened
-        self.conv2 = nn.Conv1d(self.hidden_size, self.hidden_size, conv_window, groups=input_size)
-        self.pool2 = nn.AvgPool1d(2)
-
+        # Fully connected layer
+        self.fc1 = nn.Linear()
         self.out = nn.Linear(input_size, 1)
 
     def forward(self, inputs, hidden=None):
@@ -128,10 +133,9 @@ class ConvNN(NN):
 
         # Run through Conv1d and Pool layers
         conv_results = self.conv1(variable_input)
-        pool_results = self.pool1(conv_results)
+        pool_results = self.relu(self.pool1(conv_results))
         conv_results = self.conv2(pool_results)
-        pool_results = self.pool2(conv_results)
-        pool_results = F.tanh(pool_results)
+        pool_results = self.relu(self.pool2(conv_results))
         return self.out(F.tanh(pool_results)), hidden
 
 
