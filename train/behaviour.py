@@ -39,13 +39,21 @@ class NN(nn.Module):
 
     @staticmethod
     def prepare_data(train, batch_size):
-        # TODO: Move to torch format here
-        n_batch = train[0].shape[0] // batch_size
-        n_samples = n_batch * batch_size
-        batched_data = [np.array(np.split(train[0][:n_samples,:], batch_size)),
-                        np.array(np.split(train[1][:n_samples,:], batch_size))]
+        """
+        Prepare mini-batches out of the data sequences
 
-        return np.moveaxis(batched_data[0], 0, 2), batched_data[1]
+        input: [2], first element is the inputs, second the outputs
+        """
+
+        n_batch = train[0].shape[1] // batch_size
+        n_samples = n_batch * batch_size
+        batch_data = [np.array(np.split(train[0][:, :n_samples], batch_size, axis=1)),
+                      np.array(np.split(train[1][:, :n_samples], batch_size, axis=1))]
+
+        return [Variable(torch.from_numpy(np.swapaxes(np.swapaxes(batch_data[0], 0, 1), 0, 2)))
+                .float(),
+                Variable(torch.from_numpy(np.swapaxes(np.swapaxes(batch_data[1], 0, 1), 0, 2)))
+                .float()]
 
     def fit(self, train, test, epoch=50, batch_size=100):
         optimizer = optim.Adam(self.parameters())
@@ -64,7 +72,7 @@ class NN(nn.Module):
             # Eval computation on the training data
             def closure():
                 optimizer.zero_grad()
-                out = self(train_batch[0])
+                out, _ = self(train_batch[0])
                 loss = criterion(out, train_batch[1])
                 print('Eval loss: {}'.format(loss.data.numpy()[0]))
                 loss.backward()
@@ -91,12 +99,80 @@ class NN(nn.Module):
 
     @staticmethod
     def _conv_out(in_dim, kernel_size, stride=1, padding=0, dilation=1):
-        return np.floor((in_dim + 2*padding - dilation * (kernel_size - 1) - 1)/stride + 1)
+        return np.floor((in_dim + 2 * padding - dilation *
+                         (kernel_size - 1) - 1) / stride + 1)
 
-# -----------------------
-#  Conv1D
-#  Purely conv nn, the stride is used in place of the pooling layers
+
+class ConvRNN(NN):
+    """
+    Combination of a convolutional front end and an RNN (GRU) layer below
+     >> see https://gist.github.com/spro/c87cc706625b8a54e604fb1024106556
+
+    """
+
+    def __init__(self, input_size, hidden_size, filename=None, n_layers=1):
+        super(ConvRNN, self).__init__()
+        # Load from trained NN if required
+        if filename is not None:
+            self.valid = self.load(filename)
+            if self.valid:
+                return
+            else:
+                print(
+                    "Could not load the specified net, \
+                    computing it from scratch"
+                )
+
+        # ----
+        # Define the model
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.output_size = 1
+        self.gru_layers = n_layers
+
+        self.c1 = nn.Conv1d(input_size, hidden_size, 2)
+        self.p1 = nn.AvgPool1d(2)
+        self.c2 = nn.Conv1d(hidden_size, hidden_size, 1)
+        self.p2 = nn.AvgPool1d(2)
+        self.gru = nn.GRU(hidden_size, hidden_size, n_layers, dropout=0.01)
+
+        # Fully connected layer
+        self.out = nn.Linear(hidden_size, self.output_size)
+
+    def forward(self, inputs, hidden=None):
+        batch_size = inputs.size(1)
+
+        # Turn (seq_len x batch_size x input_size) into (batch_size x input_size x seq_len) for CNN
+        inputs = inputs.transpose(0, 1).transpose(1, 2)
+
+        # Run through Conv1d and Pool1d layers
+        c = self.c1(inputs)
+        p = self.p1(c)
+        c = self.c2(p)
+        p = self.p2(c)
+
+        # Turn (batch_size x hidden_size x seq_len) back into (seq_len x batch_size x hidden_size)
+        p = p.transpose(1, 2).transpose(0, 1)
+
+        p = F.tanh(p)
+        output, hidden = self.gru(p, hidden)
+        conv_seq_len = output.size(0)
+
+        # Treating (conv_seq_len x batch_size) as batch_size for linear layer
+        output = output.view(conv_seq_len * batch_size, self.hidden_size)
+        output = F.tanh(self.out(output))
+        output = output.view(conv_seq_len, -1, self.output_size)
+        return output, hidden
+
+
 class ConvNN(NN):
+    """
+    [Broken]
+    Purely conv nn, the stride is used in place of the pooling layers
+
+    Arguments:
+        NN {[type]} -- [description]
+    """
 
     def __init__(self, filename=None, input_size=3, conv_window=10):
         super(ConvNN, self).__init__()
@@ -108,7 +184,8 @@ class ConvNN(NN):
                 return
             else:
                 print(
-                    "Could not load the specified net, computing it from scratch"
+                    "Could not load the specified net, \
+                    computing it from scratch"
                 )
 
         # ----
@@ -119,32 +196,33 @@ class ConvNN(NN):
 
         self.relu = nn.ReLU()
 
-        self.conv1 = nn.Conv1d(input_size, self.hidden_size, conv_window, groups=input_size)
-        self.conv2 = nn.Conv1d(self.hidden_size, self.hidden_size * conv_window, conv_window, groups=1, stride=2)
-        self.conv3 = nn.Conv1d(self.hidden_size, self.hidden_size * conv_window, conv_window, groups=1, stride=2)
+        self.conv1 = nn.Conv1d(input_size, self.hidden_size,
+                               conv_window, groups=input_size)
+
+        self.conv2 = nn.Conv1d(self.hidden_size, self.hidden_size * conv_window,
+                               conv_window, groups=1, stride=2)
+
+        self.conv3 = nn.Conv1d(self.hidden_size, self.hidden_size * conv_window,
+                               conv_window, groups=1, stride=2)
 
         # Fully connected layer
-        self.fc1 = nn.Linear()
         self.out = nn.Linear(input_size, 1)
 
     def forward(self, inputs, hidden=None):
         variable_input = Variable(
             torch.from_numpy(inputs).float(), requires_grad=False)
 
-        # Run through Conv1d and Pool layers
-        conv_results = self.conv1(variable_input)
-        pool_results = self.relu(self.pool1(conv_results))
-        conv_results = self.conv2(pool_results)
-        pool_results = self.relu(self.pool2(conv_results))
-        return self.out(F.tanh(pool_results)), hidden
-
+        # Run through Conv1d layers, relu the outputs
+        conv_results = self.relu(self.conv1(variable_input))
+        conv2_results = self.relu(self.conv2(conv_results))
+        return self.out(F.tanh(conv2_results)), hidden
 
 
 class LSTM(NN):
 
     def __init__(self):
         super(LSTM, self).__init__()
-        self.lstm1 = nn.LSTMCell(1, 51)
+        self.lstm1 = nn.LSTMCell(3, 51)
         self.lstm2 = nn.LSTMCell(51, 51)
         self.linear = nn.Linear(51, 1)
 
@@ -176,4 +254,3 @@ class LSTM(NN):
 
         outputs = torch.stack(outputs, 1).squeeze(2)
         return outputs
-

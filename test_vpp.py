@@ -3,7 +3,7 @@ import numpy as np
 from data_processing import plot as plt
 from data_processing.split import split
 from data_processing.load import load
-from train.behaviour import ConvNN
+from train.behaviour import ConvRNN
 
 # Load the dataset
 datafile = 'data/31_08_2016.json'
@@ -20,46 +20,34 @@ training_ratio = 0.67
 train_in, train_out, test_in, test_out = split(df, inputs, ['boat_speed'],
                                                training_ratio)
 
-# ConvNN
-name_simple = "trained/conv_nn.hf5"
-cnn = ConvNN(name_simple)
-if not cnn.valid:
-    cnn.fit([train_in, train_out], [test_in, test_out],
-            epoch=50,
-            batch_size=1000)
-    cnn.save(name_simple)
+train_in = train_in.transpose()
+train_out = train_out.transpose()
+test_in = test_in.transpose()
+test_out = test_out.transpose()
 
-trainScore = cnn.evaluate(train_in, train_out, verbose=0)
+# ConvRNN
+CONV_SAVED = "trained/conv_rnn.hf5"
+crnn = ConvRNN(input_size=3, hidden_size=50, filename=CONV_SAVED, n_layers=2)
+
+if not crnn.valid:
+    crnn.fit([train_in, train_out], [test_in, test_out],
+             epoch=50,
+             batch_size=1000)
+    crnn.save(CONV_SAVED)
+
+trainScore = crnn.evaluate(train_in, train_out, verbose=0)
 print('Train Score: %.2f RMSE' % np.sqrt(trainScore))
 
-testScore = cnn.evaluate(test_in, test_out, verbose=0)
+testScore = crnn.evaluate(test_in, test_out, verbose=0)
 print('Test Score: %.2f RMSE' % np.sqrt(testScore))
 
-# Test a more complex NN, LSTM
-# train_inputs_ltsm = np.reshape(train_in,
-#                                (train_in.shape[0], 1, train_in.shape[1]))
-# test_inputs_ltsm = np.reshape(test_in, (test_in.shape[0], 1,
-# test_in.shape[1]))
-
-# name_lstm = "trained/lstm_nn.hf5"
-# mnn = MemoryNN(name_lstm)
-# if not mnn.valid:
-#     mnn.fit(train_inputs_ltsm, train_out, batch_size=100, epoch=200, verbose=2)
-#     mnn.save(name_lstm)
-
-# trainScore = mnn.evaluate(train_inputs_ltsm, train_out, verbose=0)
-# print('Train Score: %.2f RMSE' % np.sqrt(trainScore))
-
-# testScore = mnn.evaluate(test_inputs_ltsm, test_out, verbose=0)
-# print('Test Score: %.2f RMSE' % np.sqrt(testScore))
 
 # Compare visually the outputs
 print('---\nQuality evaluation:')
 pred_simple = cnn.predict(test_in).flatten()
-# pred_ltsm = mnn.predict(test_inputs_ltsm).flatten()
 
 plt.parrallel_plot([test_out.flatten(), pred_simple],
-                   ["Ground truth", "Simple NN"],
+                   ["Ground truth", "Conv+RNN"],
                    "Neural network predictions vs ground truth")
 
 print('--Done')
