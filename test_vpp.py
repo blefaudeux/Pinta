@@ -8,7 +8,6 @@ from train.behaviour import ConvRNN
 # Load the dataset
 datafile = 'data/31_08_2016.json'
 df = load(datafile, clean_data=True)
-# df = df.iloc[0:4500]
 
 # Small debug plot, have a look at the data
 data_plot = ['wind_angle', 'rudder_angle', 'boat_speed']
@@ -19,11 +18,6 @@ inputs = ['wind_speed', 'wind_angle', 'rudder_angle']
 training_ratio = 0.67
 train_in, train_out, test_in, test_out = split(df, inputs, ['boat_speed'],
                                                training_ratio)
-
-train_in = train_in.transpose()
-train_out = train_out.transpose()
-test_in = test_in.transpose()
-test_out = test_out.transpose()
 
 # ConvRNN
 CONV_SAVED = "trained/conv_rnn.hf5"

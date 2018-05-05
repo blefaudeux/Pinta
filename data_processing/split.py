@@ -8,11 +8,10 @@ def split(raw_data, cat_in, cat_out, ratio):
     train, test = raw_data.iloc[:train_size], \
         raw_data.iloc[train_size:len(raw_data), :]
 
-    # Create and fit Multilayer Perceptron model
-    train_inputs = np.array([train[cat].values for cat in cat_in]).transpose()
-    train_output = np.array([train[cat].values for cat in cat_out]).transpose()
+    train_inputs = np.array([train[cat].values for cat in cat_in])
+    train_output = np.array([train[cat].values for cat in cat_out])
 
-    test_inputs = np.array([test[cat].values for cat in cat_in]).transpose()
-    test_output = np.array([test[cat].values for cat in cat_out]).transpose()
+    test_inputs = np.array([test[cat].values for cat in cat_in])
+    test_output = np.array([test[cat].values for cat in cat_out])
 
     return train_inputs, train_output, test_inputs, test_output
