@@ -12,6 +12,7 @@ import numpy as np
 
 
 dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
+# dtype = torch.FloatTensor
 
 
 class NN(nn.Module):
@@ -76,8 +77,8 @@ class NN(nn.Module):
             def closure():
                 optimizer.zero_grad()
                 out, _ = self(train_batch[0])
-                loss = criterion(out, train_batch[1][1:, :, :])
-                print('Eval loss: {}'.format(loss.data[0]))
+                loss = criterion(out, train_batch[1])
+                print('Eval loss: {:.4f}'.format(loss.data[0]))
                 loss.backward()
                 return loss
 
@@ -85,8 +86,8 @@ class NN(nn.Module):
 
             # Loss on the test data
             pred, _ = self(test_batch[0])
-            loss = criterion(pred, test_batch[1][1:, :, :])
-            print("Test loss: {}".format(loss.data[0]))
+            loss = criterion(pred, test_batch[1])
+            print("Test loss: {:.4f}\n".format(loss.data[0]))
 
         print("... Done")
 
@@ -123,8 +124,7 @@ class ConvRNN(NN):
                 return
             else:
                 print(
-                    "Could not load the specified net, \
-                    computing it from scratch"
+                    "Could not load the specified net, computing it from scratch"
                 )
 
         # ----
@@ -137,8 +137,9 @@ class ConvRNN(NN):
         self.gru_layers = n_layers
 
         # Conv front end
-        self.c1 = nn.Conv1d(input_size, hidden_size, 2)
-        self.c2 = nn.Conv1d(hidden_size, hidden_size, 1)
+        # First conv is a depthwise convolution
+        self.c1 = nn.Conv1d(input_size, hidden_size, 20, padding=7, groups=input_size)
+        self.c2 = nn.Conv1d(hidden_size, hidden_size, 10, padding=7)
 
         # GRU / LSTM layers
         self.gru = nn.GRU(hidden_size, hidden_size, n_layers, dropout=0.01)
@@ -147,7 +148,7 @@ class ConvRNN(NN):
         self.out = nn.Linear(hidden_size, self.output_size)
 
         # CUDA switch > Needs to be done after the model has been declared
-        if torch.cuda.is_available():
+        if dtype == torch.cuda.FloatTensor:
             print("Using Pytorch CUDA backend")
             self.cuda()
 

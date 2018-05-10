@@ -21,11 +21,11 @@ train_in, train_out, test_in, test_out = split(df, inputs, ['boat_speed'],
 
 # ConvRNN
 CONV_SAVED = "trained/conv_rnn.hf5"
-crnn = ConvRNN(input_size=3, hidden_size=50, filename=CONV_SAVED, n_layers=2)
+crnn = ConvRNN(input_size=3, hidden_size=60, filename=CONV_SAVED, n_layers=3)
 
 if not crnn.valid:
     crnn.fit([train_in, train_out], [test_in, test_out],
-             epoch=200,
+             epoch=100,
              batch_size=1000)
     # crnn.save(CONV_SAVED)
 
