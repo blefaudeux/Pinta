@@ -25,17 +25,19 @@ class NN(nn.Module):
 
     def load(self, filename):
         try:
-            self.load_state_dict(torch.load(filename))
-            print("---\nNetwork {} loaded".format(filename))
-            print(self._model.summary())
-            return True
+            with open(filename, "r") as f:
+                self.load_state_dict(torch.load(f))
+                print("---\nNetwork {} loaded".format(filename))
+                print(self._model.summary())
+                return True
 
         except (ValueError, OSError, IOError) as _:
             print("Could not find or load existing NN")
             return False
 
     def save(self, name):
-        torch.save(self._model.state_dict(), name)
+        with open(name, "w") as f:
+            torch.save(self._model.state_dict(), name)
 
     @staticmethod
     def prepare_data(train, batch_size):

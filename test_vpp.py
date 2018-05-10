@@ -25,7 +25,7 @@ crnn = ConvRNN(input_size=3, hidden_size=50, filename=CONV_SAVED, n_layers=2)
 
 if not crnn.valid:
     crnn.fit([train_in, train_out], [test_in, test_out],
-             epoch=50,
+             epoch=200,
              batch_size=1000)
     crnn.save(CONV_SAVED)
 
