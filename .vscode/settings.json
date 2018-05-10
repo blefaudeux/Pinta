@@ -3,5 +3,7 @@
     "python.unitTest.pyTestEnabled": false,
     "python.unitTest.unittestEnabled": false,
     "python.unitTest.nosetestsEnabled": false,
-    "python.formatting.provider": "autopep8"
+    "python.formatting.provider": "autopep8",
+    "python.linting.flake8Enabled": true,
+    "editor.formatOnSave": true
 }
