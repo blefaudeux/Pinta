@@ -11,6 +11,9 @@ from torch.autograd import Variable
 import numpy as np
 
 
+dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
+
+
 class NN(nn.Module):
 
     """
@@ -20,7 +23,7 @@ class NN(nn.Module):
 
     def __init__(self):
         super(NN, self).__init__()
-        self._model = None  # We keep the actual NN private, safer
+        self.model = None
         self.valid = False
 
     def load(self, filename):
@@ -28,7 +31,7 @@ class NN(nn.Module):
             with open(filename, "r") as f:
                 self.load_state_dict(torch.load(f))
                 print("---\nNetwork {} loaded".format(filename))
-                print(self._model.summary())
+                print(self.model.summary())
                 return True
 
         except (ValueError, OSError, IOError) as _:
@@ -37,7 +40,7 @@ class NN(nn.Module):
 
     def save(self, name):
         with open(name, "w") as f:
-            torch.save(self._model.state_dict(), name)
+            torch.save(self.state_dict(), name)
 
     @staticmethod
     def prepare_data(train, batch_size):
@@ -52,8 +55,8 @@ class NN(nn.Module):
         batch_data = [np.array(np.split(train[0][:, :n_samples], batch_size, axis=1)),
                       np.array(np.split(train[1][:, :n_samples], batch_size, axis=1))]
 
-        return [Variable(torch.from_numpy(np.swapaxes(batch_data[0], 1, 2))).float(),
-                Variable(torch.from_numpy(np.swapaxes(batch_data[1], 1, 2))).float()]
+        return [Variable(torch.from_numpy(np.swapaxes(batch_data[0], 1, 2))).type(dtype),
+                Variable(torch.from_numpy(np.swapaxes(batch_data[1], 1, 2))).type(dtype)]
 
     def fit(self, train, test, epoch=50, batch_size=100):
         optimizer = optim.Adam(self.parameters())
@@ -74,7 +77,7 @@ class NN(nn.Module):
                 optimizer.zero_grad()
                 out, _ = self(train_batch[0])
                 loss = criterion(out, train_batch[1][1:, :, :])
-                print('Eval loss: {}'.format(loss.data.numpy()[0]))
+                print('Eval loss: {}'.format(loss.data[0]))
                 loss.backward()
                 return loss
 
@@ -83,7 +86,7 @@ class NN(nn.Module):
             # Loss on the test data
             pred, _ = self(test_batch[0])
             loss = criterion(pred, test_batch[1][1:, :, :])
-            print("Test loss: {}".format(loss.data.numpy()[0]))
+            print("Test loss: {}".format(loss.data[0]))
 
         print("... Done")
 
@@ -112,6 +115,7 @@ class ConvRNN(NN):
 
     def __init__(self, input_size, hidden_size, filename=None, n_layers=1):
         super(ConvRNN, self).__init__()
+
         # Load from trained NN if required
         if filename is not None:
             self.valid = self.load(filename)
@@ -141,6 +145,11 @@ class ConvRNN(NN):
 
         # Ends with a fully connected layer
         self.out = nn.Linear(hidden_size, self.output_size)
+
+        # CUDA switch > Needs to be done after the model has been declared
+        if torch.cuda.is_available():
+            print("Using Pytorch CUDA backend")
+            self.cuda()
 
     def forward(self, inputs, hidden=None):
         batch_size = inputs.size(1)

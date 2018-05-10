@@ -27,7 +27,7 @@ if not crnn.valid:
     crnn.fit([train_in, train_out], [test_in, test_out],
              epoch=200,
              batch_size=1000)
-    crnn.save(CONV_SAVED)
+    # crnn.save(CONV_SAVED)
 
 trainScore = crnn.evaluate(train_in, train_out, verbose=0)
 print('Train Score: %.2f RMSE' % np.sqrt(trainScore))
