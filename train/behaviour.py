@@ -41,7 +41,7 @@ class NN(nn.Module):
 
     def save(self, name):
         with open(name, "w") as f:
-            torch.save(self.state_dict(), name)
+            torch.save(self.state_dict(), f)
 
     @staticmethod
     def prepare_data(train, batch_size):
