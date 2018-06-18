@@ -78,7 +78,7 @@ class NN(nn.Module):
                 optimizer.zero_grad()
                 out, _ = self(train_batch[0])
                 loss = criterion(out, train_batch[1])
-                print('Eval loss: {:.4f}'.format(loss.data[0]))
+                print('Eval loss: {:.4f}'.format(loss.item()))
                 loss.backward()
                 return loss
 
@@ -87,7 +87,7 @@ class NN(nn.Module):
             # Loss on the test data
             pred, _ = self(test_batch[0])
             loss = criterion(pred, test_batch[1])
-            print("Test loss: {:.4f}\n".format(loss.data[0]))
+            print("Test loss: {:.4f}\n".format(loss.item()))
 
         print("... Done")
 
@@ -138,7 +138,8 @@ class ConvRNN(NN):
 
         # Conv front end
         # First conv is a depthwise convolution
-        self.c1 = nn.Conv1d(input_size, hidden_size, 20, padding=7, groups=input_size)
+        self.c1 = nn.Conv1d(input_size, hidden_size, 20,
+                            padding=7, groups=input_size)
         self.c2 = nn.Conv1d(hidden_size, hidden_size, 10, padding=7)
 
         # GRU / LSTM layers
