@@ -5,14 +5,13 @@ Implement different NNs which best describe the behaviour of the system
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
 import numpy as np
 
 
-dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
-# dtype = torch.FloatTensor
+# dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
+dtype = torch.FloatTensor
 
 
 class NN(nn.Module):
@@ -122,10 +121,10 @@ class ConvRNN(NN):
             self.valid = self.load(filename)
             if self.valid:
                 return
-            else:
-                print(
-                    "Could not load the specified net, computing it from scratch"
-                )
+
+            print(
+                "Could not load the specified net, computing it from scratch"
+            )
 
         # ----
         # Define the model
@@ -167,12 +166,12 @@ class ConvRNN(NN):
         # for GRU/LSTM layer
         c = c.transpose(1, 2).transpose(0, 1)
 
-        p = F.tanh(c)
+        p = torch.tanh(c)
         output, hidden = self.gru(p, hidden)
         conv_seq_len = output.size(0)
 
         # Treating (conv_seq_len x batch_size) as batch_size for linear layer
         output = output.view(conv_seq_len * batch_size, self.hidden_size)
-        output = F.tanh(self.out(output))
+        output = torch.tanh(self.out(output))
         output = output.view(conv_seq_len, -1, self.output_size)
         return output, hidden
