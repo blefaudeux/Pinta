@@ -5,5 +5,8 @@
     "python.unitTest.nosetestsEnabled": false,
     "python.formatting.provider": "autopep8",
     "python.linting.flake8Enabled": true,
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "python.linting.flake8Args": [
+        "-max-line-length=100"
+    ]
 }

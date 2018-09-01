@@ -35,13 +35,20 @@ class NN(nn.Module):
                 print(self.model.summary())
                 return True
 
-        except (ValueError, OSError, IOError) as _:
+        except (ValueError, OSError, IOError, TypeError) as _:
             print("Could not find or load existing NN")
             return False
 
     def save(self, name):
         with open(name, "w") as f:
             torch.save(self.state_dict(), name)
+
+    def evaluate(self, data, batch_size=50):
+        batched = self.prepare_data(data, batch_size)
+        criterion = nn.MSELoss()
+        out, _ = self(batched[0])
+        loss = criterion(out, batched[1])
+        return loss.data[0]
 
     @staticmethod
     def prepare_data(train, batch_size):
@@ -59,7 +66,7 @@ class NN(nn.Module):
         return [Variable(torch.from_numpy(np.swapaxes(batch_data[0], 1, 2))).type(dtype),
                 Variable(torch.from_numpy(np.swapaxes(batch_data[1], 1, 2))).type(dtype)]
 
-    def fit(self, train, test, epoch=50, batch_size=100):
+    def fit(self, train, test, epoch=50, batch_size=50):
         optimizer = optim.Adam(self.parameters())
         criterion = nn.MSELoss()
 
@@ -91,8 +98,8 @@ class NN(nn.Module):
 
         print("... Done")
 
-    def predict(self, inputs):
-        return self(inputs)
+    def predict(self, data, batch_size=50):
+        return self(self.prepare_data(data, batch_size)[0])
 
     def forward(self, *inputs):
         """
@@ -123,9 +130,7 @@ class ConvRNN(NN):
             if self.valid:
                 return
             else:
-                print(
-                    "Could not load the specified net, computing it from scratch"
-                )
+                print("Could not load the specified net")
 
         # ----
         # Define the model
@@ -138,8 +143,16 @@ class ConvRNN(NN):
 
         # Conv front end
         # First conv is a depthwise convolution
-        self.c1 = nn.Conv1d(input_size, hidden_size, 20, padding=7, groups=input_size)
-        self.c2 = nn.Conv1d(hidden_size, hidden_size, 10, padding=7)
+        self.conv1 = nn.Conv1d(input_size, hidden_size,
+                               kernel_size=20, padding=7, groups=input_size)
+
+        self.conv2 = nn.Conv1d(hidden_size, hidden_size,
+                               kernel_size=10, padding=7)
+
+        self.conv3 = nn.Conv1d(hidden_size, hidden_size,
+                               kernel_size=2, stride=2, padding=7)
+
+        self.relu = nn.ReLU()
 
         # GRU / LSTM layers
         self.gru = nn.GRU(hidden_size, hidden_size, n_layers, dropout=0.01)
@@ -155,18 +168,25 @@ class ConvRNN(NN):
     def forward(self, inputs, hidden=None):
         batch_size = inputs.size(1)
 
-        # Turn (seq_len x batch_size x input_size) into (batch_size x input_size x seq_len) for CNN
+        # Turn (seq_len x batch_size x input_size)
+        # into (batch_size x input_size x seq_len) for CNN
         inputs = inputs.transpose(0, 1).transpose(1, 2)
 
         # Run through Conv1d and Pool1d layers
-        c = self.c1(inputs)
-        c = self.c2(c)
+        c1 = self.conv1(inputs)
+        r1 = self.relu(c1)
+
+        c2 = self.conv2(r1)
+        r2 = self.relu(c2)
+
+        # c3 = self.conv3(r2)
+        # r3 = self.relu(c3)
 
         # Turn (batch_size x hidden_size x seq_len) back into (seq_len x batch_size x hidden_size)
         # for GRU/LSTM layer
-        c = c.transpose(1, 2).transpose(0, 1)
+        r2 = r2.transpose(1, 2).transpose(0, 1)
 
-        p = F.tanh(c)
+        p = F.tanh(r2)
         output, hidden = self.gru(p, hidden)
         conv_seq_len = output.size(0)
 
