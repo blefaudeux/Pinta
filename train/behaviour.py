@@ -5,14 +5,14 @@ Implement different NNs which best describe the behaviour of the system
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
+import torch.nn.functional as F
 from torch.autograd import Variable
 import numpy as np
 
 
-dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
-# dtype = torch.FloatTensor
+# dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
+dtype = torch.FloatTensor
 
 
 class NN(nn.Module):
@@ -41,7 +41,7 @@ class NN(nn.Module):
 
     def save(self, name):
         with open(name, "w") as f:
-            torch.save(self.state_dict(), name)
+            torch.save(self.state_dict(), f)
 
     def evaluate(self, data, batch_size=50):
         batched = self.prepare_data(data, batch_size)
@@ -129,8 +129,10 @@ class ConvRNN(NN):
             self.valid = self.load(filename)
             if self.valid:
                 return
-            else:
-                print("Could not load the specified net")
+
+            print(
+                "Could not load the specified net, computing it from scratch"
+            )
 
         # ----
         # Define the model
@@ -192,6 +194,6 @@ class ConvRNN(NN):
 
         # Treating (conv_seq_len x batch_size) as batch_size for linear layer
         output = output.view(conv_seq_len * batch_size, self.hidden_size)
-        output = F.tanh(self.out(output))
+        output = torch.tanh(self.out(output))
         output = output.view(conv_seq_len, -1, self.output_size)
         return output, hidden

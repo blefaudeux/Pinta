@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import numpy as np
 from data_processing import plot as plt
 from data_processing.split import split
@@ -37,7 +38,7 @@ if not crnn.valid:
              [test_in, test_out],
              epoch=EPOCH,
              batch_size=BATCH_SIZE)
-    crnn.save(CONV_SAVED)
+    # crnn.save(CONV_SAVED)
 
 trainScore = crnn.evaluate([train_in, train_out])
 print('Train Score: %.2f RMSE' % np.sqrt(trainScore))
@@ -48,7 +49,7 @@ print('Test Score: %.2f RMSE' % np.sqrt(testScore))
 
 # Compare visually the outputs
 print('---\nQuality evaluation:')
-pred_simple = crnn.predict(test_in, batch_size=BATCH_SIZE).flatten()
+pred_simple = crnn.predict([test_in, test_out], batch_size=BATCH_SIZE).flatten()
 
 plt.parrallel_plot([test_out.flatten(), pred_simple],
                    ["Ground truth", "Conv+RNN"],
