@@ -6,7 +6,6 @@ Implement different NNs which best describe the behaviour of the system
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
 from torch.autograd import Variable
 import numpy as np
 
@@ -48,7 +47,7 @@ class NN(nn.Module):
         criterion = nn.MSELoss()
         out, _ = self(batched[0])
         loss = criterion(out, batched[1])
-        return loss.data[0]
+        return loss.item()
 
     @staticmethod
     def prepare_data(train, batch_size):
@@ -85,7 +84,7 @@ class NN(nn.Module):
                 optimizer.zero_grad()
                 out, _ = self(train_batch[0])
                 loss = criterion(out, train_batch[1])
-                print('Eval loss: {:.4f}'.format(loss.data[0]))
+                print('Eval loss: {:.4f}'.format(loss.item()))
                 loss.backward()
                 return loss
 
@@ -94,12 +93,12 @@ class NN(nn.Module):
             # Loss on the test data
             pred, _ = self(test_batch[0])
             loss = criterion(pred, test_batch[1])
-            print("Test loss: {:.4f}\n".format(loss.data[0]))
+            print("Test loss: {:.4f}\n".format(loss.item()))
 
         print("... Done")
 
     def predict(self, data, batch_size=50):
-        return self(self.prepare_data(data, batch_size)[0])
+        return self(self.prepare_data(data, batch_size)[0])[0]
 
     def forward(self, *inputs):
         """
@@ -188,7 +187,7 @@ class ConvRNN(NN):
         # for GRU/LSTM layer
         r2 = r2.transpose(1, 2).transpose(0, 1)
 
-        p = F.tanh(r2)
+        p = torch.tanh(r2)
         output, hidden = self.gru(p, hidden)
         conv_seq_len = output.size(0)
 

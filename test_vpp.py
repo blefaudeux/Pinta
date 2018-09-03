@@ -22,7 +22,7 @@ train_in, train_out, test_in, test_out = split(raw_data, inputs,
                                                outputs, training_ratio)
 
 # ConvRNN
-CONV_SAVED = "trained/conv_rnn.hf5"
+CONV_SAVED = "trained/conv_rnn.torch"
 INPUT_SIZE = 3
 LAYERS = 5
 EPOCH = 20
