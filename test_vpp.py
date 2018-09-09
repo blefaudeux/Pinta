@@ -11,7 +11,7 @@ datafile = 'data/31_08_2016.json'
 raw_data = load(datafile, clean_data=True)
 
 # Small debug plot, have a look at the data
-data_plot = ['wind_angle', 'rudder_angle', 'boat_speed']
+data_plot = ['wind_speed', 'wind_angle', 'rudder_angle', 'boat_speed']
 plt.parrallel_plot([raw_data[i] for i in data_plot], data_plot, "Dataset plot")
 
 # Split in between training and test
@@ -24,10 +24,10 @@ train_in, train_out, test_in, test_out = split(raw_data, inputs,
 # ConvRNN
 CONV_SAVED = "trained/conv_rnn.torch"
 INPUT_SIZE = 3
-LAYERS = 10
-EPOCH = 20
+LAYERS = 5
+EPOCH = 1000
 BATCH_SIZE = 100
-HIDDEN_SIZE = 90
+HIDDEN_SIZE = 30
 crnn = ConvRNN(input_size=INPUT_SIZE,
                hidden_size=HIDDEN_SIZE,
                filename=CONV_SAVED,

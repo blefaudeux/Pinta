@@ -2,10 +2,11 @@ import numpy as np
 import plotly.graph_objs as go
 import plotly.offline as py
 from plotly import tools
-from math import ceil    
+from math import ceil
 import os
 
 """ Several helper functions to produce plots, pretty self-explanatory """
+
 
 def handle_save(filename):
     if not os.path.isdir("plots/"):
@@ -20,7 +21,8 @@ def speed_plot(df, decimation=2, filename='speed_polar'):
 
     # - raw polar plot
     twa_rad = np.radians(df['wind_angle'][::decimation])
-    labels = ['Wind: {}deg - {}kt ** Boat: {}kt ** Rudder: {}deg'.format(wa, ws, b, r) for wa, ws, b, r
+    labels = ['Wind: {}deg - {}kt ** Boat: {}kt ** Rudder: {}deg'.format(wa, ws, b, r)
+              for wa, ws, b, r
               in zip(df['wind_angle'][::decimation],
                      df['wind_speed'][::decimation],
                      df['boat_speed'][::decimation],
@@ -70,8 +72,8 @@ def speed_plot(df, decimation=2, filename='speed_polar'):
         hovermode='closest',
         plot_bgcolor='rgb(245, 245, 245)'
     )
-    layout.xaxis.showticklabels=False
-    layout.yaxis.showticklabels=False
+    layout.xaxis.showticklabels = False
+    layout.yaxis.showticklabels = False
     layout.xaxis.showgrid = False
     layout.yaxis.showgrid = False
     layout.xaxis.range = [-13, 13]
@@ -90,7 +92,7 @@ def parrallel_plot(data_list, legend_list, title=None):
             go.Scatter(
                 y=data,
                 name=name
-                )
+            )
         )
 
     layout = go.Layout(
@@ -126,7 +128,7 @@ def multi_plot(df, fields_to_plot, title, filename='multi_plot', auto_open=False
         fig.append_trace(trace, i // plot_per_row + 1, i % plot_per_row + 1)
         i += 1
 
-    fig['layout'].update(height=1000, width=1000, 
+    fig['layout'].update(height=1000, width=1000,
                          title=title if title is not None else "Placeholder",
                          hovermode='closest')
 
