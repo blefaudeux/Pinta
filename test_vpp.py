@@ -24,7 +24,7 @@ train_in, train_out, test_in, test_out = split(raw_data, inputs,
 # ConvRNN
 CONV_SAVED = "trained/conv_rnn.torch"
 INPUT_SIZE = 3
-LAYERS = 5
+LAYERS = 10
 EPOCH = 20
 BATCH_SIZE = 100
 HIDDEN_SIZE = 90
@@ -49,7 +49,8 @@ print('Test Score: %.2f RMSE' % np.sqrt(testScore))
 
 # Compare visually the outputs
 print('---\nQuality evaluation:')
-pred_simple = crnn.predict([test_in, test_out], batch_size=BATCH_SIZE).flatten()
+pred_simple = crnn.predict(
+    [test_in, test_out], batch_size=BATCH_SIZE).flatten()
 
 plt.parrallel_plot([test_out.flatten(), pred_simple],
                    ["Ground truth", "Conv+RNN"],

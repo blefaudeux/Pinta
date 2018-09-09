@@ -25,6 +25,8 @@ class NN(nn.Module):
         super(NN, self).__init__()
         self.model = None
         self.valid = False
+        self.mean = None
+        self.std = None
 
     def load(self, filename):
         try:
@@ -43,27 +45,48 @@ class NN(nn.Module):
             torch.save(self.state_dict(), f)
 
     def evaluate(self, data, batch_size=50):
-        batched = self.prepare_data(data, batch_size)
+        batched, _, _ = self.prepare_data(data, batch_size, normalize=False)
         criterion = nn.MSELoss()
         out, _ = self(batched[0])
         loss = criterion(out, batched[1])
         return loss.item()
 
     @staticmethod
-    def prepare_data(train, batch_size):
+    def prepare_data(train, batch_size, normalize=True):
         """
         Prepare mini-batches out of the data sequences
 
-        input: [2], first element is the inputs, second the outputs
+        train: [2], first element is the inputs, second the outputs
         """
 
+        # Compute some stats on the data
+        mean = [np.mean(train[0], axis=1), np.mean(train[1], axis=1)]
+        std = [np.std(train[0], axis=1), np.std(train[1], axis=1)]
+
+        if normalize:
+            # Normalize the data, bring it back to zero mean and STD of 1
+            train[0] = np.subtract(train[0].transpose(), mean[0]).transpose()
+            train[1] = np.subtract(train[1].transpose(), mean[1]).transpose()
+
+            train[0] = np.divide(train[0].transpose(), std[0]).transpose()
+            train[1] = np.divide(train[1].transpose(), std[1]).transpose()
+            print("Data normalized")
+
+        # Compute normalized batches
         n_batch = train[0].shape[1] // batch_size
         n_samples = n_batch * batch_size
         batch_data = [np.array(np.split(train[0][:, :n_samples], batch_size, axis=1)),
                       np.array(np.split(train[1][:, :n_samples], batch_size, axis=1))]
 
+        # Return [batch data], mean, std
+        mean = [torch.from_numpy(mean[0]).type(dtype),
+                torch.from_numpy(mean[1]).type(dtype)]
+
+        std = [torch.from_numpy(std[0]).type(dtype),
+               torch.from_numpy(std[1]).type(dtype)]
+
         return [Variable(torch.from_numpy(np.swapaxes(batch_data[0], 1, 2))).type(dtype),
-                Variable(torch.from_numpy(np.swapaxes(batch_data[1], 1, 2))).type(dtype)]
+                Variable(torch.from_numpy(np.swapaxes(batch_data[1], 1, 2))).type(dtype)], mean, std
 
     def fit(self, train, test, epoch=50, batch_size=50):
         optimizer = optim.Adam(self.parameters())
@@ -71,9 +94,20 @@ class NN(nn.Module):
 
         # Prepare the data in batches
         print("Preparing dataset...")
-        train_batch = self.prepare_data(train, batch_size)
-        test_batch = self.prepare_data(test, batch_size)
+        train_batch, self.mean, self.std = self.prepare_data(train,
+                                                             batch_size,
+                                                             normalize=True)
 
+        test_batch, _, _ = self.prepare_data(test,
+                                             batch_size,
+                                             normalize=False)
+
+        # Test data needs to be normalized with the same coefficients as training data
+        test_batch[0] = torch.div(torch.add(test_batch[0], - self.mean[0]),
+                                  self.std[0])
+
+        test_batch[1] = torch.div(torch.add(test_batch[1], - self.mean[1]),
+                                  self.std[1])
         print("Training the network...")
 
         for i in range(epoch):
@@ -98,7 +132,17 @@ class NN(nn.Module):
         print("... Done")
 
     def predict(self, data, batch_size=50):
-        return self(self.prepare_data(data, batch_size)[0])[0]
+        # batch and normalize
+        batched, _, _ = self.prepare_data(data, batch_size, normalize=False)
+
+        batched = torch.div(torch.add(batched[0], - self.mean[0]),
+                            self.std[0])
+
+        # De-normalize the output
+        return torch.add(
+            torch.mul(self(batched)[0], self.std[1]),
+            self.mean[1]
+        ).detach().numpy()
 
     def forward(self, *inputs):
         """
@@ -135,8 +179,6 @@ class ConvRNN(NN):
 
         # ----
         # Define the model
-        # TODO: Add batch normalization ?
-
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = 1
