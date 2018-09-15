@@ -41,7 +41,7 @@ class NN(nn.Module):
             return False
 
     def save(self, name):
-        with open(name, "w") as f:
+        with open(name, "wb") as f:
             torch.save(self.state_dict(), f)
 
     def evaluate(self, data, batch_size=50):
@@ -187,13 +187,10 @@ class ConvRNN(NN):
         # Conv front end
         # First conv is a depthwise convolution
         self.conv1 = nn.Conv1d(input_size, hidden_size,
-                               kernel_size=20, padding=7, groups=input_size)
+                               kernel_size=10, padding=3, groups=input_size)
 
         self.conv2 = nn.Conv1d(hidden_size, hidden_size,
-                               kernel_size=10, padding=7)
-
-        self.conv3 = nn.Conv1d(hidden_size, hidden_size,
-                               kernel_size=2, stride=2, padding=7)
+                               kernel_size=6, padding=4)
 
         self.relu = nn.ReLU()
 
@@ -221,9 +218,6 @@ class ConvRNN(NN):
 
         c2 = self.conv2(r1)
         r2 = self.relu(c2)
-
-        # c3 = self.conv3(r2)
-        # r3 = self.relu(c3)
 
         # Turn (batch_size x hidden_size x seq_len) back into (seq_len x batch_size x hidden_size)
         # for GRU/LSTM layer
