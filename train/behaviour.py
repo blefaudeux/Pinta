@@ -8,7 +8,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 import numpy as np
-
+import logging
+from tensorboardX import SummaryWriter
 
 # dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
 dtype = torch.FloatTensor
@@ -21,12 +22,16 @@ class NN(nn.Module):
     This is an abstract class, a proper model needs to be implemented
     """
 
-    def __init__(self):
+    def __init__(self, logdir):
         super(NN, self).__init__()
         self.model = None
         self.valid = False
         self.mean = None
         self.std = None
+
+        # Set up TensorBoard
+        self.summary_writer = SummaryWriter(logdir)
+        self.summary_writer.add_graph(self.model)
 
     def load(self, filename):
         try:
@@ -118,7 +123,8 @@ class NN(nn.Module):
                 optimizer.zero_grad()
                 out, _ = self(train_batch[0])
                 loss = criterion(out, train_batch[1])
-                print('Eval loss: {:.4f}'.format(loss.item()))
+                print('Train loss: {:.4f}'.format(loss.item()))
+                self.summary_writer.add_scalar('train', loss.item())
                 loss.backward()
                 return loss
 
@@ -127,6 +133,7 @@ class NN(nn.Module):
             # Loss on the test data
             pred, _ = self(test_batch[0])
             loss = criterion(pred, test_batch[1])
+            self.summary_writer.add_scalar('test', loss.item())
             print("Test loss: {:.4f}\n".format(loss.item()))
 
         print("... Done")
@@ -164,8 +171,8 @@ class ConvRNN(NN):
 
     """
 
-    def __init__(self, input_size, hidden_size, filename=None, n_layers=1):
-        super(ConvRNN, self).__init__()
+    def __init__(self, logdir, input_size, hidden_size, filename=None, n_gru_layers=1):
+        super(ConvRNN, self).__init__(logdir)
 
         # Load from trained NN if required
         if filename is not None:
@@ -182,7 +189,7 @@ class ConvRNN(NN):
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = 1
-        self.gru_layers = n_layers
+        self.gru_layers = n_gru_layers
 
         # Conv front end
         # First conv is a depthwise convolution
@@ -195,7 +202,7 @@ class ConvRNN(NN):
         self.relu = nn.ReLU()
 
         # GRU / LSTM layers
-        self.gru = nn.GRU(hidden_size, hidden_size, n_layers, dropout=0.01)
+        self.gru = nn.GRU(hidden_size, hidden_size, n_gru_layers, dropout=0.01)
 
         # Ends with a fully connected layer
         self.out = nn.Linear(hidden_size, self.output_size)

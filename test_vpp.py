@@ -24,14 +24,15 @@ train_in, train_out, test_in, test_out = split(raw_data, inputs,
 # ConvRNN
 CONV_SAVED = "trained/conv_rnn.torch"
 INPUT_SIZE = 3
-LAYERS = 6
-EPOCH = 400
+GRU_LAYERS = 6
+EPOCH = 100
 BATCH_SIZE = 1000
-HIDDEN_SIZE = 30
-crnn = ConvRNN(input_size=INPUT_SIZE,
+HIDDEN_SIZE = 60
+crnn = ConvRNN(logdir='logs/gru_6_conv_60',
+               input_size=INPUT_SIZE,
                hidden_size=HIDDEN_SIZE,
                filename=CONV_SAVED,
-               n_layers=LAYERS)
+               n_gru_layers=GRU_LAYERS)
 
 if not crnn.valid:
     crnn.fit([train_in, train_out],
