@@ -10,25 +10,30 @@ from train.behaviour import ConvRNN
 datafile = 'data/31_08_2016.json'
 raw_data = load(datafile, clean_data=True)
 
+# Handle the angular coordinates discontinuity -> split x/y components
+raw_data['wind_angle_x'] = np.cos(np.radians(raw_data['wind_angle']))
+raw_data['wind_angle_y'] = np.sin(np.radians(raw_data['wind_angle']))
+
 # Small debug plot, have a look at the data
-data_plot = ['wind_speed', 'wind_angle', 'rudder_angle', 'boat_speed']
+data_plot = ['wind_speed', 'wind_angle_x', 'wind_angle_y', 'rudder_angle', 'boat_speed']
 plt.parrallel_plot([raw_data[i] for i in data_plot], data_plot, "Dataset plot")
 
 # Split in between training and test
-inputs = ['wind_speed', 'wind_angle', 'rudder_angle']
+inputs = ['wind_speed', 'wind_angle_x', 'wind_angle_y', 'rudder_angle']
 outputs = ['boat_speed']
 training_ratio = 0.8
 train_in, train_out, test_in, test_out = split(raw_data, inputs,
                                                outputs, training_ratio)
 
+
 # ConvRNN
 CONV_SAVED = "trained/conv_rnn.torch"
-INPUT_SIZE = 3
+INPUT_SIZE = len(inputs)
 GRU_LAYERS = 6
 EPOCH = 100
 BATCH_SIZE = 1000
 HIDDEN_SIZE = 60
-crnn = ConvRNN(logdir='logs/gru_6_conv_60',
+crnn = ConvRNN(logdir='logs/gru6conv60',
                input_size=INPUT_SIZE,
                hidden_size=HIDDEN_SIZE,
                filename=CONV_SAVED,
