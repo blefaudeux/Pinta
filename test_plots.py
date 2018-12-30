@@ -1,8 +1,11 @@
+#!/usr/bin/env python3
+
 from data_processing.plot import multi_plot
 from data_processing.load import load
 
 # Load the full json and do some analysis
-df = load('data/3_09_2016.json', clean_data=True)
+df = load('data/03_09_2016.json', clean_data=True, whiten_data=True)[0]
+
 multi_plot(df, ['rudder_angle', 'wind_speed', 'wind_angle'],
            "test multi plot", "multi_plot", True)
 

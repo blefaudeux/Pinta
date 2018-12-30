@@ -9,7 +9,7 @@ import json
 """
 
 
-# Add here any field that you would like to be parsed into the dataframe
+# The fields that we know of, and which can be parsed into the dataframe
 nmea_fields = {
     'IIVHW': 'Speed',
     'IIVLW': 'Log',
@@ -87,7 +87,7 @@ def parse_nmea(filepath, wind_bias=0):
         'wind_speed': pd.Series([float(data['WindTrue'][ts][4]) for ts in data['WindTrue'].keys()],
                                 index=data['WindTrue'].keys()),
         'rudder_angle': pd.Series([float(data['RudderAngle'][ts][0]) for ts in data['RudderAngle'].keys()],
-                                       index=data['RudderAngle'].keys())
+                                  index=data['RudderAngle'].keys())
     }
 
     return pd.DataFrame(dataframe)
