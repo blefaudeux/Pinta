@@ -4,7 +4,7 @@ import numpy as np
 from data_processing import plot as plt
 from data_processing.split import split
 from data_processing.load import load
-from train.behaviour import ConvRNN
+from train.behaviour import ConvRNN, Conv
 
 
 def angle_split(data):
@@ -44,9 +44,9 @@ test_out += test_out_r
 # ConvRNN
 CONV_SAVED = "trained/conv_rnn.torch"
 INPUT_SIZE = len(INPUTS)
-GRU_LAYERS = 6
-EPOCH = 100
-BATCH_SIZE = 1000
+GRU_LAYERS = 2
+EPOCH = 40
+BATCH_SIZE = 500
 HIDDEN_SIZE = 60
 crnn = ConvRNN(logdir='logs/gru6conv60',
                input_size=INPUT_SIZE,
@@ -61,6 +61,19 @@ if not crnn.valid:
              batch_size=BATCH_SIZE)
     crnn.save(CONV_SAVED)
 
+# cnn = Conv(logdir='logs/conv',
+#            input_size=INPUT_SIZE,
+#            hidden_size=HIDDEN_SIZE,
+#            filename=CONV_SAVED)
+
+# if not cnn.valid:
+#     cnn.fit([train_in, train_out],
+#             [test_in, test_out],
+#             epoch=EPOCH,
+#             batch_size=BATCH_SIZE)
+#     cnn.save(CONV_SAVED)
+
+
 trainScore = crnn.evaluate([train_in, train_out])
 print('Train Score: %.2f RMSE' % np.sqrt(trainScore))
 
@@ -74,7 +87,7 @@ pred_simple = crnn.predict(
     [test_in, test_out], batch_size=BATCH_SIZE).flatten()
 
 plt.parrallel_plot([test_out.flatten(), pred_simple],
-                   ["Ground truth", "Conv+RNN"],
+                   ["Ground truth", "Conv"],
                    "Neural network predictions vs ground truth")
 
 print('--Done')

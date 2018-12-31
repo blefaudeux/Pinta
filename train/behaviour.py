@@ -230,12 +230,71 @@ class ConvRNN(NN):
         # for GRU/LSTM layer
         r2 = r2.transpose(1, 2).transpose(0, 1)
 
-        p = torch.tanh(r2)
-        output, hidden = self.gru(p, hidden)
+        output, hidden = self.gru(r2, hidden)
         conv_seq_len = output.size(0)
 
         # Treating (conv_seq_len x batch_size) as batch_size for linear layer
         output = output.view(conv_seq_len * batch_size, self.hidden_size)
         output = torch.tanh(self.out(output))
         output = output.view(conv_seq_len, -1, self.output_size)
+        return output, hidden
+
+
+class Conv(NN):
+    """
+    Pure Conv
+    """
+
+    def __init__(self, logdir, input_size, hidden_size, filename=None):
+        super(Conv, self).__init__(logdir)
+
+        # Load from trained NN if required
+        if filename is not None:
+            self.valid = self.load(filename)
+            if self.valid:
+                return
+
+            print(
+                "Could not load the specified net, computing it from scratch"
+            )
+
+        # ----
+        # Define the model
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.output_size = 1
+
+        # Conv front end
+        # First conv is a depthwise convolution
+        self.conv1 = nn.Conv1d(input_size, hidden_size,
+                               kernel_size=10, padding=3, groups=input_size)
+
+        self.conv2 = nn.Conv1d(hidden_size, hidden_size,
+                               kernel_size=6, padding=4)
+
+        self.relu = nn.ReLU()
+
+        # Ends with a fully connected layer
+        self.out = nn.Linear(hidden_size, self.output_size)
+
+        # CUDA switch > Needs to be done after the model has been declared
+        if dtype == torch.cuda.FloatTensor:
+            print("Using Pytorch CUDA backend")
+            self.cuda()
+
+    def forward(self, inputs, hidden=None):
+        batch_size = inputs.size(1)
+
+        # Turn (seq_len x batch_size x input_size)
+        # into (batch_size x input_size x seq_len) for CNN
+        inputs = inputs.transpose(0, 1).transpose(1, 2)
+
+        # Run through Conv1d and Pool1d layers
+        c1 = self.conv1(inputs)
+        r1 = self.relu(c1)
+
+        c2 = self.conv2(r1)
+        r2 = self.relu(c2)
+
+        output = torch.tanh(self.out(r2))
         return output, hidden
