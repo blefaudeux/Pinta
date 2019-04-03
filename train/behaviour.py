@@ -124,7 +124,7 @@ class NN(nn.Module):
                 out, _ = self(train_batch[0])
                 loss = criterion(out, train_batch[1])
                 print('Train loss: {:.4f}'.format(loss.item()))
-                self.summary_writer.add_scalar('train', loss.item())
+                self.summary_writer.add_scalar('train', loss.item(), i)
                 loss.backward()
                 return loss
 
@@ -133,7 +133,7 @@ class NN(nn.Module):
             # Loss on the test data
             pred, _ = self(test_batch[0])
             loss = criterion(pred, test_batch[1])
-            self.summary_writer.add_scalar('test', loss.item())
+            self.summary_writer.add_scalar('test', loss.item(), i)
             print("Test loss: {:.4f}\n".format(loss.item()))
 
         print("... Done")
