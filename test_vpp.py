@@ -13,15 +13,15 @@ def angle_split(data):
     return data
 
 
-# Load the dataset
+# Load the dataset + some data augmentation
 datafile = 'data/03_09_2016.json'
 raw_data, raw_data_reversed = load(datafile, clean_data=True)
 INPUTS = ['wind_speed', 'wind_angle_x', 'wind_angle_y', 'rudder_angle']
 OUTPUTS = ['boat_speed']
 
 # Handle the angular coordinates discontinuity -> split x/y components
-raw_data = angle_split(raw_data)
-raw_data_reversed = angle_split(raw_data_reversed)
+raw_data, raw_data_reversed = angle_split(
+    raw_data), angle_split(raw_data_reversed)
 
 # Small debug plot, have a look at the data
 data_plot = INPUTS + OUTPUTS
@@ -47,7 +47,7 @@ INPUT_SIZE = len(INPUTS)
 GRU_LAYERS = 2
 EPOCH = 40
 BATCH_SIZE = 500
-HIDDEN_SIZE = 60
+HIDDEN_SIZE = 20
 crnn = ConvRNN(logdir='logs/gru6conv60',
                input_size=INPUT_SIZE,
                hidden_size=HIDDEN_SIZE,

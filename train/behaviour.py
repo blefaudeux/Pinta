@@ -11,8 +11,12 @@ import numpy as np
 import logging
 from tensorboardX import SummaryWriter
 
-# dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
-dtype = torch.FloatTensor
+dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
+
+if dtype == torch.cuda.FloatTensor:
+    print("CUDA enabled")
+else:
+    print("CPU enabled")
 
 
 class NN(nn.Module):
