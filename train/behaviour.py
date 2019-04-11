@@ -153,7 +153,7 @@ class NN(nn.Module):
         return torch.add(
             torch.mul(self(batched)[0], self.std[1]),
             self.mean[1]
-        ).detach().numpy()
+        ).detach().cpu().numpy()
 
     def forward(self, *inputs):
         """

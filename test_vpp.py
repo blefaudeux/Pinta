@@ -45,8 +45,8 @@ test_out += test_out_r
 CONV_SAVED = "trained/conv_rnn.torch"
 INPUT_SIZE = len(INPUTS)
 GRU_LAYERS = 2
-EPOCH = 40
-BATCH_SIZE = 500
+EPOCH = 200
+BATCH_SIZE = 3000
 HIDDEN_SIZE = 20
 crnn = ConvRNN(logdir='logs/gru6conv60',
                input_size=INPUT_SIZE,
@@ -61,17 +61,17 @@ if not crnn.valid:
              batch_size=BATCH_SIZE)
     crnn.save(CONV_SAVED)
 
-# cnn = Conv(logdir='logs/conv',
-#            input_size=INPUT_SIZE,
-#            hidden_size=HIDDEN_SIZE,
-#            filename=CONV_SAVED)
+# crnn = Conv(logdir='logs/conv',
+#             input_size=INPUT_SIZE,
+#             hidden_size=HIDDEN_SIZE,
+#             filename=CONV_SAVED)
 
-# if not cnn.valid:
-#     cnn.fit([train_in, train_out],
-#             [test_in, test_out],
-#             epoch=EPOCH,
-#             batch_size=BATCH_SIZE)
-#     cnn.save(CONV_SAVED)
+# if not crnn.valid:
+#     crnn.fit([train_in, train_out],
+#              [test_in, test_out],
+#              epoch=EPOCH,
+#              batch_size=BATCH_SIZE)
+#     crnn.save(CONV_SAVED)
 
 
 trainScore = crnn.evaluate([train_in, train_out])
