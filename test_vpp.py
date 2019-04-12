@@ -45,10 +45,13 @@ test_out += test_out_r
 CONV_SAVED = "trained/conv_rnn.torch"
 INPUT_SIZE = len(INPUTS)
 GRU_LAYERS = 2
-EPOCH = 200
-BATCH_SIZE = 3000
+EPOCH = 400
+BATCH_SIZE = 10000
 HIDDEN_SIZE = 20
-crnn = ConvRNN(logdir='logs/gru6conv60',
+
+print(f"Training on {len(train_in[0])} samples. Batch is {BATCH_SIZE}")
+
+crnn = ConvRNN(logdir='logs/crnn',
                input_size=INPUT_SIZE,
                hidden_size=HIDDEN_SIZE,
                filename=CONV_SAVED,
