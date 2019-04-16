@@ -45,49 +45,49 @@ test_out += test_out_r
 CONV_SAVED = "trained/conv_rnn.torch"
 INPUT_SIZE = len(INPUTS)
 GRU_LAYERS = 2
-EPOCH = 400
+EPOCH = 1000
 BATCH_SIZE = 10000
-HIDDEN_SIZE = 20
+HIDDEN_SIZE = 40
 
 print(f"Training on {len(train_in[0])} samples. Batch is {BATCH_SIZE}")
 
-crnn = ConvRNN(logdir='logs/crnn',
-               input_size=INPUT_SIZE,
-               hidden_size=HIDDEN_SIZE,
-               filename=CONV_SAVED,
-               n_gru_layers=GRU_LAYERS)
+# dnn = ConvRNN(logdir='logs/crnn',
+#                input_size=INPUT_SIZE,
+#                hidden_size=HIDDEN_SIZE,
+#                filename=CONV_SAVED,
+#                n_gru_layers=GRU_LAYERS)
 
-if not crnn.valid:
-    crnn.fit([train_in, train_out],
-             [test_in, test_out],
-             epoch=EPOCH,
-             batch_size=BATCH_SIZE)
-    crnn.save(CONV_SAVED)
-
-# crnn = Conv(logdir='logs/conv',
-#             input_size=INPUT_SIZE,
-#             hidden_size=HIDDEN_SIZE,
-#             filename=CONV_SAVED)
-
-# if not crnn.valid:
-#     crnn.fit([train_in, train_out],
+# if not dnn.valid:
+#     dnn.fit([train_in, train_out],
 #              [test_in, test_out],
 #              epoch=EPOCH,
 #              batch_size=BATCH_SIZE)
-#     crnn.save(CONV_SAVED)
+#     dnn.save(CONV_SAVED)
+
+dnn = Conv(logdir='logs/conv',
+           input_size=INPUT_SIZE,
+           hidden_size=HIDDEN_SIZE,
+           filename=CONV_SAVED)
+
+if not dnn.valid:
+    dnn.fit([train_in, train_out],
+            [test_in, test_out],
+            epoch=EPOCH,
+            batch_size=BATCH_SIZE)
+    dnn.save(CONV_SAVED)
 
 
-trainScore = crnn.evaluate([train_in, train_out])
+trainScore = dnn.evaluate([train_in, train_out])
 print('Train Score: %.2f RMSE' % np.sqrt(trainScore))
 
-testScore = crnn.evaluate([test_in, test_out])
+testScore = dnn.evaluate([test_in, test_out])
 print('Test Score: %.2f RMSE' % np.sqrt(testScore))
 
 
 # Compare visually the outputs
 print('---\nQuality evaluation:')
-pred_simple = crnn.predict(
-    [test_in, test_out], batch_size=BATCH_SIZE).flatten()
+pred_simple = dnn.predict(
+    [test_in, test_out], batch_size=200).flatten()
 
 plt.parrallel_plot([test_out.flatten(), pred_simple],
                    ["Ground truth", "Conv"],

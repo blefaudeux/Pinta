@@ -287,7 +287,7 @@ class Conv(NN):
             self.cuda()
 
     def forward(self, inputs, hidden=None):
-        batch_size = inputs.size(1)
+        batch_size = inputs.size(0)
 
         # Turn (seq_len x batch_size x input_size)
         # into (batch_size x input_size x seq_len) for CNN
@@ -300,5 +300,8 @@ class Conv(NN):
         c2 = self.conv2(r1)
         r2 = self.relu(c2)
 
-        output = torch.tanh(self.out(r2))
+        # Treating (conv_seq_len x batch_size) as batch_size for linear layer
+        output = r2.view(r2.size(0) * batch_size, self.hidden_size)
+        output = torch.tanh(self.out(output))
+        output = output.view(batch_size, -1, self.output_size)
         return output, hidden
