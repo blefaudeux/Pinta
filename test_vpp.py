@@ -4,7 +4,8 @@ import numpy as np
 from data_processing import plot as plt
 from data_processing.split import split
 from data_processing.load import load
-from train.behaviour import ConvRNN, Conv
+from train.behave_rnn import ConvRNN
+from train.behave_cnn import Conv
 
 
 def angle_split(data):
@@ -47,7 +48,7 @@ INPUT_SIZE = len(INPUTS)
 GRU_LAYERS = 2
 EPOCH = 1000
 BATCH_SIZE = 10000
-HIDDEN_SIZE = 40
+HIDDEN_SIZE = 100
 
 print(f"Training on {len(train_in[0])} samples. Batch is {BATCH_SIZE}")
 
