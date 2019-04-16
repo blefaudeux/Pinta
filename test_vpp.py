@@ -46,9 +46,9 @@ test_out += test_out_r
 CONV_SAVED = "trained/conv_rnn.torch"
 INPUT_SIZE = len(INPUTS)
 GRU_LAYERS = 2
-EPOCH = 1000
+EPOCH = 300
 BATCH_SIZE = 10000
-HIDDEN_SIZE = 100
+HIDDEN_SIZE = 60
 
 print(f"Training on {len(train_in[0])} samples. Batch is {BATCH_SIZE}")
 
