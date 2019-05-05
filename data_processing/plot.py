@@ -37,9 +37,6 @@ def speed_plot(df, decimation=2, filename='speed_polar'):
             color=df['wind_speed'][::decimation],
             colorscale='Portland',
             showscale=True,
-            colorbar=go.ColorBar(
-                title="Wind speed"
-            ),
             opacity=0.5
         ),
         text=labels
@@ -80,7 +77,7 @@ def speed_plot(df, decimation=2, filename='speed_polar'):
     layout.yaxis.range = [-13, 13]
 
     fig = go.Figure(data=traces, layout=layout)
-    py.plot(fig, filename=handle_save(filename), auto_open=False)
+    py.plot(fig, filename=handle_save(filename), auto_open=True)
 
 
 # Plot any traces in parallel
