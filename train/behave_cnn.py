@@ -38,10 +38,10 @@ class Conv(NN):
         # Conv front end
         # First conv is a depthwise convolution
         self.conv1 = nn.Conv1d(input_size, hidden_size,
-                               kernel_size=20, groups=input_size, padding=6)
+                               kernel_size=12, groups=input_size, padding=6)
 
         self.conv2 = nn.Conv1d(hidden_size, hidden_size,
-                               kernel_size=16, padding=7)
+                               kernel_size=12, padding=7)
 
         self.conv3 = nn.Conv1d(hidden_size, hidden_size,
                                kernel_size=5, padding=6)
@@ -59,12 +59,8 @@ class Conv(NN):
     def forward(self, inputs, hidden=None):
         batch_size = inputs.size(0)
 
-        # Turn (seq_len x batch_size x input_size)
-        # into (batch_size x input_size x seq_len) for CNN
-        inputs = inputs.transpose(0, 1).transpose(1, 2)
-
         # Run through Conv1d and Pool1d layers
-        c1 = self.conv1(inputs)
+        c1 = self.conv1(inputs.transpose(1, 2))
         r1 = self.relu(c1)
 
         c2 = self.conv2(r1)
@@ -73,8 +69,4 @@ class Conv(NN):
         c3 = self.conv3(r2)
         r3 = self.relu(c3)
 
-        # Treating (conv_seq_len x batch_size) as batch_size for linear layer
-        output = r3.view(r3.size(0) * batch_size, self.hidden_size)
-        output = torch.tanh(self.out(output))
-        output = output.view(batch_size, -1, self.output_size)
-        return output, hidden
+        return self.out(r3.transpose(1, 2)), hidden

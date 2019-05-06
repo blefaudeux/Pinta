@@ -59,11 +59,11 @@ class ConvRNN(NN):
             self.cuda()
 
     def forward(self, inputs, hidden=None):
-        batch_size = inputs.size(1)
+        batch_size = inputs.size(0)
 
-        # Turn (seq_len x batch_size x input_size)
-        # into (batch_size x input_size x seq_len) for CNN
-        inputs = inputs.transpose(0, 1).transpose(1, 2)
+        # Turn (batch_size x batch_number x input_size)
+        # into (batch_size x input_size x batch_number) for CNN
+        inputs = inputs.transpose(1, 2)
 
         # Run through Conv1d and Pool1d layers
         c1 = self.conv1(inputs)
@@ -72,15 +72,16 @@ class ConvRNN(NN):
         c2 = self.conv2(r1)
         r2 = self.relu(c2)
 
-        # Turn (batch_size x hidden_size x seq_len) back into (seq_len x batch_size x hidden_size)
+        # Turn  (batch_size x input_size x batch_number)
+        # back into (batch_size x batch_number x input_size)
         # for GRU/LSTM layer
-        r2 = r2.transpose(1, 2).transpose(0, 1)
+        r2 = r2.transpose(1, 2)
 
         output, hidden = self.gru(r2, hidden)
-        conv_seq_len = output.size(0)
+        conv_seq_len = output.size(2)
 
         # Treating (conv_seq_len x batch_size) as batch_size for linear layer
-        output = output.view(conv_seq_len * batch_size, self.hidden_size)
-        output = torch.tanh(self.out(output))
+        output = output.view(batch_size//self.hidden_size, -1, self.hidden_size)
+        output = self.out(output)
         output = output.view(conv_seq_len, -1, self.output_size)
         return output, hidden

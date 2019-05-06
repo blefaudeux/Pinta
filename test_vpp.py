@@ -16,26 +16,25 @@ def angle_split(data):
 
 # Load the dataset + some data augmentation
 datafile = 'data/03_09_2016.json'
-raw_data, raw_data_reversed = load(datafile, clean_data=True)
+raw_data, raw_data_aug = load(datafile, clean_data=True)
 INPUTS = ['wind_speed', 'wind_angle_x', 'wind_angle_y', 'rudder_angle']
 OUTPUTS = ['boat_speed']
 
 # Handle the angular coordinates discontinuity -> split x/y components
-raw_data, raw_data_reversed = angle_split(
-    raw_data), angle_split(raw_data_reversed)
+raw_data, raw_data_aug = angle_split(
+    raw_data), angle_split(raw_data_aug)
 
 # Small debug plot, have a look at the data
 data_plot = INPUTS + OUTPUTS
 plt.parrallel_plot([raw_data[i] for i in data_plot], data_plot, "Dataset plot")
 
 # Split in between training and test
-training_ratio = 0.8
+TRAINING_RATIO = 0.95
 train_in, train_out, test_in, test_out = split(raw_data, INPUTS,
-                                               OUTPUTS, training_ratio)
+                                               OUTPUTS, TRAINING_RATIO)
 
-train_in_r, train_out_r, test_in_r, test_out_r = split(raw_data_reversed, INPUTS,
-                                                       OUTPUTS, training_ratio)
-
+train_in_r, train_out_r, test_in_r, test_out_r = split(raw_data_aug, INPUTS,
+                                                       OUTPUTS, TRAINING_RATIO)
 
 train_in += train_in_r
 train_out += train_out_r
@@ -43,7 +42,7 @@ test_in += test_in_r
 test_out += test_out_r
 
 # ConvRNN
-CONV_SAVED = "trained/conv_rnn.torch"
+CONV_SAVED = "trained/conv_rnn.pt"
 INPUT_SIZE = len(INPUTS)
 GRU_LAYERS = 2
 EPOCH = 300
@@ -53,16 +52,16 @@ HIDDEN_SIZE = 60
 print(f"Training on {len(train_in[0])} samples. Batch is {BATCH_SIZE}")
 
 # dnn = ConvRNN(logdir='logs/crnn',
-#                input_size=INPUT_SIZE,
-#                hidden_size=HIDDEN_SIZE,
-#                filename=CONV_SAVED,
-#                n_gru_layers=GRU_LAYERS)
+#               input_size=INPUT_SIZE,
+#               hidden_size=HIDDEN_SIZE,
+#               filename=CONV_SAVED,
+#               n_gru_layers=GRU_LAYERS)
 
 # if not dnn.valid:
 #     dnn.fit([train_in, train_out],
-#              [test_in, test_out],
-#              epoch=EPOCH,
-#              batch_size=BATCH_SIZE)
+#             [test_in, test_out],
+#             epoch=EPOCH,
+#             batch_size=BATCH_SIZE)
 #     dnn.save(CONV_SAVED)
 
 dnn = Conv(logdir='logs/conv',
