@@ -44,7 +44,7 @@ test_out += test_out_r
 # ConvRNN
 CONV_SAVED = "trained/conv_rnn.pt"
 GRU_LAYERS = 2
-EPOCH = 60
+EPOCH = 5
 BATCH_SIZE = 20000
 HIDDEN_SIZE = 32
 SEQ_LEN = 100
@@ -89,7 +89,7 @@ print('Test Score: %.2f RMSE' % np.sqrt(testScore))
 # Compare visually the outputs
 print('---\nQuality evaluation:')
 pred_simple = dnn.predict(
-    [test_in, test_out], batch_size=200).flatten()
+    [test_in, test_out], seq_len=SEQ_LEN).flatten()
 
 plt.parrallel_plot([test_out.flatten(), pred_simple],
                    ["Ground truth", "Conv"],

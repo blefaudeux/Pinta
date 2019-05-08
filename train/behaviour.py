@@ -57,11 +57,22 @@ class NN(nn.Module):
         with open(name, "wb") as f:
             torch.save(self.state_dict(), f)
 
-    def evaluate(self, data, batch_size=50):
-        batched, _, _ = self.prepare_data(data, batch_size, normalize=False)
+    def normalize(self, dataframe):
+        return Dataframe(
+            torch.div(
+                torch.add(dataframe.input, - self.mean[0].reshape(1, -1, 1)),
+                self.std[0].reshape(1, -1, 1)),
+            torch.div(
+                torch.add(dataframe.output, - self.mean[1].reshape(1, -1, 1)),
+                self.std[1].reshape(1, -1, 1)))
+
+    def evaluate(self, data, seq_len=100):
+        data_seq, _, _ = self.prepare_data(data, seq_len, normalize=False)
+        data_seq = self.normalize(data_seq)
+
         criterion = nn.MSELoss()
-        out, _ = self(batched[0])
-        loss = criterion(out, batched[1])
+        out, _ = self(data_seq.input)
+        loss = criterion(out, data_seq.output.view(out.size()[0], -1))
         return loss.item()
 
     @staticmethod
@@ -115,13 +126,7 @@ class NN(nn.Module):
                                            normalize=False)
 
         # Test data needs to be normalized with the same coefficients as training data
-        test_seq = Dataframe(
-            torch.div(
-                torch.add(test_seq.input, - self.mean[0].reshape(1, -1, 1)),
-                self.std[0].reshape(1, -1, 1)),
-            torch.div(
-                torch.add(test_seq.output, - self.mean[1].reshape(1, -1, 1)),
-                self.std[1].reshape(1, -1, 1)))
+        test_seq = self.normalize(test_seq)
 
         print("Training the network...")
 
@@ -155,14 +160,12 @@ class NN(nn.Module):
 
     def predict(self, data, seq_len=100):
         # batch and normalize
-        batched, _, _ = self.prepare_data(data, 1, seq_len, normalize=False)
-
-        batched = torch.div(torch.add(batched[0], - self.mean[0]),
-                            self.std[0])
+        test_seq, _, _ = self.prepare_data(data, seq_len, normalize=False)
+        test_seq = self.normalize(test_seq)
 
         # De-normalize the output
         return torch.add(
-            torch.mul(self(batched)[0], self.std[1]),
+            torch.mul(self(test_seq.input)[0], self.std[1]),
             self.mean[1]
         ).detach().cpu().numpy()
 
