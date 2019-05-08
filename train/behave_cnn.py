@@ -34,11 +34,11 @@ class Conv(NN):
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = 1
-        KERNEL_SIZE = 2
+        KERNEL_SIZE = 32
 
         # Conv front end
         # First conv is a depthwise convolution
-        self.conv = nn.Sequential(nn.Conv1d(input_size[1], hidden_size,
+        self.conv = nn.Sequential(nn.Conv1d(input_size[0], hidden_size,
                                             kernel_size=KERNEL_SIZE),
                                   nn.ReLU(),
                                   nn.Conv1d(hidden_size, hidden_size,
@@ -50,7 +50,7 @@ class Conv(NN):
         # Ends with a fully connected layer
         self.fc = nn.Sequential(nn.Linear(out_conv_size, 512),
                                 nn.ReLU(),
-                                nn.Linear(out_conv_size, self.output_size))
+                                nn.Linear(512, self.output_size))
 
         # CUDA switch > Needs to be done after the model has been declared
         if dtype is torch.cuda.FloatTensor:
@@ -59,8 +59,7 @@ class Conv(NN):
 
     def _get_conv_out(self, shape):
         # Useful to compute the shape out of the conv blocks (including eventual padding..)
-        # on the fly
-        o = self.conv(torch.zeros(*shape))
+        o = self.conv(torch.zeros(1, *shape))
         return int(np.prod(o.size()))
 
     def forward(self, inputs, hidden=None):

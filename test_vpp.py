@@ -44,10 +44,11 @@ test_out += test_out_r
 # ConvRNN
 CONV_SAVED = "trained/conv_rnn.pt"
 GRU_LAYERS = 2
-EPOCH = 300
-BATCH_SIZE = 1000
-HIDDEN_SIZE = 128
-INPUT_SIZE = [BATCH_SIZE, len(INPUTS), len(train_in[0]) // BATCH_SIZE]
+EPOCH = 100
+BATCH_SIZE = 10000
+HIDDEN_SIZE = 32
+SEQ_LEN = 100
+INPUT_SIZE = [len(INPUTS), SEQ_LEN]
 
 print(f"Training on {len(train_in[0])} samples. Batch is {BATCH_SIZE}")
 
@@ -73,7 +74,8 @@ if not dnn.valid:
     dnn.fit([train_in, train_out],
             [test_in, test_out],
             epoch=EPOCH,
-            batch_size=BATCH_SIZE)
+            batch_size=BATCH_SIZE,
+            seq_len=SEQ_LEN)
     dnn.save(CONV_SAVED)
 
 

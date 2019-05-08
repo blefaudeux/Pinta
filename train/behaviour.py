@@ -11,8 +11,12 @@ import numpy as np
 import logging
 from tensorboardX import SummaryWriter
 
-dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
+# Our lightweight data structure..
+from collections import namedtuple
+Dataframe = namedtuple("Dataframe", "input output")
 
+# Handle GPU compute if available
+dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
 if dtype == torch.cuda.FloatTensor:
     print("CUDA enabled")
 else:
@@ -20,7 +24,6 @@ else:
 
 
 class NN(nn.Module):
-
     """
     This is a generic NN implementation.
     This is an abstract class, a proper model needs to be implemented
@@ -62,11 +65,9 @@ class NN(nn.Module):
         return loss.item()
 
     @staticmethod
-    def prepare_data(train, batch_size, normalize=True):
+    def prepare_data(train, seq_len, normalize=True):
         """
-        Prepare mini-batches out of the data sequences
-
-        train: [2], first element is the inputs, second the outputs
+        Prepare sequences of a given length given the input data
         """
 
         # Compute some stats on the data
@@ -82,70 +83,79 @@ class NN(nn.Module):
             train[1] = np.divide(train[1].transpose(), std[1]).transpose()
             print("Data normalized")
 
-        # Compute normalized batches
-        n_batch = train[0].shape[1] // batch_size
-        n_samples = n_batch * batch_size
-        batch_data = [np.array(np.split(train[0][:, :n_samples], batch_size, axis=1)),
-                      np.array(np.split(train[1][:, :n_samples], batch_size, axis=1))]
-
-        # Return [batch data], mean, std
+        # To Torch tensor
         mean = [torch.from_numpy(mean[0]).type(dtype),
                 torch.from_numpy(mean[1]).type(dtype)]
 
         std = [torch.from_numpy(std[0]).type(dtype),
                torch.from_numpy(std[1]).type(dtype)]
 
-        return [Variable(torch.from_numpy(np.swapaxes(batch_data[0], 1, 2))).type(dtype),
-                Variable(torch.from_numpy(np.swapaxes(batch_data[1], 1, 2))).type(dtype)], mean, std
+        # Compute all the seq samples
+        n_sequences = train[0].shape[1] - seq_len
+        training_data = Dataframe(torch.from_numpy(np.array([train[0][:, start:start+seq_len]
+                                                             for start in range(n_sequences)])
+                                                   ).type(dtype),
+                                  torch.from_numpy(train[1][:, :-seq_len]).type(dtype))
 
-    def fit(self, train, test, epoch=50, batch_size=50):
+        return training_data, mean, std
+
+    def fit(self, train, test, epoch=50, batch_size=50, seq_len=100):
         optimizer = optim.Adam(self.parameters())
         criterion = nn.MSELoss()
 
         # Prepare the data in batches
-        print("Preparing dataset...")
-        train_batch, self.mean, self.std = self.prepare_data(train,
-                                                             batch_size,
-                                                             normalize=True)
+        channels = train[0].shape[0]
+        print(f"Preparing dataset... {channels} channels used")
+        train_seq, self.mean, self.std = self.prepare_data(train,
+                                                           seq_len,
+                                                           normalize=True)
 
-        test_batch, _, _ = self.prepare_data(test,
-                                             batch_size,
-                                             normalize=False)
+        test_seq, _, _ = self.prepare_data(test,
+                                           seq_len,
+                                           normalize=False)
 
         # Test data needs to be normalized with the same coefficients as training data
-        test_batch[0] = torch.div(torch.add(test_batch[0], - self.mean[0]),
-                                  self.std[0])
+        test_batch = Dataframe(
+            torch.div(
+                torch.add(test_seq.input, - self.mean[0].reshape(1, -1, 1)),
+                self.std[0].reshape(1, -1, 1)),
+            torch.div(
+                torch.add(test_seq.output, - self.mean[1].reshape(1, -1, 1)),
+                self.std[1].reshape(1, -1, 1)))
 
-        test_batch[1] = torch.div(torch.add(test_batch[1], - self.mean[1]),
-                                  self.std[1])
         print("Training the network...")
 
         for i in range(epoch):
             print('epoch {}'.format(i))
 
-            # Eval computation on the training data
-            def closure():
-                optimizer.zero_grad()
-                out, _ = self(train_batch[0])
-                loss = criterion(out, train_batch[1])
-                print('Train loss: {:.4f}'.format(loss.item()))
-                self.summary_writer.add_scalar('train', loss.item(), i)
-                loss.backward()
-                return loss
+            for b in range(0, train_seq.input.shape[0], batch_size):
+                # Prepare batch
+                batch_data = Dataframe(train_seq.input[b:b+batch_size, :, :],
+                                       train_seq.output[:, b:b+batch_size])
 
-            optimizer.step(closure)
+                # Eval computation on the training data
+                def closure():
+                    optimizer.zero_grad()
+                    out, _ = self(batch_data.input)
+                    loss = criterion(out, batch_data.output.view(out.size()[0], -1))
+                    print('Train loss: {:.4f}'.format(loss.item()))
+                    self.summary_writer.add_scalar('train', loss.item(), i)
+                    loss.backward()
+                    return loss
 
-            # Loss on the test data
-            pred, _ = self(test_batch[0])
-            loss = criterion(pred, test_batch[1])
-            self.summary_writer.add_scalar('test', loss.item(), i)
-            print("Test loss: {:.4f}\n".format(loss.item()))
+                optimizer.step(closure)
+
+                # Loss on the test data
+                pred, _ = self(test_seq.input)
+                loss = criterion(pred, test_seq.output.view(pred.size()[0], -1))
+                self.summary_writer.add_scalar('test', loss.item(), i)
+                print("Test loss: {:.4f}\n".format(loss.item()))
 
         print("... Done")
 
-    def predict(self, data, batch_size=50):
+    def predict(self, data, seq_len=100):
         # batch and normalize
-        batched, _, _ = self.prepare_data(data, batch_size, normalize=False)
+        batched, _, _ = self.prepare_data(data, 1, seq_len, normalize=False)
 
         batched = torch.div(torch.add(batched[0], - self.mean[0]),
                             self.std[0])

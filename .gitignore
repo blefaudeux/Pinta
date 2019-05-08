@@ -94,3 +94,4 @@ ENV/
 .idea
 .directory
 *.html
+logs
