@@ -43,11 +43,11 @@ test_out += test_out_r
 
 # ConvRNN
 CONV_SAVED = "trained/conv_rnn.pt"
-INPUT_SIZE = len(INPUTS)
 GRU_LAYERS = 2
 EPOCH = 300
-BATCH_SIZE = 10000
-HIDDEN_SIZE = 60
+BATCH_SIZE = 1000
+HIDDEN_SIZE = 128
+INPUT_SIZE = [BATCH_SIZE, len(INPUTS), len(train_in[0]) // BATCH_SIZE]
 
 print(f"Training on {len(train_in[0])} samples. Batch is {BATCH_SIZE}")
 

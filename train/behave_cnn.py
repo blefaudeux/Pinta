@@ -34,39 +34,35 @@ class Conv(NN):
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = 1
+        KERNEL_SIZE = 2
 
         # Conv front end
         # First conv is a depthwise convolution
-        self.conv1 = nn.Conv1d(input_size, hidden_size,
-                               kernel_size=12, groups=input_size, padding=6)
+        self.conv = nn.Sequential(nn.Conv1d(input_size[1], hidden_size,
+                                            kernel_size=KERNEL_SIZE),
+                                  nn.ReLU(),
+                                  nn.Conv1d(hidden_size, hidden_size,
+                                            kernel_size=KERNEL_SIZE),
+                                  nn.ReLU())
 
-        self.conv2 = nn.Conv1d(hidden_size, hidden_size,
-                               kernel_size=12, padding=7)
-
-        self.conv3 = nn.Conv1d(hidden_size, hidden_size,
-                               kernel_size=5, padding=6)
-
-        self.relu = nn.ReLU()
+        out_conv_size = self._get_conv_out(input_size)
 
         # Ends with a fully connected layer
-        self.out = nn.Linear(hidden_size, self.output_size)
+        self.fc = nn.Sequential(nn.Linear(out_conv_size, 512),
+                                nn.ReLU(),
+                                nn.Linear(out_conv_size, self.output_size))
 
         # CUDA switch > Needs to be done after the model has been declared
         if dtype is torch.cuda.FloatTensor:
             print("Using Pytorch CUDA backend")
             self.cuda()
 
+    def _get_conv_out(self, shape):
+        # Useful to compute the shape out of the conv blocks (including eventual padding..)
+        # on the fly
+        o = self.conv(torch.zeros(*shape))
+        return int(np.prod(o.size()))
+
     def forward(self, inputs, hidden=None):
-        batch_size = inputs.size(0)
-
-        # Run through Conv1d and Pool1d layers
-        c1 = self.conv1(inputs.transpose(1, 2))
-        r1 = self.relu(c1)
-
-        c2 = self.conv2(r1)
-        r2 = self.relu(c2)
-
-        c3 = self.conv3(r2)
-        r3 = self.relu(c3)
-
-        return self.out(r3.transpose(1, 2)), hidden
+        features = self.conv(inputs).view(inputs.size()[0], -1)
+        return self.fc(features), None
