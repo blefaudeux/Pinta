@@ -44,8 +44,8 @@ test_out += test_out_r
 # ConvRNN
 CONV_SAVED = "trained/conv_rnn.pt"
 GRU_LAYERS = 2
-EPOCH = 100
-BATCH_SIZE = 10000
+EPOCH = 60
+BATCH_SIZE = 20000
 HIDDEN_SIZE = 32
 SEQ_LEN = 100
 INPUT_SIZE = [len(INPUTS), SEQ_LEN]

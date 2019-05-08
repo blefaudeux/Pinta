@@ -115,7 +115,7 @@ class NN(nn.Module):
                                            normalize=False)
 
         # Test data needs to be normalized with the same coefficients as training data
-        test_batch = Dataframe(
+        test_seq = Dataframe(
             torch.div(
                 torch.add(test_seq.input, - self.mean[0].reshape(1, -1, 1)),
                 self.std[0].reshape(1, -1, 1)),
