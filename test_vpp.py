@@ -29,7 +29,7 @@ data_plot = INPUTS + OUTPUTS
 plt.parrallel_plot([raw_data[i] for i in data_plot], data_plot, "Dataset plot")
 
 # Split in between training and test
-TRAINING_RATIO = 0.95
+TRAINING_RATIO = 0.9
 train_in, train_out, test_in, test_out = split(raw_data, INPUTS,
                                                OUTPUTS, TRAINING_RATIO)
 
@@ -44,10 +44,10 @@ test_out += test_out_r
 # ConvRNN
 CONV_SAVED = "trained/conv_rnn.pt"
 GRU_LAYERS = 2
-EPOCH = 30
-BATCH_SIZE = 20000
-HIDDEN_SIZE = 32
-SEQ_LEN = 100
+EPOCH = 40
+BATCH_SIZE = 5000
+HIDDEN_SIZE = 64
+SEQ_LEN = 256
 INPUT_SIZE = [len(INPUTS), SEQ_LEN]
 
 print(f"Training on {len(train_in[0])} samples. Batch is {BATCH_SIZE}")
@@ -76,14 +76,11 @@ if not dnn.valid:
             epoch=EPOCH,
             batch_size=BATCH_SIZE,
             seq_len=SEQ_LEN)
-    dnn.save(CONV_SAVED)
+    # dnn.save(CONV_SAVED)
 
 
-trainScore = dnn.evaluate([train_in, train_out])
-print('Train Score: %.2f RMSE' % np.sqrt(trainScore))
-
-testScore = dnn.evaluate([test_in, test_out])
-print('Test Score: %.2f RMSE' % np.sqrt(testScore))
+testScore = dnn.evaluate([test_in, test_out], seq_len=SEQ_LEN)
+print('Final test Score: %.2f RMSE' % np.sqrt(testScore))
 
 
 # Compare visually the outputs

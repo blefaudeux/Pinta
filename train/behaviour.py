@@ -40,19 +40,6 @@ class NN(nn.Module):
         self.summary_writer = SummaryWriter(logdir)
         self.summary_writer.add_graph(self.model)
 
-    def load(self, filename):
-        try:
-            with open(filename, "rb") as f:
-                self.load_state_dict(torch.load(f))
-                print("---\nNetwork {} loaded".format(filename))
-                print(self.model.summary())
-                return True
-
-        except (ValueError, OSError, IOError, TypeError) as e:
-            print(e)
-            print("Could not find or load existing NN")
-            return False
-
     def save(self, name):
         with open(name, "wb") as f:
             torch.save(self.state_dict(), f)
@@ -111,7 +98,7 @@ class NN(nn.Module):
         return training_data, mean, std
 
     def fit(self, train, test, epoch=50, batch_size=50, seq_len=100):
-        optimizer = optim.Adam(self.parameters())
+        optimizer = optim.SGD(self.parameters(), lr=0.01)
         criterion = nn.MSELoss()
 
         # Prepare the data in batches
@@ -130,8 +117,11 @@ class NN(nn.Module):
 
         print("Training the network...")
 
+        LR_PERIOD_DECREASE = 5
+        LR_AMOUNT_DECREASE = 0.05
+
         for i in range(epoch):
-            print('epoch {}'.format(i))
+            print('\n***** Epoch {}'.format(i))
 
             for b in range(0, train_seq.input.shape[0], batch_size):
                 # Prepare batch
@@ -155,6 +145,12 @@ class NN(nn.Module):
                 loss = criterion(pred, test_seq.output.view(pred.size()[0], -1))
                 self.summary_writer.add_scalar('test', loss.item(), i)
                 print("Test loss: {:.4f}\n".format(loss.item()))
+
+            # Update learning rate if needed
+            if not (i + 1) % LR_PERIOD_DECREASE:
+                print("Reducing learning rate")
+                for g in optimizer.param_groups:
+                    g['lr'] *= LR_AMOUNT_DECREASE
 
         print("... Done")
 

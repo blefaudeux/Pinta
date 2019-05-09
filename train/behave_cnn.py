@@ -57,6 +57,19 @@ class Conv(NN):
             print("Using Pytorch CUDA backend")
             self.cuda()
 
+    def load(self, filename):
+        try:
+            with open(filename, "rb") as f:
+                self.load_state_dict(torch.load(f))
+                print("---\nNetwork {} loaded".format(filename))
+                print(self.model.summary())
+                return True
+
+        except (ValueError, OSError, IOError, TypeError) as e:
+            print(e)
+            print("Could not find or load existing NN")
+            return False
+
     def _get_conv_out(self, shape):
         # Useful to compute the shape out of the conv blocks (including eventual padding..)
         o = self.conv(torch.zeros(1, *shape))
