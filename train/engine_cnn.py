@@ -48,12 +48,14 @@ class Conv(NN):
             self.cuda()
 
         # Load from trained NN if required
-        if filename is not None and self.load(filename):
-            self._valid = True
-            return
+        try:
+            if filename is not None and self.load(filename):
+                self._valid = True
+                return
+        except RuntimeError:
+            pass
 
-        print("Could not load the specified net, \
-                needs to be computing from scratch")
+        print("Could not load the specified net, needs to be computed from scratch")
 
     def load(self, filename):
         try:

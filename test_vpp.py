@@ -6,7 +6,7 @@ from data_processing.split import split
 from data_processing.load import load
 # from train.engine_rnn import ConvRNN
 from train.engine_cnn import Conv
-from constants import INPUTS, OUTPUTS, NN_FILENAME, HIDDEN_SIZE, SEQ_LEN, INPUT_SIZE
+from settings import INPUTS, OUTPUTS, NN_FILENAME, HIDDEN_SIZE, SEQ_LEN, INPUT_SIZE
 
 
 def angle_split(data):
@@ -42,8 +42,8 @@ test_out += test_out_r
 
 # ConvRNN
 GRU_LAYERS = 2
-EPOCH = 1
-BATCH_SIZE = 5000
+EPOCH = 40
+BATCH_SIZE = 10000
 
 print(f"Training on {len(train_in[0])} samples. Batch is {BATCH_SIZE}")
 

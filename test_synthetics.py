@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from train.engine_cnn import Conv
-from constants import INPUT_SIZE, HIDDEN_SIZE, NN_FILENAME
+from settings import INPUT_SIZE, HIDDEN_SIZE, NN_FILENAME
 from synthetic import polar
 
 """
