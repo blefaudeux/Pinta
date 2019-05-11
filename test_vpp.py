@@ -4,8 +4,8 @@ import numpy as np
 from data_processing import plot as plt
 from data_processing.split import split
 from data_processing.load import load
-from train.behave_rnn import ConvRNN
-from train.behave_cnn import Conv
+from train.engine_rnn import ConvRNN
+from train.engine_cnn import Conv
 
 
 def angle_split(data):
