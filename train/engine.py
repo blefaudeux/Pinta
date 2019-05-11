@@ -32,13 +32,16 @@ class NN(nn.Module):
     def __init__(self, logdir):
         super(NN, self).__init__()
         self.model = None
-        self.valid = False
+        self._valid = False
         self.mean = None
         self.std = None
 
         # Set up TensorBoard
         self.summary_writer = SummaryWriter(logdir)
         self.summary_writer.add_graph(self.model)
+
+    def valid(self):
+        return self._valid
 
     def save(self, name):
         with open(name, "wb") as f:
@@ -132,7 +135,8 @@ class NN(nn.Module):
                 def closure():
                     optimizer.zero_grad()
                     out, _ = self(batch_data.input)
-                    loss = criterion(out, batch_data.output.view(out.size()[0], -1))
+                    loss = criterion(
+                        out, batch_data.output.view(out.size()[0], -1))
                     print('Train loss: {:.4f}'.format(loss.item()))
                     self.summary_writer.add_scalar('train', loss.item(), i)
                     loss.backward()
@@ -142,7 +146,8 @@ class NN(nn.Module):
 
                 # Loss on the test data
                 pred, _ = self(test_seq.input)
-                loss = criterion(pred, test_seq.output.view(pred.size()[0], -1))
+                loss = criterion(
+                    pred, test_seq.output.view(pred.size()[0], -1))
                 self.summary_writer.add_scalar('test', loss.item(), i)
                 print("Test loss: {:.4f}\n".format(loss.item()))
 

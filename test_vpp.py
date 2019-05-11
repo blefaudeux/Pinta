@@ -4,8 +4,9 @@ import numpy as np
 from data_processing import plot as plt
 from data_processing.split import split
 from data_processing.load import load
-from train.engine_rnn import ConvRNN
+# from train.engine_rnn import ConvRNN
 from train.engine_cnn import Conv
+from constants import INPUTS, OUTPUTS, NN_FILENAME, HIDDEN_SIZE, SEQ_LEN, INPUT_SIZE
 
 
 def angle_split(data):
@@ -17,8 +18,6 @@ def angle_split(data):
 # Load the dataset + some data augmentation
 datafile = 'data/03_09_2016.json'
 raw_data, raw_data_aug = load(datafile, clean_data=True)
-INPUTS = ['wind_speed', 'wind_angle_x', 'wind_angle_y', 'rudder_angle']
-OUTPUTS = ['boat_speed']
 
 # Handle the angular coordinates discontinuity -> split x/y components
 raw_data, raw_data_aug = angle_split(
@@ -42,13 +41,9 @@ test_in += test_in_r
 test_out += test_out_r
 
 # ConvRNN
-CONV_SAVED = "trained/conv_rnn.pt"
 GRU_LAYERS = 2
-EPOCH = 40
+EPOCH = 1
 BATCH_SIZE = 5000
-HIDDEN_SIZE = 64
-SEQ_LEN = 256
-INPUT_SIZE = [len(INPUTS), SEQ_LEN]
 
 print(f"Training on {len(train_in[0])} samples. Batch is {BATCH_SIZE}")
 
@@ -68,15 +63,15 @@ print(f"Training on {len(train_in[0])} samples. Batch is {BATCH_SIZE}")
 dnn = Conv(logdir='logs/conv',
            input_size=INPUT_SIZE,
            hidden_size=HIDDEN_SIZE,
-           filename=CONV_SAVED)
+           filename=NN_FILENAME)
 
-if not dnn.valid:
+if not dnn.valid():
     dnn.fit([train_in, train_out],
             [test_in, test_out],
             epoch=EPOCH,
             batch_size=BATCH_SIZE,
             seq_len=SEQ_LEN)
-    # dnn.save(CONV_SAVED)
+    dnn.save(NN_FILENAME)
 
 
 testScore = dnn.evaluate([test_in, test_out], seq_len=SEQ_LEN)

@@ -6,7 +6,7 @@ import numpy as np
 import logging
 from tensorboardX import SummaryWriter
 
-from train.behaviour import NN
+from train.engine import NN
 
 dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
 
@@ -18,16 +18,6 @@ class Conv(NN):
 
     def __init__(self, logdir, input_size, hidden_size, filename=None):
         super(Conv, self).__init__(logdir)
-
-        # Load from trained NN if required
-        if filename is not None:
-            self.valid = self.load(filename)
-            if self.valid:
-                return
-
-            print(
-                "Could not load the specified net, computing it from scratch"
-            )
 
         # ----
         # Define the model
@@ -57,12 +47,20 @@ class Conv(NN):
             print("Using Pytorch CUDA backend")
             self.cuda()
 
+        # Load from trained NN if required
+        if filename is not None and self.load(filename):
+            self._valid = True
+            return
+
+        print("Could not load the specified net, \
+                needs to be computing from scratch")
+
     def load(self, filename):
         try:
             with open(filename, "rb") as f:
                 self.load_state_dict(torch.load(f))
                 print("---\nNetwork {} loaded".format(filename))
-                print(self.model.summary())
+                print(self)
                 return True
 
         except (ValueError, OSError, IOError, TypeError) as e:
