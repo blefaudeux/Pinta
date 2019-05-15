@@ -63,22 +63,33 @@ class NN(nn.Module):
         return loss.item()
 
     @staticmethod
-    def prepare_data(train, seq_len, normalize=True):
+    def prepare_data(data_list, seq_len, normalize=True):
         """
         Prepare sequences of a given length given the input data
         """
 
         # Compute some stats on the data
-        mean = [np.mean(train[0], axis=1), np.mean(train[1], axis=1)]
-        std = [np.std(train[0], axis=1), np.std(train[1], axis=1)]
+        mean = np.mean(np.array([[np.mean(t, axis=1) for t in data_list.input], [
+                       np.mean(t, axis=1) for t in data_list.output]]), axis=1)
+
+        std = np.mean(np.array([[np.std(t, axis=1) for t in data_list.input], [
+            np.std(t, axis=1) for t in data_list.output]]), axis=1)
 
         if normalize:
-            # Normalize the data, bring it back to zero mean and STD of 1
-            train[0] = np.subtract(train[0].transpose(), mean[0]).transpose()
-            train[1] = np.subtract(train[1].transpose(), mean[1]).transpose()
+            data_normalize = Dataframe([], [])
 
-            train[0] = np.divide(train[0].transpose(), std[0]).transpose()
-            train[1] = np.divide(train[1].transpose(), std[1]).transpose()
+            for data in data_list.input:
+                # Normalize the data, bring it back to zero mean and STD of 1
+                data = np.subtract(data.transpose(), mean[0]).transpose()
+                data = np.divide(data.transpose(), std[0]).transpose()
+                data_normalize.input.append(data)
+
+            for data in data_list.output:
+                data = np.subtract(data.transpose(), mean[1]).transpose()
+                data = np.divide(data.transpose(), std[1]).transpose()
+                data_normalize.output.append(data)
+
+            data_list = data_normalize
             print("Data normalized")
 
         # To Torch tensor
@@ -89,6 +100,7 @@ class NN(nn.Module):
                torch.from_numpy(std[1]).type(dtype)]
 
         # Compute all the seq samples
+        # TODO: Ben - take the temporal coherency constraints into account here
         n_sequences = train[0].shape[1] - seq_len
         training_data = Dataframe(torch.from_numpy(np.array([train[0][:, start:start+seq_len]
                                                              for start in range(n_sequences)])
@@ -98,13 +110,10 @@ class NN(nn.Module):
         return training_data, mean, std
 
     def fit(self, train, test, epoch=50, batch_size=50, seq_len=100):
-
         optimizer = optim.SGD(self.parameters(), lr=0.01)
         criterion = nn.MSELoss()
 
         # Prepare the data in batches
-        channels = train.input.shape[0]
-        print(f"Preparing dataset... {channels} channels used")
         train_seq, self.mean, self.std = self.prepare_data(train,
                                                            seq_len,
                                                            normalize=True)

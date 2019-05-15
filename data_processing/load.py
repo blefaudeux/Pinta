@@ -15,9 +15,10 @@ def _angle_split(data):
 
 def load_folder(folder_path, clean_data=True, whiten_data=True):
     def valid(filepath):
-        return os.path.isfile(filepath) and os.path.splitext(filepath)[1] == "json"
+        return os.path.isfile(filepath) and os.path.splitext(filepath)[1] == ".json"
 
-    filelist = [f for f in os.listdir(folder_path) if valid(f)]
+    filelist = [os.path.join(folder_path, f) for f in os.listdir(
+        folder_path) if valid(os.path.join(folder_path, f))]
     return [load(f, clean_data, whiten_data) for f in filelist]
 
 
@@ -50,27 +51,22 @@ def package_data(raw, settings):
         raw_data = _angle_split(pair[0])
         raw_data_aug = _angle_split(pair[1])
 
-        # Small debug plot, have a look at the data
-        # data_plot = settings["inputs"] + settings["outputs"]
-        # plt.parrallel_plot([raw_data[i]
-        #                     for i in data_plot], data_plot, "Dataset plot")
-
         # Split in between training and test
-        train_in, train_out, test_in, test_out = split(
-            raw_data, settings)
-        train_in_r, train_out_r, test_in_r, test_out_r = split(
-            raw_data_aug, settings)
+        train, test = split(raw_data, settings)
+        train_r, test_r = split(raw_data_aug, settings)
 
-        training_data.input += train_in_r
-        training_data.input += train_in
+        # All the sub-datasets are not coherent over time.
+        # Keep a list of them, do not concatenate straight
+        training_data.input.append(train.input)
+        training_data.input.append(train_r.input)
 
-        training_data.output += train_out
-        training_data.output += train_out_r
+        training_data.output.append(train.output)
+        training_data.output.append(train_r.output)
 
-        testing_data.input += test_in
-        testing_data.input += test_in_r
+        testing_data.input.append(test.input)
+        testing_data.input.append(test_r.input)
 
-        testing_data.output += test_out
-        testing_data.output += test_out_r
+        testing_data.output.append(test.output)
+        testing_data.output.append(test_r.output)
 
     return training_data, testing_data

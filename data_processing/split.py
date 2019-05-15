@@ -1,4 +1,5 @@
 import numpy as np
+from settings import Dataframe
 
 
 def split(raw_data, settings):
@@ -18,4 +19,4 @@ def split(raw_data, settings):
     test_inputs = np.array([test[cat].values for cat in cat_in])
     test_output = np.array([test[cat].values for cat in cat_out])
 
-    return train_inputs, train_output, test_inputs, test_output
+    return Dataframe(train_inputs, train_output), Dataframe(test_inputs, test_output)
