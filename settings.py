@@ -1,5 +1,10 @@
 import json
 
+# Our lightweight data structure..
+from collections import namedtuple
+Dataframe = namedtuple("Dataframe", ["input", "output"])
+
+
 _DEFAULTS = {
     "inputs": ['wind_speed', 'wind_angle_x', 'wind_angle_y', 'rudder_angle'],
     "outputs": ['boat_speed'],

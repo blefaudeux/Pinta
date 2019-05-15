@@ -10,10 +10,7 @@ from torch.autograd import Variable
 import numpy as np
 import logging
 from tensorboardX import SummaryWriter
-
-# Our lightweight data structure..
-from collections import namedtuple
-Dataframe = namedtuple("Dataframe", "input output")
+from settings import Dataframe
 
 # Handle GPU compute if available
 dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
@@ -101,11 +98,12 @@ class NN(nn.Module):
         return training_data, mean, std
 
     def fit(self, train, test, epoch=50, batch_size=50, seq_len=100):
+
         optimizer = optim.SGD(self.parameters(), lr=0.01)
         criterion = nn.MSELoss()
 
         # Prepare the data in batches
-        channels = train[0].shape[0]
+        channels = train.input.shape[0]
         print(f"Preparing dataset... {channels} channels used")
         train_seq, self.mean, self.std = self.prepare_data(train,
                                                            seq_len,
