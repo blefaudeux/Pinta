@@ -1,7 +1,11 @@
 import numpy as np
 
 
-def split(raw_data, cat_in, cat_out, ratio):
+def split(raw_data, settings):
+    cat_in = settings["inputs"]
+    cat_out = settings["outputs"]
+    ratio = settings["training_ratio"]
+
     train_size = int(len(raw_data) * ratio)
     print("Training set is {} samples long".format(train_size))
 
