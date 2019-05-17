@@ -100,12 +100,22 @@ class NN(nn.Module):
                torch.from_numpy(std[1]).type(dtype)]
 
         # Compute all the seq samples
-        # TODO: Ben - take the temporal coherency constraints into account here
-        n_sequences = train[0].shape[1] - seq_len
-        training_data = Dataframe(torch.from_numpy(np.array([train[0][:, start:start+seq_len]
-                                                             for start in range(n_sequences)])
-                                                   ).type(dtype),
-                                  torch.from_numpy(train[1][:, :-seq_len]).type(dtype))
+        def generate_conv_seq(input, output):
+            n_sequences = input.shape[1] - seq_len
+
+            return torch.from_numpy(np.array([input[:, start:start+seq_len]
+                                              for start in range(n_sequences)])
+                                    ).type(dtype), torch.from_numpy(output[:, :-seq_len]).type(dtype).transpose(0, 1)
+
+        inputs = []
+        outputs = []
+
+        for data_in, data_out in zip(data_list.input, data_list.output):
+            a, b = generate_conv_seq(data_in, data_out)
+            inputs.append(a), outputs.append(b)
+
+        training_data = Dataframe(
+            torch.cat(inputs), torch.cat(outputs).transpose(0, 1))
 
         return training_data, mean, std
 
@@ -131,7 +141,7 @@ class NN(nn.Module):
         LR_AMOUNT_DECREASE = 0.05
 
         for i in range(epoch):
-            print('\n***** Epoch {}'.format(i))
+            print(f'\n***** Epoch {i}')
 
             for b in range(0, train_seq.input.shape[0], batch_size):
                 # Prepare batch
