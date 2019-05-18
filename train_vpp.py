@@ -21,7 +21,7 @@ INPUT_SIZE = [len(training_settings["inputs"]),
               training_settings["seq_length"]]
 
 print(f"Training on {len(training_data.input)} samples. Batch is {BATCH_SIZE}")
-dnn = Conv(logdir='logs/conv',
+dnn = Conv(logdir='logs/conv_seq64',
            input_size=INPUT_SIZE,
            hidden_size=training_settings["hidden_size"],
            filename=training_settings["network_filename"])
@@ -45,10 +45,10 @@ print('Final test Score: %.2f RMSE' % np.sqrt(testScore))
 # Compare visually the outputs
 print('---\nQuality evaluation:')
 pred_simple = dnn.predict(
-    [test_in, test_out],
+    testing_data,
     seq_len=training_settings["seq_length"]).flatten()
 
-plt.parrallel_plot([test_out.flatten(), pred_simple],
+plt.parrallel_plot([testing_data.output[0].flatten(), pred_simple],
                    ["Ground truth", "Conv"],
                    "Neural network predictions vs ground truth")
 
