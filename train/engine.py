@@ -20,6 +20,18 @@ else:
     print("CPU enabled")
 
 
+def generate_temporal_seq(input, output, seq_len):
+    """
+    Generate all the subsequences over time for the conv training
+    """
+
+    n_sequences = input.shape[1] - seq_len
+
+    return torch.from_numpy(np.array([input[:, start:start+seq_len]
+                                      for start in range(n_sequences)])
+                            ).type(dtype), torch.from_numpy(output[:-seq_len, :]).type(dtype)
+
+
 class NN(nn.Module):
     """
     This is a generic NN implementation.
@@ -67,17 +79,17 @@ class NN(nn.Module):
         """
 
         # Compute some stats on the data
-        mean = np.mean(np.array([[np.mean(t, axis=1) for t in data_list.input], [
-                       np.mean(t) for t in data_list.output]]), axis=1)
+        mean = np.mean(np.array([[np.mean(t, axis=1) for t in data_list.input],
+                                 [np.mean(t) for t in data_list.output]]), axis=1)
 
         std = np.mean(np.array([[np.std(t, axis=1) for t in data_list.input], [
             np.std(t) for t in data_list.output]]), axis=1)
 
         if normalize:
+            # Normalize the data, bring it back to zero mean and STD of 1
             data_normalize = Dataframe([], [])
 
             for data in data_list.input:
-                # Normalize the data, bring it back to zero mean and STD of 1
                 data = np.subtract(data.transpose(), mean[0]).transpose()
                 data = np.divide(data.transpose(), std[0]).transpose()
                 data_normalize.input.append(data)
@@ -97,23 +109,14 @@ class NN(nn.Module):
         std = [torch.from_numpy(std[0]).type(dtype),
                torch.Tensor([std[1]]).type(dtype)]
 
-        # Compute all the seq samples
-        def generate_conv_seq(input, output):
-            n_sequences = input.shape[1] - seq_len
-
-            return torch.from_numpy(np.array([input[:, start:start+seq_len]
-                                              for start in range(n_sequences)])
-                                    ).type(dtype), torch.from_numpy(output[:-seq_len, :]).type(dtype)
-
         inputs = []
         outputs = []
 
         for data_in, data_out in zip(data_list.input, data_list.output):
-            a, b = generate_conv_seq(data_in, data_out)
+            a, b = generate_temporal_seq(data_in, data_out, seq_len)
             inputs.append(a), outputs.append(b)
 
-        training_data = Dataframe(
-            torch.cat(inputs), torch.cat(outputs))
+        training_data = Dataframe(torch.cat(inputs), torch.cat(outputs))
 
         return training_data, mean, std
 
@@ -136,21 +139,20 @@ class NN(nn.Module):
         print("Training the network...")
 
         LR_PERIOD_DECREASE = 5
-        LR_AMOUNT_DECREASE = 0.6
+        LR_AMOUNT_DECREASE = 0.9
 
         for i in range(epoch):
             print(f'\n***** Epoch {i}')
 
-            for b in range(0, train_seq.input.shape[0], batch_size):
-                # Prepare batch
-                batch_data = Dataframe(train_seq.input[b:b+batch_size, :, :],
-                                       train_seq.output[b:b+batch_size, :])
-
+            for batch_index in range(0, train_seq.input.shape[0], batch_size):
                 # Eval computation on the training data
                 def closure():
+                    data = Dataframe(train_seq.input[batch_index:batch_index+batch_size, :, :],
+                                     train_seq.output[batch_index:batch_index+batch_size, :])
+
                     optimizer.zero_grad()
-                    out, _ = self(batch_data.input)
-                    loss = criterion(out, batch_data.output)
+                    out, _ = self(data.input)
+                    loss = criterion(out, data.output)
                     print('Train loss: {:.4f}'.format(loss.item()))
                     self.summary_writer.add_scalar('train', loss.item(), i)
                     loss.backward()
