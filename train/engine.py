@@ -49,9 +49,7 @@ class NN(nn.Module):
             torch.div(
                 torch.add(dataframe.input, - self.mean[0].reshape(1, -1, 1)),
                 self.std[0].reshape(1, -1, 1)),
-            torch.div(
-                torch.add(dataframe.output, - self.mean[1].reshape(1, -1, 1)),
-                self.std[1].reshape(1, -1, 1)))
+            torch.div(torch.add(dataframe.output, - self.mean[1]), self.std[1]))
 
     def evaluate(self, data, seq_len=100):
         data_seq, _, _ = self.prepare_data(data, seq_len, normalize=False)
@@ -70,10 +68,10 @@ class NN(nn.Module):
 
         # Compute some stats on the data
         mean = np.mean(np.array([[np.mean(t, axis=1) for t in data_list.input], [
-                       np.mean(t, axis=1) for t in data_list.output]]), axis=1)
+                       np.mean(t) for t in data_list.output]]), axis=1)
 
         std = np.mean(np.array([[np.std(t, axis=1) for t in data_list.input], [
-            np.std(t, axis=1) for t in data_list.output]]), axis=1)
+            np.std(t) for t in data_list.output]]), axis=1)
 
         if normalize:
             data_normalize = Dataframe([], [])
@@ -94,10 +92,10 @@ class NN(nn.Module):
 
         # To Torch tensor
         mean = [torch.from_numpy(mean[0]).type(dtype),
-                torch.from_numpy(mean[1]).type(dtype)]
+                torch.Tensor([mean[1]]).type(dtype)]
 
         std = [torch.from_numpy(std[0]).type(dtype),
-               torch.from_numpy(std[1]).type(dtype)]
+               torch.Tensor([std[1]]).type(dtype)]
 
         # Compute all the seq samples
         def generate_conv_seq(input, output):
@@ -105,7 +103,7 @@ class NN(nn.Module):
 
             return torch.from_numpy(np.array([input[:, start:start+seq_len]
                                               for start in range(n_sequences)])
-                                    ).type(dtype), torch.from_numpy(output[:, :-seq_len]).type(dtype).transpose(0, 1)
+                                    ).type(dtype), torch.from_numpy(output[:-seq_len, :]).type(dtype)
 
         inputs = []
         outputs = []
@@ -115,7 +113,7 @@ class NN(nn.Module):
             inputs.append(a), outputs.append(b)
 
         training_data = Dataframe(
-            torch.cat(inputs), torch.cat(outputs).transpose(0, 1))
+            torch.cat(inputs), torch.cat(outputs))
 
         return training_data, mean, std
 
@@ -146,14 +144,13 @@ class NN(nn.Module):
             for b in range(0, train_seq.input.shape[0], batch_size):
                 # Prepare batch
                 batch_data = Dataframe(train_seq.input[b:b+batch_size, :, :],
-                                       train_seq.output[:, b:b+batch_size])
+                                       train_seq.output[b:b+batch_size, :])
 
                 # Eval computation on the training data
                 def closure():
                     optimizer.zero_grad()
                     out, _ = self(batch_data.input)
-                    loss = criterion(
-                        out, batch_data.output.view(out.size()[0], -1))
+                    loss = criterion(out, batch_data.output)
                     print('Train loss: {:.4f}'.format(loss.item()))
                     self.summary_writer.add_scalar('train', loss.item(), i)
                     loss.backward()
@@ -163,8 +160,7 @@ class NN(nn.Module):
 
                 # Loss on the test data
                 pred, _ = self(test_seq.input)
-                loss = criterion(
-                    pred, test_seq.output.view(pred.size()[0], -1))
+                loss = criterion(pred, test_seq.output)
                 self.summary_writer.add_scalar('test', loss.item(), i)
                 print("Test loss: {:.4f}\n".format(loss.item()))
 
