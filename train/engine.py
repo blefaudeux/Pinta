@@ -137,8 +137,8 @@ class NN(nn.Module):
 
         print("Training the network...")
 
-        LR_PERIOD_DECREASE = 10
-        LR_AMOUNT_DECREASE = 0.05
+        LR_PERIOD_DECREASE = 5
+        LR_AMOUNT_DECREASE = 0.6
 
         for i in range(epoch):
             print(f'\n***** Epoch {i}')
