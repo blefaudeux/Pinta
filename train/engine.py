@@ -63,17 +63,32 @@ class NN(nn.Module):
                 self.std[0].reshape(1, -1, 1)),
             torch.div(torch.add(dataframe.output, - self.mean[1]), self.std[1]))
 
-    def evaluate(self, data, seq_len=100):
-        data_seq, _, _ = self.prepare_data(data, seq_len, normalize=False)
-        data_seq = self.normalize(data_seq)
+    def denormalize(self, dataframe):
+        return Dataframe(
+            torch.mul(
+                torch.add(dataframe.input, self.mean[0].reshape(1, -1, 1)),
+                self.std[0].reshape(1, -1, 1)),
+            torch.mul(torch.add(dataframe.output, self.mean[1]), self.std[1]))
 
+    def updateNormalization(self, settings):
+        assert "dataset_normalization" in settings.keys()
+
+        # Update mean and std just in case
+        self.mean = torch.Tensor(settings["dataset_normalization"]["mean"]).type(dtype)
+        self.std = torch.Tensor(settings["dataset_normalization"]["std"]).type(dtype)
+
+    def evaluate(self, data, settings):
+        data_seq, _, _ = self.prepare_data(data, settings["seq_length"],
+                                           self_normalize=False)
+
+        data_seq = self.normalize(data_seq)
         criterion = nn.MSELoss()
         out, _ = self(data_seq.input)
         loss = criterion(out, data_seq.output.view(out.size()[0], -1))
         return loss.item()
 
     @staticmethod
-    def prepare_data(data_list, seq_len, normalize=True):
+    def prepare_data(data_list, seq_len, self_normalize=True):
         """
         Prepare sequences of a given length given the input data
         """
@@ -85,7 +100,7 @@ class NN(nn.Module):
         std = np.mean(np.array([[np.std(t, axis=1) for t in data_list.input], [
             np.std(t) for t in data_list.output]]), axis=1)
 
-        if normalize:
+        if self_normalize:
             # Normalize the data, bring it back to zero mean and STD of 1
             data_normalize = Dataframe([], [])
 
@@ -120,18 +135,26 @@ class NN(nn.Module):
 
         return training_data, mean, std
 
-    def fit(self, train, test, epoch=50, batch_size=50, seq_len=100):
+    def fit(self, train, test, settings, epoch=50, batch_size=50):
         optimizer = optim.SGD(self.parameters(), lr=0.01)
         criterion = nn.MSELoss()
 
         # Prepare the data in batches
-        train_seq, self.mean, self.std = self.prepare_data(train,
-                                                           seq_len,
-                                                           normalize=True)
+        if "dataset_normalization" in settings.keys():
+            train_seq, _, _ = self.prepare_data(train,
+                                                settings["seq_length"],
+                                                self_normalize=False)
+
+            train_seq = self.normalize(train_seq)
+
+        else:
+            train_seq, self.mean, self.std = self.prepare_data(train,
+                                                               settings["seq_length"],
+                                                               self_normalize=True)
 
         test_seq, _, _ = self.prepare_data(test,
-                                           seq_len,
-                                           normalize=False)
+                                           settings["seq_length"],
+                                           self_normalize=False)
 
         # Test data needs to be normalized with the same coefficients as training data
         test_seq = self.normalize(test_seq)
@@ -176,7 +199,7 @@ class NN(nn.Module):
 
     def predict(self, data, seq_len=100):
         # batch and normalize
-        test_seq, _, _ = self.prepare_data(data, seq_len, normalize=False)
+        test_seq, _, _ = self.prepare_data(data, seq_len, self_normalize=False)
         test_seq = self.normalize(test_seq)
 
         # De-normalize the output
@@ -191,8 +214,3 @@ class NN(nn.Module):
         Should be overriden by all subclasses.
         """
         raise NotImplementedError
-
-    @staticmethod
-    def _conv_out(in_dim, kernel_size, stride=1, padding=0, dilation=1):
-        return np.floor((in_dim + 2 * padding - dilation *
-                         (kernel_size - 1) - 1) / stride + 1)

@@ -9,11 +9,15 @@ _DEFAULTS = {
     "inputs": ['wind_speed', 'wind_angle_x', 'wind_angle_y', 'rudder_angle'],
     "outputs": ['boat_speed'],
     "network_filename": "trained/conv.pt",
-    "hidden_size": 128,
-    "seq_length": 64,
+    "hidden_size": 64,
+    "seq_length": 128,
     "training_ratio": 0.9,
-    "batch_size": 15000,
-    "epoch": 1
+    "batch_size": 8000,
+    "epoch": 50,
+    "dataset_normalization": {
+        "mean": [13.60, -0.08, 0.28, -0.57],
+        "std": [2.41, 0.32, 0.52, 7.22]
+    }
 }
 
 

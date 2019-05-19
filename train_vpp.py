@@ -26,18 +26,21 @@ dnn = Conv(logdir='logs/conv',
            hidden_size=training_settings["hidden_size"],
            filename=training_settings["network_filename"])
 
+# Load pre-computed normalization values
+dnn.updateNormalization(training_settings)
+
 if not dnn.valid():
     dnn.fit(training_data,
             testing_data,
+            settings=training_settings,
             epoch=EPOCH,
-            batch_size=BATCH_SIZE,
-            seq_len=training_settings["seq_length"])
+            batch_size=BATCH_SIZE)
     dnn.save(training_settings["network_filename"])
 
 
 testScore = dnn.evaluate(
     testing_data,
-    seq_len=training_settings["seq_length"])
+    training_settings)
 
 print('Final test Score: %.2f RMSE' % np.sqrt(testScore))
 
@@ -48,9 +51,18 @@ prediction = dnn.predict(
     testing_data,
     seq_len=training_settings["seq_length"]).flatten()
 
+# Split the output sequence to re-align
+current_i = 0
+splits = []
 
-plt.parrallel_plot([np.concatenate([t.flatten() for t in testing_data.output]), prediction],
-                   ["Ground truth", "Conv"],
-                   "Neural network predictions vs ground truth")
+for dataset in testing_data.output:
+    current_i += len(dataset)
+    splits.append(current_i)
+prediction = np.split(prediction, splits)
+
+plt.parrallel_plot([testing_data.output, prediction],
+                   ["Ground truth" for _ in range(len(testing_data.output))] +
+                   ["Conv" for _ in range(len(prediction))],
+                   "Network predictions vs ground truth")
 
 print('--Done')

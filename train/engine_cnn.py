@@ -37,7 +37,7 @@ class Conv(NN):
 
         out_conv_size = self._get_conv_out(input_size)
 
-        # Ends with a fully connected layer
+        # Ends with two fully connected layers
         self.fc = nn.Sequential(nn.Linear(out_conv_size, 512),
                                 nn.ReLU(),
                                 nn.Linear(512, self.output_size))
@@ -70,11 +70,12 @@ class Conv(NN):
             print("Could not find or load existing NN")
             return False
 
-    def _get_conv_out(self, shape):
-        # Useful to compute the shape out of the conv blocks (including eventual padding..)
-        o = self.conv(torch.zeros(1, *shape))
-        return int(np.prod(o.size()))
-
     def forward(self, inputs, hidden=None):
         features = self.conv(inputs).view(inputs.size()[0], -1)
         return self.fc(features), None
+
+    def _get_conv_out(self, shape):
+        # Useful to compute the shape out of the conv blocks
+        # (including eventual padding..)
+        o = self.conv(torch.zeros(1, *shape))
+        return int(np.prod(o.size()))
