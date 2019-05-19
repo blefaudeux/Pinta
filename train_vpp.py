@@ -37,7 +37,7 @@ if not dnn.valid():
             epoch=EPOCH,
             batch_size=BATCH_SIZE,
             self_normalize=False)
-    dnn.save(training_settings["network_filename"])
+    dnn.save('trained/' + settings.get_name() + '.pt')
 
 
 testScore = dnn.evaluate(
