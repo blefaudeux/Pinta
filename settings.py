@@ -8,21 +8,32 @@ Dataframe = namedtuple("Dataframe", ["input", "output"])
 _DEFAULTS = {
     "inputs": ['wind_speed', 'wind_angle_x', 'wind_angle_y', 'rudder_angle'],
     "outputs": ['boat_speed'],
-    "network_filename": "trained/conv.pt",
-    "hidden_size": 64,
+    "network_root_name": "conv",
+    "hidden_size": 32,
     "seq_length": 128,
     "training_ratio": 0.9,
-    "batch_size": 8000,
+    "batch_size": 15000,
     "epoch": 50,
     "dataset_normalization": {
-        "mean": [13.60, -0.08, 0.28, -0.57],
-        "std": [2.41, 0.32, 0.52, 7.22]
+        "input": {
+            "mean": [13.60, -0.08, 0.28, -0.57],
+            "std": [2.41, 0.32, 0.52, 7.22]
+        },
+        "output": {
+            "mean": 6.48,
+            "std": 1.69
+        }
     }
 }
 
 
 def get_defaults():
     return _DEFAULTS
+
+
+def get_name():
+    return _DEFAULTS["network_root_name"] + "_seq_" + \
+        _DEFAULTS["seq_length"] + "_hidden_" + _DEFAULTS["hidden_size"]
 
 
 def save(filename, settings):

@@ -21,10 +21,11 @@ INPUT_SIZE = [len(training_settings["inputs"]),
               training_settings["seq_length"]]
 
 print(f"Training on {len(training_data.input)} samples. Batch is {BATCH_SIZE}")
-dnn = Conv(logdir='logs/conv',
+
+dnn = Conv(logdir='logs/' + settings.get_name(),
            input_size=INPUT_SIZE,
            hidden_size=training_settings["hidden_size"],
-           filename=training_settings["network_filename"])
+           filename='trained/' + settings.get_name() + '.pt')
 
 # Load pre-computed normalization values
 dnn.updateNormalization(training_settings)
@@ -34,7 +35,8 @@ if not dnn.valid():
             testing_data,
             settings=training_settings,
             epoch=EPOCH,
-            batch_size=BATCH_SIZE)
+            batch_size=BATCH_SIZE,
+            self_normalize=False)
     dnn.save(training_settings["network_filename"])
 
 
