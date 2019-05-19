@@ -74,8 +74,11 @@ class NN(nn.Module):
         assert "dataset_normalization" in settings.keys()
 
         # Update mean and std just in case
-        self.mean = torch.Tensor(settings["dataset_normalization"]["mean"]).type(dtype)
-        self.std = torch.Tensor(settings["dataset_normalization"]["std"]).type(dtype)
+        self.mean = [torch.Tensor(settings["dataset_normalization"]["input"]["mean"]).type(dtype),
+                     torch.Tensor(settings["dataset_normalization"]["output"]["mean"]).type(dtype)]
+
+        self.std = [torch.Tensor(settings["dataset_normalization"]["input"]["std"]).type(dtype),
+                    torch.Tensor(settings["dataset_normalization"]["output"]["std"]).type(dtype)]
 
     def evaluate(self, data, settings):
         data_seq, _, _ = self.prepare_data(data, settings["seq_length"],
@@ -135,19 +138,20 @@ class NN(nn.Module):
 
         return training_data, mean, std
 
-    def fit(self, train, test, settings, epoch=50, batch_size=50):
+    def fit(self, train, test, settings, epoch=50, batch_size=50, self_normalize=False):
         optimizer = optim.SGD(self.parameters(), lr=0.01)
         criterion = nn.MSELoss()
 
         # Prepare the data in batches
-        if "dataset_normalization" in settings.keys():
+        if not self_normalize:
+            # Use the normalization defined in the settings
             train_seq, _, _ = self.prepare_data(train,
                                                 settings["seq_length"],
                                                 self_normalize=False)
 
             train_seq = self.normalize(train_seq)
-
         else:
+            # Compute the dataset normalization on the fly
             train_seq, self.mean, self.std = self.prepare_data(train,
                                                                settings["seq_length"],
                                                                self_normalize=True)
