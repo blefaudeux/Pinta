@@ -20,8 +20,8 @@ _DEFAULTS = {
             "std": [2.41, 0.32, 0.52, 7.22]
         },
         "output": {
-            "mean": 6.48,
-            "std": 1.69
+            "mean": [6.48],
+            "std": [1.69]
         }
     }
 }
@@ -33,7 +33,8 @@ def get_defaults():
 
 def get_name():
     return _DEFAULTS["network_root_name"] + "_seq_" + \
-        _DEFAULTS["seq_length"] + "_hidden_" + _DEFAULTS["hidden_size"]
+        str(_DEFAULTS["seq_length"]) + "_hidden_" + str(_DEFAULTS["hidden_size"]) + \
+        "_batch_" + str(_DEFAULTS["batch_size"])
 
 
 def save(filename, settings):
