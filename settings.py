@@ -23,6 +23,10 @@ _DEFAULTS = {
             "mean": [6.48],
             "std": [1.69]
         }
+    },
+    "training": {
+        "lr_period_decrease": 10,
+        "lr_amount_decrease": 0.9
     }
 }
 
@@ -34,7 +38,9 @@ def get_defaults():
 def get_name():
     return _DEFAULTS["network_root_name"] + "_seq_" + \
         str(_DEFAULTS["seq_length"]) + "_hidden_" + str(_DEFAULTS["hidden_size"]) + \
-        "_batch_" + str(_DEFAULTS["batch_size"])
+        "_batch_" + str(_DEFAULTS["batch_size"]) \
+        + "_lr_" + str(_DEFAULTS["training"]["lr_period_decrease"]) \
+        + "_" + str(_DEFAULTS["training"]["lr_amount_decrease"])
 
 
 def save(filename, settings):

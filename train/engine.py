@@ -165,9 +165,6 @@ class NN(nn.Module):
 
         print("Training the network...")
 
-        LR_PERIOD_DECREASE = 5
-        LR_AMOUNT_DECREASE = 0.9
-
         for i in range(epoch):
             print(f'\n***** Epoch {i}')
 
@@ -194,10 +191,10 @@ class NN(nn.Module):
                 print("Test loss: {:.4f}\n".format(loss.item()))
 
             # Update learning rate if needed
-            if not (i + 1) % LR_PERIOD_DECREASE:
+            if not (i + 1) % settings["training"]["lr_period_decrease"]:
                 print("Reducing learning rate")
                 for g in optimizer.param_groups:
-                    g['lr'] *= LR_AMOUNT_DECREASE
+                    g['lr'] *= settings["training"]["lr_amount_decrease"]
 
         print("... Done")
 
