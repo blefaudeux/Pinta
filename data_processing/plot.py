@@ -85,6 +85,9 @@ def parrallel_plot(data_list, legend_list, title=None):
     traces = []
 
     for data, name in zip(data_list, legend_list):
+        if len(data.shape) > 1:
+            data = data.flatten()
+
         traces.append(
             go.Scatter(
                 y=data,

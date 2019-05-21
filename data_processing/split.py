@@ -1,5 +1,5 @@
 import numpy as np
-from settings import Dataframe
+from settings import TrainingSet
 
 
 def split(raw_data, settings):
@@ -20,4 +20,4 @@ def split(raw_data, settings):
     train_output = np.array([train[cat].values for cat in cat_out]).transpose()
     test_output = np.array([test[cat].values for cat in cat_out]).transpose()
 
-    return Dataframe(train_inputs, train_output), Dataframe(test_inputs, test_output)
+    return TrainingSet(train_inputs, train_output), TrainingSet(test_inputs, test_output)

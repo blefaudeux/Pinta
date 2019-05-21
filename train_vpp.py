@@ -62,7 +62,7 @@ for dataset in testing_data.output:
     splits.append(current_i)
 prediction = np.split(prediction, splits)
 
-plt.parrallel_plot([testing_data.output, prediction],
+plt.parrallel_plot(testing_data.output + prediction,
                    ["Ground truth" for _ in range(len(testing_data.output))] +
                    ["Conv" for _ in range(len(prediction))],
                    "Network predictions vs ground truth")

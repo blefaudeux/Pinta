@@ -10,7 +10,7 @@ from torch.autograd import Variable
 import numpy as np
 import logging
 from tensorboardX import SummaryWriter
-from settings import Dataframe
+from settings import TrainingSet
 
 # Handle GPU compute if available
 dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
@@ -57,14 +57,14 @@ class NN(nn.Module):
             torch.save(self.state_dict(), f)
 
     def normalize(self, dataframe):
-        return Dataframe(
+        return TrainingSet(
             torch.div(
                 torch.add(dataframe.input, - self.mean[0].reshape(1, -1, 1)),
                 self.std[0].reshape(1, -1, 1)),
             torch.div(torch.add(dataframe.output, - self.mean[1]), self.std[1]))
 
     def denormalize(self, dataframe):
-        return Dataframe(
+        return TrainingSet(
             torch.mul(
                 torch.add(dataframe.input, self.mean[0].reshape(1, -1, 1)),
                 self.std[0].reshape(1, -1, 1)),
@@ -105,7 +105,7 @@ class NN(nn.Module):
 
         if self_normalize:
             # Normalize the data, bring it back to zero mean and STD of 1
-            data_normalize = Dataframe([], [])
+            data_normalize = TrainingSet([], [])
 
             for data in data_list.input:
                 data = np.subtract(data.transpose(), mean[0]).transpose()
@@ -134,7 +134,7 @@ class NN(nn.Module):
             a, b = generate_temporal_seq(data_in, data_out, seq_len)
             inputs.append(a), outputs.append(b)
 
-        training_data = Dataframe(torch.cat(inputs), torch.cat(outputs))
+        training_data = TrainingSet(torch.cat(inputs), torch.cat(outputs))
 
         return training_data, mean, std
 
@@ -174,8 +174,8 @@ class NN(nn.Module):
             for batch_index in range(0, train_seq.input.shape[0], batch_size):
                 # Eval computation on the training data
                 def closure():
-                    data = Dataframe(train_seq.input[batch_index:batch_index+batch_size, :, :],
-                                     train_seq.output[batch_index:batch_index+batch_size, :])
+                    data = TrainingSet(train_seq.input[batch_index:batch_index+batch_size, :, :],
+                                       train_seq.output[batch_index:batch_index+batch_size, :])
 
                     optimizer.zero_grad()
                     out, _ = self(data.input)

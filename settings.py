@@ -2,15 +2,15 @@ import json
 
 # Our lightweight data structure..
 from collections import namedtuple
-Dataframe = namedtuple("Dataframe", ["input", "output"])
+TrainingSet = namedtuple("TrainingSet", ["input", "output"])
 
 
 _DEFAULTS = {
     "inputs": ['wind_speed', 'wind_angle_x', 'wind_angle_y', 'rudder_angle'],
     "outputs": ['boat_speed'],
     "network_root_name": "conv",
-    "hidden_size": 32,
-    "seq_length": 256,
+    "hidden_size": 64,
+    "seq_length": 128,
     "training_ratio": 0.9,
     "batch_size": 10000,
     "epoch": 50,

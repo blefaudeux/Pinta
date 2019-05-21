@@ -3,7 +3,7 @@ import os
 from data_processing.nmea2pandas import load_json
 from data_processing.whitening import whiten_angle
 from data_processing.split import split
-from settings import Dataframe
+from settings import TrainingSet
 import numpy as np
 
 
@@ -43,8 +43,8 @@ def package_data(raw, settings):
     if not isinstance(raw, list):
         raw = [raw]
 
-    training_data = Dataframe(input=[], output=[])
-    testing_data = Dataframe(input=[], output=[])
+    training_data = TrainingSet(input=[], output=[])
+    testing_data = TrainingSet(input=[], output=[])
 
     for pair in raw:
         # Handle the angular coordinates discontinuity -> split x/y components
