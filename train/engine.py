@@ -144,10 +144,7 @@ class NN(nn.Module):
         assert training_set.input.shape[0] == training_set.output.shape[0]
 
         shuffle = torch.randperm(training_set.input.shape[0])
-        training_set.input = training_set.input[shuffle]
-        training_set.output = training_set.input[shuffle]
-
-        return training_set
+        return TrainingSet(training_set.input[shuffle], training_set.output[shuffle])
 
     def fit(self, train, test, settings, epoch=50, batch_size=50, self_normalize=False):
         optimizer = optim.SGD(self.parameters(), lr=0.01)
@@ -192,6 +189,7 @@ class NN(nn.Module):
                     loss = criterion(out, data.output)
                     print('Train loss: {:.4f}'.format(loss.item()))
                     self.summary_writer.add_scalar('train', loss.item(), i)
+                    # Add to the gradient
                     loss.backward()
                     return loss
 
