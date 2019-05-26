@@ -138,6 +138,17 @@ class NN(nn.Module):
 
         return training_data, mean, std
 
+    @staticmethod
+    def randomize_data(training_set):
+        # Randomize the input/output pairs
+        assert training_set.input.shape[0] == training_set.output.shape[0]
+
+        shuffle = torch.randperm(training_set.input.shape[0])
+        training_set.input = training_set.input[shuffle]
+        training_set.output = training_set.input[shuffle]
+
+        return training_set
+
     def fit(self, train, test, settings, epoch=50, batch_size=50, self_normalize=False):
         optimizer = optim.SGD(self.parameters(), lr=0.01)
         criterion = nn.MSELoss()
@@ -155,6 +166,8 @@ class NN(nn.Module):
             train_seq, self.mean, self.std = self.prepare_data(train,
                                                                settings["seq_length"],
                                                                self_normalize=True)
+
+        self.randomize_data(train_seq)
 
         test_seq, _, _ = self.prepare_data(test,
                                            settings["seq_length"],
@@ -183,6 +196,7 @@ class NN(nn.Module):
                     return loss
 
                 optimizer.step(closure)
+                optimizer.zero_grad()
 
                 # Loss on the test data
                 pred, _ = self(test_seq.input)
