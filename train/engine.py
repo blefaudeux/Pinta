@@ -194,7 +194,6 @@ class NN(nn.Module):
                     return loss
 
                 optimizer.step(closure)
-                optimizer.zero_grad()
 
                 # Loss on the test data
                 pred, _ = self(test_seq.input)
