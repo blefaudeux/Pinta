@@ -3,7 +3,7 @@ import numpy as np
 from collections import namedtuple
 
 SpeedPolarPoint = namedtuple(
-    "SpeedPolarPoint", ["wind_angle",  "wind_speed", "rudder_angle", "boat_speed"])
+    "SpeedPolarPoint", ["wind_angle", "wind_speed", "rudder_angle", "boat_speed"])
 
 
 def generate(engine, wind_range, wind_step, angular_step):

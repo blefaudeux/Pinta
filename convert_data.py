@@ -17,7 +17,8 @@ def handle_directory(path):
         for filename in filenames:
             if filename.endswith('.nmea'):
                 filename = os.path.splitext(filename)[0]
-                nmea_files[filename] = os.path.abspath(os.sep.join([dirpath, filename])+'.nmea')
+                nmea_files[filename] = os.path.abspath(
+                    os.sep.join([dirpath, filename])+'.nmea')
 
             if filename.endswith('.json'):
                 json_files[os.path.splitext(filename)[0]] = 1
@@ -32,4 +33,3 @@ def handle_directory(path):
 
 if __name__ == '__main__':
     handle_directory("data")
-

@@ -6,9 +6,7 @@ Implement different NNs which best describe the behaviour of the system
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.autograd import Variable
 import numpy as np
-import logging
 from tensorboardX import SummaryWriter
 from settings import TrainingSet
 
@@ -188,7 +186,7 @@ class NN(nn.Module):
                     out, _ = self(data.input)
                     loss = criterion(out, data.output)
                     print('Train loss: {:.4f}'.format(loss.item()))
-                    self.summary_writer.add_scalar('train', loss.item(), i)
+                    self.summary_writer.add_scalar('train', loss.item())
                     # Add to the gradient
                     loss.backward()
                     return loss
@@ -198,7 +196,7 @@ class NN(nn.Module):
                 # Loss on the test data
                 pred, _ = self(test_seq.input)
                 loss = criterion(pred, test_seq.output)
-                self.summary_writer.add_scalar('test', loss.item(), i)
+                self.summary_writer.add_scalar('test', loss.item())
                 print("Test loss: {:.4f}\n".format(loss.item()))
 
             # Update learning rate if needed

@@ -2,7 +2,7 @@
 
 import numpy as np
 from data_processing import plot as plt
-from data_processing.load import load, load_folder, package_data
+from data_processing.load import load_folder, package_data
 # from train.engine_rnn import ConvRNN
 from train.engine_cnn import Conv
 import settings
