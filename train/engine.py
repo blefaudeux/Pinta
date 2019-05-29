@@ -95,11 +95,20 @@ class NN(nn.Module):
         """
 
         # Compute some stats on the data
-        mean = np.mean(np.array([[np.mean(t, axis=1) for t in data_list.input],
-                                 [np.mean(t) for t in data_list.output]]), axis=1)
+        try:
+            mean = np.mean(np.array([[np.mean(t, axis=1) for t in data_list.input],
+                                     [np.mean(t) for t in data_list.output]]), axis=1)
 
-        std = np.mean(np.array([[np.std(t, axis=1) for t in data_list.input], [
-            np.std(t) for t in data_list.output]]), axis=1)
+            std = np.mean(np.array([[np.std(t, axis=1) for t in data_list.input], [
+                np.std(t) for t in data_list.output]]), axis=1)
+
+        except IndexError:
+            # The data is not packed in a tensor, we need to generate one on the fly
+            mean = [data_list.input, data_list.output]
+            std = [np.array([1.]), np.array([1.])]
+            pack_in = np.array([[data_list.input for i in range(seq_len)]])
+            pack_out = np.array([[data_list.output for i in range(seq_len)]])
+            data_list = TrainingSet(pack_in, pack_out)
 
         if self_normalize:
             # Normalize the data, bring it back to zero mean and STD of 1

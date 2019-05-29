@@ -22,6 +22,10 @@ engine = Conv(logdir='logs/' + settings.get_name(),
               hidden_size=training_settings["hidden_size"],
               filename='trained/' + settings.get_name() + '.pt')
 
+if not engine.valid():
+    print("Failed loading the model, cannot continue")
+    exit(-1)
+
 # Generate data all along the curve
 polar_data = polar.generate(engine, [5, 25], 5, .1)
 
