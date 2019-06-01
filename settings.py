@@ -10,10 +10,10 @@ _DEFAULTS = {
     "outputs": ['boat_speed'],
     "network_root_name": "conv",
     "hidden_size": 64,
-    "seq_length": 96,
+    "seq_length": 128,
     "training_ratio": 0.9,
     "batch_size": 20000,
-    "epoch": 100,
+    "epoch": 50,
     "dataset_normalization": {
         "input": {
             "mean": [13.60, -0.08, 0.28, -0.57],

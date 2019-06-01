@@ -25,9 +25,12 @@ def generate_temporal_seq(input, output, seq_len):
 
     n_sequences = input.shape[1] - seq_len + 1
 
-    return torch.from_numpy(np.array([input[:, start:start+seq_len]
-                                      for start in range(n_sequences)])
-                            ).type(dtype), torch.from_numpy(output[:-seq_len, :]).type(dtype)
+    input_seq = np.array([input[:, start:start+seq_len]
+                          for start in range(n_sequences)])
+
+    output_seq = np.array(output[:-seq_len+1, :])
+
+    return torch.from_numpy(input_seq).type(dtype), torch.from_numpy(output_seq).type(dtype)
 
 
 class NN(nn.Module):
