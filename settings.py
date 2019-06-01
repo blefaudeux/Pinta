@@ -9,11 +9,11 @@ _DEFAULTS = {
     "inputs": ['wind_speed', 'wind_angle_x', 'wind_angle_y', 'rudder_angle'],
     "outputs": ['boat_speed'],
     "network_root_name": "conv",
-    "hidden_size": 32,
+    "hidden_size": 64,
     "seq_length": 96,
     "training_ratio": 0.9,
     "batch_size": 20000,
-    "epoch": 50,
+    "epoch": 100,
     "dataset_normalization": {
         "input": {
             "mean": [13.60, -0.08, 0.28, -0.57],
@@ -25,7 +25,7 @@ _DEFAULTS = {
         }
     },
     "training": {
-        "lr_period_decrease": 10,
+        "lr_period_decrease": 20,
         "lr_amount_decrease": 0.9
     }
 }

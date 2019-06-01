@@ -26,6 +26,8 @@ if not engine.valid():
     print("Failed loading the model, cannot continue")
     exit(-1)
 
+engine.updateNormalization(training_settings)
+
 # Generate data all along the curve
 polar_data = polar.generate(engine, [5, 25], 5, .1)
 

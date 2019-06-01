@@ -23,7 +23,7 @@ def generate_temporal_seq(input, output, seq_len):
     Generate all the subsequences over time for the conv training
     """
 
-    n_sequences = input.shape[1] - seq_len
+    n_sequences = input.shape[1] - seq_len + 1
 
     return torch.from_numpy(np.array([input[:, start:start+seq_len]
                                       for start in range(n_sequences)])
@@ -181,7 +181,7 @@ class NN(nn.Module):
         test_seq = self.normalize(test_seq)
 
         print("Training the network...")
-
+        i_log = 0
         for i in range(epoch):
             print(f'\n***** Epoch {i}')
 
@@ -195,7 +195,7 @@ class NN(nn.Module):
                     out, _ = self(data.input)
                     loss = criterion(out, data.output)
                     print('Train loss: {:.4f}'.format(loss.item()))
-                    self.summary_writer.add_scalar('train', loss.item())
+                    self.summary_writer.add_scalar('train', loss.item(), i_log)
                     # Add to the gradient
                     loss.backward()
                     return loss
@@ -205,8 +205,9 @@ class NN(nn.Module):
                 # Loss on the test data
                 pred, _ = self(test_seq.input)
                 loss = criterion(pred, test_seq.output)
-                self.summary_writer.add_scalar('test', loss.item())
+                self.summary_writer.add_scalar('test', loss.item(), i_log)
                 print("Test loss: {:.4f}\n".format(loss.item()))
+                i_log += 1
 
             # Update learning rate if needed
             if not (i + 1) % settings["training"]["lr_period_decrease"]:
@@ -217,6 +218,11 @@ class NN(nn.Module):
         print("... Done")
 
     def predict(self, data, seq_len=100):
+        if data.input.size == data.input.shape[0]:
+            # Only one sample, need some -constant- padding
+            data = TrainingSet([np.repeat(np.array([data.input]), seq_len, axis=0).transpose()],
+                               [np.repeat(np.array([data.output]), seq_len, axis=0).transpose()])
+
         # batch and normalize
         test_seq, _, _ = self.prepare_data(data, seq_len, self_normalize=False)
         test_seq = self.normalize(test_seq)
