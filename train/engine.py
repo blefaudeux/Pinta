@@ -221,7 +221,7 @@ class NN(nn.Module):
         print("... Done")
 
     def predict(self, data, seq_len=100):
-        if data.input.size == data.input.shape[0]:
+        if not isinstance(data.input, list) and data.input.size == data.input.shape[0]:
             # Only one sample, need some -constant- padding
             data = TrainingSet([np.repeat(np.array([data.input]), seq_len, axis=0).transpose()],
                                [np.repeat(np.array([data.output]), seq_len, axis=0).transpose()])
