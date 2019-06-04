@@ -53,18 +53,22 @@ prediction = dnn.predict(
     testing_data,
     seq_len=training_settings["seq_length"]).flatten()
 
-# Split the output sequence to re-align
-current_i = 0
+# Split the output sequence to re-align,
+# ! need to take sequence length into account, offset
+reference = []
 splits = []
+i = 0
 
 for dataset in testing_data.output:
-    current_i += len(dataset)
-    splits.append(current_i)
+    reference.append(dataset[training_settings["seq_length"]-1:])
+    i += reference[-1].shape[0]
+    splits.append(i)
+
 prediction = np.split(prediction, splits)
 
-plt.parrallel_plot(testing_data.output + prediction,
-                   ["Ground truth" for _ in range(len(testing_data.output))] +
-                   ["Conv" for _ in range(len(prediction))],
-                   "Network predictions vs ground truth")
+plt.parallel_plot(reference + prediction,
+                  ["Ground truth" for _ in range(len(testing_data.output))] +
+                  ["Conv" for _ in range(len(prediction))],
+                  "Network predictions vs ground truth")
 
 print('--Done')

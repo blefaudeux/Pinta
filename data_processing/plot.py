@@ -81,7 +81,7 @@ def speed_plot(df, decimation=2, filename='speed_polar'):
 
 
 # Plot any traces in parallel
-def parrallel_plot(data_list, legend_list, title=None):
+def parallel_plot(data_list, legend_list, title=None):
     traces = []
 
     for data, name in zip(data_list, legend_list):

@@ -95,3 +95,4 @@ ENV/
 .directory
 *.html
 logs
+.mypy_cache
