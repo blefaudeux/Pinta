@@ -60,7 +60,7 @@ splits = []
 i = 0
 
 for dataset in testing_data.output:
-    reference.append(dataset[training_settings["seq_length"]-1:])
+    reference.append(dataset[:-training_settings["seq_length"]+1])
     i += reference[-1].shape[0]
     splits.append(i)
 

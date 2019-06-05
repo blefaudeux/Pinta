@@ -9,11 +9,11 @@ _DEFAULTS = {
     "inputs": ['wind_speed', 'wind_angle_x', 'wind_angle_y', 'rudder_angle'],
     "outputs": ['boat_speed'],
     "network_root_name": "conv",
-    "hidden_size": 64,
-    "seq_length": 128,
+    "hidden_size": 96,
+    "seq_length": 96,
     "training_ratio": 0.9,
     "batch_size": 20000,
-    "epoch": 20,
+    "epoch": 200,
     "dataset_normalization": {
         "input": {
             "mean": [13.60, -0.08, 0.28, -0.57],

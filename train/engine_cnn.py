@@ -20,7 +20,7 @@ class Conv(NN):
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = 1
-        KERNEL_SIZE = 32
+        KERNEL_SIZE = 16
 
         # Conv front end
         # First conv is a depthwise convolution
@@ -36,7 +36,9 @@ class Conv(NN):
         # Ends with two fully connected layers
         self.fc = nn.Sequential(nn.Linear(out_conv_size, 512),
                                 nn.ReLU(),
-                                nn.Linear(512, self.output_size))
+                                nn.Linear(512, 256),
+                                nn.ReLU(),
+                                nn.Linear(256, self.output_size))
 
         # CUDA switch > Needs to be done after the model has been declared
         if dtype is torch.cuda.FloatTensor:
