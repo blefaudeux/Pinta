@@ -24,6 +24,8 @@ class Conv(NN):
 
         # Conv front end
         # First conv is a depthwise convolution
+        # Remark: All inputs convolved to all outputs. This could be changed
+        # with the groups flag
         self.conv = nn.Sequential(nn.Conv1d(input_size[0], hidden_size,
                                             kernel_size=KERNEL_SIZE),
                                   nn.ReLU(),
@@ -32,6 +34,7 @@ class Conv(NN):
                                   nn.ReLU())
 
         out_conv_size = self._get_conv_out(input_size)
+        print(f"Feature vector size out of the convolution is {out_conv_size}")
 
         # Ends with two fully connected layers
         self.fc = nn.Sequential(nn.Linear(out_conv_size, 512),
@@ -69,7 +72,10 @@ class Conv(NN):
             return False
 
     def forward(self, inputs, hidden=None):
+        # One feature vector per sample in. Rearrange accordingly
         features = self.conv(inputs).view(inputs.size()[0], -1)
+
+        # The feature vector goes through the fully connected layers, and we're good
         return self.fc(features), None
 
     def _get_conv_out(self, shape):

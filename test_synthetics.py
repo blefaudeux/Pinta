@@ -29,7 +29,8 @@ if not engine.valid():
 engine.updateNormalization(training_settings)
 
 # Generate data all along the curve
-polar_data = polar.generate(engine, [5, 25], 5, .1)
+polar_data = polar.generate(engine, [5, 25], 5, .1, training_settings["seq_length"])
 
 # Plot all that
+print(polar_data)
 # TODO: Ben
