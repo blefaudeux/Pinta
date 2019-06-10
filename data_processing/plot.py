@@ -4,6 +4,8 @@ import plotly.offline as py
 from plotly import tools
 from math import ceil
 import os
+from synthetic.polar import SpeedPolarPoint
+from typing import List, Dict
 
 """ Several helper functions to produce plots, pretty self-explanatory """
 
@@ -15,8 +17,60 @@ def handle_save(filename):
     return "plots/" + filename + ".html"
 
 
-# Speed polar plot
-def speed_plot(df, decimation=2, filename='speed_polar'):
+def polar_plot(data: List[SpeedPolarPoint], filename: str = 'speed_polar'):
+    #  Gather polar lines
+    speed_lines = {}  # type: Dict[float, List[int]]
+
+    for i, point in enumerate(data):
+        if point.wind_speed in speed_lines.keys():
+            speed_lines[point.wind_speed].append(i)
+        else:
+            speed_lines[point.wind_speed] = [i]
+
+    # Plot one line per wind speed
+    traces = []
+    for wind_speed in speed_lines.keys():
+        twa_rad = np.array([data[k].wind_angle for k in speed_lines[wind_speed]]).flatten()
+        boat_speeds = np.array([data[k].boat_speed for k in speed_lines[wind_speed]]).flatten()
+
+        labels = ["Wind: {}deg - {}kt ** Boat: {}kt".format(angle, wind_speed, boat_speed)
+                  for angle, boat_speed in zip(twa_rad, boat_speeds)]
+
+        traces.append(go.Scatterpolar(
+            r=boat_speeds,
+            theta=np.degrees(-twa_rad),
+            mode='lines',
+            marker=dict(
+                size=6,
+                color=boat_speeds,
+                colorscale='Portland',
+                showscale=True,
+                opacity=0.5
+            ),
+            text=labels,
+            name="Wind {}kt".format(wind_speed)
+        ))
+
+    # Some styling, get something reasonable
+    layout = go.Layout(
+        title='Speed vs True Wind',
+        orientation=90,
+        autosize=False,
+        width=800,
+        height=800,
+        hovermode='closest',
+        plot_bgcolor='rgb(245, 245, 245)',
+        polar={
+            "angularaxis": {"rotation": 90}}
+    )
+
+    fig = go.Figure(data=traces, layout=layout)
+    py.plot(fig, filename=handle_save(filename), auto_open=True)
+
+    return
+
+
+def speed_plot(df, decimation=2, filename='speed_polar_raw'):
     print("\nPlotting data")
 
     # - raw polar plot

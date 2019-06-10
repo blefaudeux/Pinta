@@ -3,6 +3,7 @@
 from train.engine_cnn import Conv
 import settings
 from synthetic import polar
+from data_processing.plot import polar_plot
 
 """
 Load a given engine, generate a couple of synthetic plots from it
@@ -31,6 +32,5 @@ engine.updateNormalization(training_settings)
 # Generate data all along the curve
 polar_data = polar.generate(engine, [5, 25], 5, .1, training_settings["seq_length"])
 
-# Plot all that
-print(polar_data)
-# TODO: Ben
+# Plot all that stuff
+polar_plot(polar_data)
