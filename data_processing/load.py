@@ -2,8 +2,9 @@ import os
 
 from data_processing.nmea2pandas import load_json
 from data_processing.whitening import whiten_angle
-from settings import TrainingSet
+from data_processing.training_set import TrainingSet
 import numpy as np
+from typing import List, Tuple
 
 
 def _angle_split(data):
@@ -38,6 +39,17 @@ def load(filename, clean_data=True, whiten_data=True):
     return [data_frame, df_white_angle]
 
 
+def toTrainingSet(raw_data, settings):
+    cat_in = settings["inputs"]
+    cat_out = settings["outputs"]
+
+    # Move samples to first dimension, makes more sense if output is 1d
+    inputs = np.array([raw_data[cat].values for cat in cat_in]).transpose()
+    outputs = np.array([raw_data[cat].values for cat in cat_out]).transpose()
+
+    return TrainingSet.from_numpy(inputs, outputs)
+
+
 def split(raw_data, settings):
     cat_in = settings["inputs"]
     cat_out = settings["outputs"]
@@ -59,34 +71,41 @@ def split(raw_data, settings):
     return TrainingSet(train_inputs, train_output), TrainingSet(test_inputs, test_output)
 
 
-def package_data(raw, settings):
+def load_sets(raw, settings) -> List[TrainingSet]:
     if not isinstance(raw, list):
         raw = [raw]
 
-    training_data = TrainingSet(input=[], output=[])
-    testing_data = TrainingSet(input=[], output=[])
+    training_sets = []
 
     for pair in raw:
         # Handle the angular coordinates discontinuity -> split x/y components
         raw_data = _angle_split(pair[0])
         raw_data_aug = _angle_split(pair[1])
 
-        # Split in between training and test
-        train, test = split(raw_data, settings)
-        train_r, test_r = split(raw_data_aug, settings)
+        # Save both sets, original and flipped
+        training_sets.append(toTrainingSet(raw_data, settings))
+        training_sets.append(toTrainingSet(raw_data_aug, settings))
 
-        # All the sub-datasets are not coherent over time.
-        # Keep a list of them, do not concatenate straight
-        training_data.input.append(train.input)
-        training_data.input.append(train_r.input)
+    return training_sets
 
-        training_data.output.append(train.output)
-        training_data.output.append(train_r.output)
 
-        testing_data.input.append(test.input)
-        testing_data.input.append(test_r.input)
+def get_train_test_list(trainingSets: List[TrainingSet], ratio: float, randomize: bool) \
+        -> Tuple[List[TrainingSet], List[TrainingSet]]:
 
-        testing_data.output.append(test.output)
-        testing_data.output.append(test_r.output)
+    training_data, testing_data = [], []
+
+    for item in trainingSets:
+        train, test = item.get_train_test(ratio, randomize)
+        training_data.append(train)
+        testing_data.append(test)
 
     return training_data, testing_data
+
+
+def pack_sets(trainingSetlist: List[TrainingSet]) -> TrainingSet:
+    final_set = trainingSetlist[0]
+
+    for trainingSet in trainingSetlist[1:]:
+        final_set.append(trainingSet.inputs, trainingSet.outputs)
+
+    return final_set

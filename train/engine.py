@@ -8,7 +8,9 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 from tensorboardX import SummaryWriter
-from settings import TrainingSet
+from settings import TrainingSample
+from data_processing.training_set import TrainingSet
+from typing import List
 
 # Handle GPU compute if available
 dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
@@ -58,14 +60,14 @@ class NN(nn.Module):
             torch.save(self.state_dict(), f)
 
     def normalize(self, dataframe):
-        return TrainingSet(
+        return TrainingSample(
             torch.div(
                 torch.add(dataframe.input, - self.mean[0].reshape(1, -1, 1)),
                 self.std[0].reshape(1, -1, 1)),
             torch.div(torch.add(dataframe.output, - self.mean[1]), self.std[1]))
 
     def denormalize(self, dataframe):
-        return TrainingSet(
+        return TrainingSample(
             torch.mul(
                 torch.add(dataframe.input, self.mean[0].reshape(1, -1, 1)),
                 self.std[0].reshape(1, -1, 1)),
@@ -92,18 +94,26 @@ class NN(nn.Module):
         return loss.item()
 
     @staticmethod
-    def prepare_data(data_list, seq_len, self_normalize=True):
+    def prepare_data(trainingSets: List[TrainingSet], seq_len, self_normalize=True):
         """
         Prepare sequences of a given length given the input data
         """
 
+        # TODO: This should be moved to a dedicated class, this is super messy
+
         # Compute some stats on the data
         try:
-            mean = np.mean(np.array([[np.mean(t, axis=1) for t in data_list.input],
-                                     [np.mean(t) for t in data_list.output]]), axis=1)
+            mean_inputs, mean_outputs, std_inputs, std_outputs = [], [], [], []
+            for t in trainingSets:
+                mean_inputs.append(t.inputs.mean(dim=0))
+                mean_outputs.append(t.outputs.mean(dim=0))
 
-            std = np.mean(np.array([[np.std(t, axis=1) for t in data_list.input], [
-                np.std(t) for t in data_list.output]]), axis=1)
+                std_inputs.append(t.inputs.std(dim=0))
+                std_outputs.append(t.outputs.std(dim=0))
+
+            # To Torch tensor and mean
+            mean = [torch.stack(mean_inputs).mean(dim=0), torch.stack(mean_outputs).mean(dim=0)]
+            std = [torch.stack(std_inputs).mean(dim=0), torch.cat(std_outputs).mean(dim=0)]
 
         except IndexError:
             # The data is not packed in a tensor, we need to generate one on the fly
@@ -111,11 +121,11 @@ class NN(nn.Module):
             std = [np.array([1.]), np.array([1.])]
             pack_in = np.array([[data_list.input for i in range(seq_len)]])
             pack_out = np.array([[data_list.output for i in range(seq_len)]])
-            data_list = TrainingSet(pack_in, pack_out)
+            data_list = TrainingSample(pack_in, pack_out)
 
         if self_normalize:
             # Normalize the data, bring it back to zero mean and STD of 1
-            data_normalize = TrainingSet([], [])
+            data_normalize = TrainingSample([], [])
 
             for data in data_list.input:
                 data = np.subtract(data.transpose(), mean[0]).transpose()
@@ -130,19 +140,13 @@ class NN(nn.Module):
             data_list = data_normalize
             print("Data normalized")
 
-        # To Torch tensor
-        mean = [torch.from_numpy(mean[0]).type(dtype),
-                torch.Tensor([mean[1]]).type(dtype)]
-
-        std = [torch.from_numpy(std[0]).type(dtype),
-               torch.Tensor([std[1]]).type(dtype)]
-
         inputs = []
         outputs = []
 
-        for data_in, data_out in zip(data_list.input, data_list.output):
-            a, b = generate_temporal_seq(data_in, data_out, seq_len)
-            inputs.append(a), outputs.append(b)
+        for trainingSet in trainingSets:
+            a, b = generate_temporal_seq(trainingSet.inputs, trainingSet.outputs, seq_len)
+            inputs.append(a)
+            outputs.append(b)
 
         training_data = TrainingSet(torch.cat(inputs), torch.cat(outputs))
 

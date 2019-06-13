@@ -2,7 +2,7 @@ import json
 
 # Our lightweight data structure..
 from collections import namedtuple
-TrainingSet = namedtuple("TrainingSet", ["input", "output"])
+TrainingSample = namedtuple("TrainingSample", ["input", "output"])
 
 
 _DEFAULTS = {
@@ -10,9 +10,9 @@ _DEFAULTS = {
     "outputs": ['boat_speed'],
     "network_root_name": "conv",
     "hidden_size": 96,
-    "seq_length": 96,
+    "seq_length": 64,
     "training_ratio": 0.9,
-    "batch_size": 20000,
+    "batch_size": 30000,
     "epoch": 200,
     "dataset_normalization": {
         "input": {
