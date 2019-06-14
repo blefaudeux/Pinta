@@ -9,7 +9,7 @@ import torch.optim as optim
 import numpy as np
 from tensorboardX import SummaryWriter
 from settings import TrainingSample
-from data_processing.training_set import TrainingSet
+from data_processing.training_set import TrainingSet, TrainingSetBundle
 from typing import List
 
 # Handle GPU compute if available
@@ -94,61 +94,26 @@ class NN(nn.Module):
         return loss.item()
 
     @staticmethod
-    def prepare_data(trainingSets: List[TrainingSet], seq_len, self_normalize=True):
+    def prepare_data(training_sets: List[TrainingSet], seq_len, self_normalize=True):
         """
         Prepare sequences of a given length given the input data
         """
 
-        # TODO: This should be moved to a dedicated class, this is super messy
+        bundle = TrainingSetBundle(training_sets)
+        mean, std = bundle.get_norm()
 
-        # Compute some stats on the data
-        try:
-            mean_inputs, mean_outputs, std_inputs, std_outputs = [], [], [], []
-            for t in trainingSets:
-                mean_inputs.append(t.inputs.mean(dim=0))
-                mean_outputs.append(t.outputs.mean(dim=0))
-
-                std_inputs.append(t.inputs.std(dim=0))
-                std_outputs.append(t.outputs.std(dim=0))
-
-            # To Torch tensor and mean
-            mean = [torch.stack(mean_inputs).mean(dim=0), torch.stack(mean_outputs).mean(dim=0)]
-            std = [torch.stack(std_inputs).mean(dim=0), torch.cat(std_outputs).mean(dim=0)]
-
-        except IndexError:
-            # The data is not packed in a tensor, we need to generate one on the fly
-            mean = [data_list.input, data_list.output]
-            std = [np.array([1.]), np.array([1.])]
-            pack_in = np.array([[data_list.input for i in range(seq_len)]])
-            pack_out = np.array([[data_list.output for i in range(seq_len)]])
-            data_list = TrainingSample(pack_in, pack_out)
+        # except IndexError:
+        #     # The data is not packed in a tensor, we need to generate one on the fly
+        #     mean = [data_list.input, data_list.output]
+        #     std = [np.array([1.]), np.array([1.])]
+        #     pack_in = np.array([[data_list.input for i in range(seq_len)]])
+        #     pack_out = np.array([[data_list.output for i in range(seq_len)]])
+        #     data_list = TrainingSample(pack_in, pack_out)
 
         if self_normalize:
-            # Normalize the data, bring it back to zero mean and STD of 1
-            data_normalize = TrainingSample([], [])
+            bundle.normalize()
 
-            for data in data_list.input:
-                data = np.subtract(data.transpose(), mean[0]).transpose()
-                data = np.divide(data.transpose(), std[0]).transpose()
-                data_normalize.input.append(data)
-
-            for data in data_list.output:
-                data = np.subtract(data.transpose(), mean[1]).transpose()
-                data = np.divide(data.transpose(), std[1]).transpose()
-                data_normalize.output.append(data)
-
-            data_list = data_normalize
-            print("Data normalized")
-
-        inputs = []
-        outputs = []
-
-        for trainingSet in trainingSets:
-            a, b = generate_temporal_seq(trainingSet.inputs, trainingSet.outputs, seq_len)
-            inputs.append(a)
-            outputs.append(b)
-
-        training_data = TrainingSet(torch.cat(inputs), torch.cat(outputs))
+        training_data = bundle.get_sequences(seq_len)
 
         return training_data, mean, std
 
@@ -178,7 +143,7 @@ class NN(nn.Module):
                                                                settings["seq_length"],
                                                                self_normalize=True)
 
-        self.randomize_data(train_seq)
+        train_seq.randomize()
 
         test_seq, _, _ = self.prepare_data(test,
                                            settings["seq_length"],
