@@ -8,16 +8,9 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 from tensorboardX import SummaryWriter
-from settings import TrainingSample
+from settings import TrainingSample, dtype
 from data_processing.training_set import TrainingSet, TrainingSetBundle
 from typing import List
-
-# Handle GPU compute if available
-dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
-if dtype == torch.cuda.FloatTensor:
-    print("CUDA enabled")
-else:
-    print("CPU enabled")
 
 
 def generate_temporal_seq(input, output, seq_len):
@@ -62,9 +55,9 @@ class NN(nn.Module):
     def normalize(self, dataframe):
         return TrainingSample(
             torch.div(
-                torch.add(dataframe.input, - self.mean[0].reshape(1, -1, 1)),
+                torch.add(dataframe.inputs, - self.mean[0].reshape(1, -1, 1)),
                 self.std[0].reshape(1, -1, 1)),
-            torch.div(torch.add(dataframe.output, - self.mean[1]), self.std[1]))
+            torch.div(torch.add(dataframe.outputs, - self.mean[1]), self.std[1]))
 
     def denormalize(self, dataframe):
         return TrainingSample(

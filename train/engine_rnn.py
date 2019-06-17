@@ -6,8 +6,7 @@ import numpy as np
 import logging
 from tensorboardX import SummaryWriter
 from train.engine import NN
-
-dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
+from settings import dtype
 
 
 class ConvRNN(NN):

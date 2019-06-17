@@ -1,8 +1,14 @@
 import json
+import torch
 
-# Our lightweight data structure..
-from collections import namedtuple
-TrainingSample = namedtuple("TrainingSample", ["input", "output"])
+
+# Select our target at runtime
+dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
+
+if dtype == torch.cuda.FloatTensor:
+    print("CUDA enabled")
+else:
+    print("CPU enabled")
 
 
 _DEFAULTS = {

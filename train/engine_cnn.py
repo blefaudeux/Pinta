@@ -1,10 +1,8 @@
 import torch
 import torch.nn as nn
 import numpy as np
-
+from settings import dtype
 from train.engine import NN
-
-dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
 
 
 class Conv(NN):

@@ -2,22 +2,30 @@ from __future__ import annotations
 
 import torch
 import numpy as np
-from typing import List, Tuple
+from typing import List, Tuple, Optional
+from settings import dtype
 
-dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
-
-
-"""
-Holds the training or testing data, with some helper functions
-"""
+# Our lightweight base data structure..
+# specialize inputs/outputs, makes it readable down the line
+from collections import namedtuple
+TrainingSample = namedtuple("TrainingSample", ["inputs", "outputs"])
 
 
 class TrainingSet:
+    """
+    Holds the training or testing data, with some helper functions.
+    This keeps all the time coherent data in one package
+    """
+
     def __init__(self, inputs: torch.Tensor, outputs: torch.Tensor):
         assert inputs.shape[0] == outputs.shape[0], "Dimensions mismatch"
 
         self.inputs = inputs    # type: torch.Tensor
         self.outputs = outputs  # type: torch.Tensor
+
+        self._normalized = False
+        self._mean = None  # type: Optional[TrainingSample]
+        self._std = None  # type: Optional[TrainingSample]
 
     # Alternative "constructor", straight from Numpy arrays
     @classmethod
@@ -29,6 +37,51 @@ class TrainingSet:
 
         self.inputs = torch.cat((self.inputs, inputs), 0)
         self.outputs = torch.cat((self.inputs, inputs), 0)
+
+    def is_normalized(self):
+        return self._normalized
+
+    def normalize(self, mean: TrainingSample, std: TrainingSample):
+        """
+        Given mean and std of the appropriate dimensions,
+        bring the training set to a normalized state
+
+        Arguments:
+            mean {TrainingSample holding torch tensors} -- Expected distribution first moment
+            std {TrainingSample holding torch tensors} -- Expected distribution second moment
+        """
+
+        # Check sizes
+        assert mean.inputs.shape[0] == self.inputs.shape[1]
+        assert mean.outputs.shape[0] == self.outputs.shape[1]
+
+        self.inputs = torch.div(
+            torch.add(self.inputs, - mean.inputs.reshape(1, -1, 1)),
+            std.inputs.reshape(1, -1, 1))
+
+        self.outputs = torch.div(torch.add(self.outputs, - mean.outputs), std.outputs)
+
+        # Save new status for future use
+        self._mean = mean
+        self._std = std
+        self._normalized = True
+
+    def denormalize(self, mean: Optional[TrainingSample] = None,
+                    std: Optional[TrainingSample] = None):
+
+        _mean = self._mean if mean is None else mean
+        _std = self._std if std is None else std
+
+        # FIXME: Mypy is lost down there
+        self.inputs = torch.mul(
+            torch.add(self.inputs, _mean.inputs.reshape(1, -1, 1)),
+            _std.inputs.reshape(1, -1, 1))
+
+        self.outputs = torch.mul(torch.add(self.outputs, _mean.outputs), _std.outputs)
+
+        self._normalized = False
+        self._mean = None
+        self._std = None
 
     def randomize(self):
         shuffle = torch.randperm(self.inputs.shape[0])
@@ -66,6 +119,12 @@ class TrainingSet:
 
 
 class TrainingSetBundle:
+    """
+    Hold a list of training sets, with some helper functions.
+    This allows us to maintain a bigger pool of data without any time coherency / time continuity constraints.
+    All the data can be used for training, but we can enfore time-continuous streams where needed.
+    """
+
     def __init__(self, training_sets: List[TrainingSet]):
         self.sets = training_sets
 
@@ -103,22 +162,6 @@ class TrainingSetBundle:
             training_set.outputs = np.subtract(training_set.outputs, mean[1]).transpose()
             training_set.outputs = np.divide(training_set.outputs, std[1]).transpose()
 
-    @staticmethod
-    def generate_temporal_seq(input, output, seq_len):
-        """
-        Generate all the subsequences over time for the conv training
-        """
-
-        # TODO: move to pure torch
-        n_sequences = input.shape[1] - seq_len + 1
-
-        input_seq = np.array([input[:, start:start+seq_len]
-                              for start in range(n_sequences)])
-
-        output_seq = np.array(output[:-seq_len+1, :])
-
-        return torch.from_numpy(input_seq).type(dtype), torch.from_numpy(output_seq).type(dtype)
-
     def get_sequences(self, seq_len) -> TrainingSet:
         """
         Prepare sequences of a given length given the input data
@@ -133,3 +176,19 @@ class TrainingSetBundle:
             outputs.append(b)
 
         return TrainingSet(torch.cat(inputs), torch.cat(outputs))
+
+    @staticmethod
+    def generate_temporal_seq(input, output, seq_len):
+        """
+        Generate all the subsequences over time,
+        Useful for instance for training a temporal conv net
+        """
+
+        n_sequences = input.shape[0] - seq_len + 1
+
+        input_seq = torch.transpose(torch.stack([input[start:start+seq_len, :]
+                                                 for start in range(n_sequences)], dim=0), 1, 2)
+
+        output_seq = output[:-seq_len+1, :]
+
+        return input_seq, output_seq
