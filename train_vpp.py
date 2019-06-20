@@ -35,7 +35,7 @@ dnn = Conv(logdir='logs/' + settings.get_name(),
 # Load pre-computed normalization values
 dnn.updateNormalization(training_settings)
 
-if not dnn.valid():
+if not dnn.valid:
     dnn.fit(training_data,
             testing_data,
             settings=training_settings,

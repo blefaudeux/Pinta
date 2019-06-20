@@ -54,7 +54,7 @@ class ConvRNN(NN):
 
         # CUDA switch > Needs to be done after the model has been declared
         if dtype == torch.cuda.FloatTensor:
-            print("Using Pytorch CUDA backend")
+            print("Using Pytorch CUDA backend. Moving the net definition to device")
             self.cuda()
 
     def forward(self, inputs, hidden=None):

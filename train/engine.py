@@ -13,21 +13,6 @@ from data_processing.training_set import TrainingSet, TrainingSetBundle, Trainin
 from typing import List
 
 
-def generate_temporal_seq(input, output, seq_len):
-    """
-    Generate all the subsequences over time for the conv training
-    """
-
-    n_sequences = input.shape[1] - seq_len + 1
-
-    input_seq = np.array([input[:, start:start+seq_len]
-                          for start in range(n_sequences)])
-
-    output_seq = np.array(output[:-seq_len+1, :])
-
-    return torch.from_numpy(input_seq).type(dtype), torch.from_numpy(output_seq).type(dtype)
-
-
 class NN(nn.Module):
     """
     This is a generic NN implementation.
@@ -45,6 +30,7 @@ class NN(nn.Module):
         self.summary_writer = SummaryWriter(logdir)
         self.summary_writer.add_graph(self.model)
 
+    @property
     def valid(self):
         return self._valid
 
@@ -65,13 +51,16 @@ class NN(nn.Module):
             torch.Tensor(settings["dataset_normalization"]["output"]["std"]).type(dtype))
 
     def evaluate(self, data, settings):
+        # Move the data to the proper format
         data_seq, _, _ = self.prepare_data(data, settings["seq_length"],
                                            self_normalize=False)
 
-        data_seq = self.normalize(data_seq)
+        data_seq.normalize(self.mean, self.std)
+
+        # Re-use PyTorch losses on the fly
         criterion = nn.MSELoss()
-        out, _ = self(data_seq.input)
-        loss = criterion(out, data_seq.output.view(out.size()[0], -1))
+        out, _ = self(data_seq.inputs)
+        loss = criterion(out, data_seq.outputs.view(out.size()[0], -1))
         return loss.item()
 
     @staticmethod
@@ -171,10 +160,11 @@ class NN(nn.Module):
         print("... Done")
 
     def predict(self, data, seq_len=100):
-        if not isinstance(data.input, list) and data.input.size == data.input.shape[0]:
+        # FIXME: Ben - this is broken and clumsy
+        if not isinstance(data.inputs, list) and data.inputs.size == data.inputs.shape[0]:
             # Only one sample, need some -constant- padding
-            data = TrainingSet([np.repeat(np.array([data.input]), seq_len, axis=0).transpose()],
-                               [np.repeat(np.array([data.output]), seq_len, axis=0).transpose()])
+            data = TrainingSet([np.repeat(np.array([data.inputs]), seq_len, axis=0).transpose()],
+                               [np.repeat(np.array([data.outputs]), seq_len, axis=0).transpose()])
 
         # batch and normalize
         test_seq, _, _ = self.prepare_data(data, seq_len, self_normalize=False)
@@ -182,7 +172,7 @@ class NN(nn.Module):
 
         # De-normalize the output
         return torch.add(
-            torch.mul(self(test_seq.input)[0], self.std[1]),
+            torch.mul(self(test_seq.inputs)[0], self.std[1]),
             self.mean[1]
         ).detach().cpu().numpy()
 

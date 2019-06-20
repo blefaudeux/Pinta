@@ -19,7 +19,7 @@ _DEFAULTS = {
     "seq_length": 64,
     "training_ratio": 0.9,
     "batch_size": 30000,
-    "epoch": 200,
+    "epoch": 10,
     "dataset_normalization": {
         "input": {
             "mean": [13.60, -0.08, 0.28, -0.57],
