@@ -1,7 +1,7 @@
 
 import numpy as np
 from collections import namedtuple
-from settings import TrainingSample
+from data_processing.training_set import TrainingSample
 
 SpeedPolarPoint = namedtuple(
     "SpeedPolarPoint", ["wind_angle", "wind_speed", "rudder_angle", "boat_speed"])

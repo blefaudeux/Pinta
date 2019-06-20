@@ -8,8 +8,8 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 from tensorboardX import SummaryWriter
-from settings import TrainingSample, dtype
-from data_processing.training_set import TrainingSet, TrainingSetBundle
+from settings import dtype
+from data_processing.training_set import TrainingSet, TrainingSetBundle, TrainingSample
 from typing import List
 
 
@@ -52,29 +52,17 @@ class NN(nn.Module):
         with open(name, "wb") as f:
             torch.save(self.state_dict(), f)
 
-    def normalize(self, dataframe):
-        return TrainingSample(
-            torch.div(
-                torch.add(dataframe.inputs, - self.mean[0].reshape(1, -1, 1)),
-                self.std[0].reshape(1, -1, 1)),
-            torch.div(torch.add(dataframe.outputs, - self.mean[1]), self.std[1]))
-
-    def denormalize(self, dataframe):
-        return TrainingSample(
-            torch.mul(
-                torch.add(dataframe.input, self.mean[0].reshape(1, -1, 1)),
-                self.std[0].reshape(1, -1, 1)),
-            torch.mul(torch.add(dataframe.output, self.mean[1]), self.std[1]))
-
     def updateNormalization(self, settings):
         assert "dataset_normalization" in settings.keys()
 
-        # Update mean and std just in case
-        self.mean = [torch.Tensor(settings["dataset_normalization"]["input"]["mean"]).type(dtype),
-                     torch.Tensor(settings["dataset_normalization"]["output"]["mean"]).type(dtype)]
+        # Update reference mean and std
+        self.mean = TrainingSample(
+            torch.Tensor(settings["dataset_normalization"]["input"]["mean"]).type(dtype),
+            torch.Tensor(settings["dataset_normalization"]["output"]["mean"]).type(dtype))
 
-        self.std = [torch.Tensor(settings["dataset_normalization"]["input"]["std"]).type(dtype),
-                    torch.Tensor(settings["dataset_normalization"]["output"]["std"]).type(dtype)]
+        self.std = TrainingSample(
+            torch.Tensor(settings["dataset_normalization"]["input"]["std"]).type(dtype),
+            torch.Tensor(settings["dataset_normalization"]["output"]["std"]).type(dtype))
 
     def evaluate(self, data, settings):
         data_seq, _, _ = self.prepare_data(data, settings["seq_length"],
@@ -129,7 +117,7 @@ class NN(nn.Module):
                                                 settings["seq_length"],
                                                 self_normalize=False)
 
-            train_seq = self.normalize(train_seq)
+            train_seq.normalize(self.mean, self.std)
         else:
             # Compute the dataset normalization on the fly
             train_seq, self.mean, self.std = self.prepare_data(train,
@@ -143,22 +131,22 @@ class NN(nn.Module):
                                            self_normalize=False)
 
         # Test data needs to be normalized with the same coefficients as training data
-        test_seq = self.normalize(test_seq)
+        test_seq.normalize(self.mean, self.std)
 
         print("Training the network...")
         i_log = 0
         for i in range(epoch):
             print(f'\n***** Epoch {i}')
 
-            for batch_index in range(0, train_seq.input.shape[0], batch_size):
+            for batch_index in range(0, train_seq.inputs.shape[0], batch_size):
                 # Eval computation on the training data
                 def closure():
-                    data = TrainingSet(train_seq.input[batch_index:batch_index+batch_size, :, :],
-                                       train_seq.output[batch_index:batch_index+batch_size, :])
+                    data = TrainingSet(train_seq.inputs[batch_index:batch_index+batch_size, :, :],
+                                       train_seq.outputs[batch_index:batch_index+batch_size, :])
 
                     optimizer.zero_grad()
-                    out, _ = self(data.input)
-                    loss = criterion(out, data.output)
+                    out, _ = self(data.inputs)
+                    loss = criterion(out, data.outputs)
                     print('Train loss: {:.4f}'.format(loss.item()))
                     self.summary_writer.add_scalar('train', loss.item(), i_log)
                     # Add to the gradient
@@ -168,8 +156,8 @@ class NN(nn.Module):
                 optimizer.step(closure)
 
                 # Loss on the test data
-                pred, _ = self(test_seq.input)
-                loss = criterion(pred, test_seq.output)
+                pred, _ = self(test_seq.inputs)
+                loss = criterion(pred, test_seq.outputs)
                 self.summary_writer.add_scalar('test', loss.item(), i_log)
                 print("Test loss: {:.4f}\n".format(loss.item()))
                 i_log += 1

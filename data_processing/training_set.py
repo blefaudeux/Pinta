@@ -30,13 +30,13 @@ class TrainingSet:
     # Alternative "constructor", straight from Numpy arrays
     @classmethod
     def from_numpy(cls, inputs: np.array, outputs: np.array):
-        return cls(torch.from_numpy(inputs), torch.from_numpy(outputs))
+        return cls(torch.from_numpy(inputs).type(dtype), torch.from_numpy(outputs).type(dtype))
 
     def append(self, inputs: torch.Tensor, outputs: torch.Tensor):
         assert inputs.shape[0] == outputs.shape[0], "Dimensions mismatch"
 
-        self.inputs = torch.cat((self.inputs, inputs), 0)
-        self.outputs = torch.cat((self.inputs, inputs), 0)
+        self.inputs = torch.cat((self.inputs, inputs), 0).type(dtype)
+        self.outputs = torch.cat((self.inputs, inputs), 0).type(dtype)
 
     def is_normalized(self):
         return self._normalized
@@ -85,7 +85,7 @@ class TrainingSet:
 
     def randomize(self):
         shuffle = torch.randperm(self.inputs.shape[0])
-        self.inputs = self.input[shuffle]
+        self.inputs = self.inputs[shuffle]
         self.outputs = self.outputs[shuffle]
 
     def get_train_test(self, ratio: float, randomize: bool) -> Tuple[TrainingSet, TrainingSet]:
@@ -175,7 +175,11 @@ class TrainingSetBundle:
             inputs.append(a)
             outputs.append(b)
 
-        return TrainingSet(torch.cat(inputs), torch.cat(outputs))
+        # Handle possible type mismatchs (cpu/cuda)
+        tensor_input = torch.cat(inputs)
+        tensor_output = torch.cat(outputs)
+
+        return TrainingSet(tensor_input, tensor_output)
 
     @staticmethod
     def generate_temporal_seq(input, output, seq_len):
