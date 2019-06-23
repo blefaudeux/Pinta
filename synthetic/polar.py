@@ -16,10 +16,14 @@ def generate(engine, wind_range, wind_step, angular_step, seq_len):
                 np.array([w, np.cos(a), np.sin(a), 0.]), np.array([0.]))
 
             # FW pass in the DNN and save
+            pred = engine.predict(sample_input, seq_len)
+            pred = pred.detach().cpu().numpy()
+
             pt = SpeedPolarPoint(wind_angle=a,
                                  wind_speed=w,
                                  rudder_angle=0.,
-                                 boat_speed=engine.predict(sample_input, seq_len))
+                                 boat_speed=pred)
+
             speed.append(pt)
 
     return speed

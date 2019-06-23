@@ -160,11 +160,9 @@ class NN(nn.Module):
         print("... Done")
 
     def predict(self, data, seq_len=100):
-        # FIXME: Ben - this is broken and clumsy
-        # if not isinstance(data.inputs, list) and data.inputs.size == data.inputs.shape[0]:
-        #     # Only one sample, need some -constant- padding
-        #     data = TrainingSet([np.repeat(np.array([data.inputs]), seq_len, axis=0).transpose()],
-        #                        [np.repeat(np.array([data.outputs]), seq_len, axis=0).transpose()])
+        if isinstance(data, TrainingSample) and data.inputs.size == data.inputs.shape[0]:
+            # Only one sample, need some -constant- padding
+            data = [TrainingSet.from_training_sample(data, seq_len)]
 
         # batch and normalize
         test_seq, _, _ = self.prepare_data(data, seq_len, self_normalize=False)

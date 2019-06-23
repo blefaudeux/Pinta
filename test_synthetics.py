@@ -23,7 +23,7 @@ engine = Conv(logdir='logs/' + settings.get_name(),
               hidden_size=training_settings["hidden_size"],
               filename='trained/' + settings.get_name() + '.pt')
 
-if not engine.valid():
+if not engine.valid:
     print("Failed loading the model, cannot continue")
     exit(-1)
 

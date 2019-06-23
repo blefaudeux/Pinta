@@ -32,6 +32,17 @@ class TrainingSet:
     def from_numpy(cls, inputs: np.array, outputs: np.array):
         return cls(torch.from_numpy(inputs).type(dtype), torch.from_numpy(outputs).type(dtype))
 
+    # Alternative constructor: straight from TrainingSample, repeat
+    @classmethod
+    def from_training_sample(cls, sample: TrainingSample, seq_len: int):
+        return cls(
+            torch.tensor(
+                np.repeat(np.array([sample.inputs]), seq_len, axis=0)
+            ).type(dtype),
+            torch.tensor(
+                np.repeat(np.array([sample.outputs]), seq_len, axis=0)
+            ).type(dtype))
+
     def append(self, inputs: torch.Tensor, outputs: torch.Tensor):
         assert inputs.shape[0] == outputs.shape[0], "Dimensions mismatch"
 
