@@ -56,7 +56,9 @@ print('Final test Score: %.2f RMSE' % np.sqrt(testScore))
 print('---\nQuality evaluation:')
 prediction = dnn.predict(
     testing_data,
-    seq_len=training_settings["seq_length"]).flatten()
+    seq_len=training_settings["seq_length"])
+
+prediction = prediction.detach().cpu().numpy()
 
 # Split the output sequence to re-align,
 # ! need to take sequence length into account, offset
@@ -65,7 +67,7 @@ splits = []
 i = 0
 
 for dataset in testing_data:
-    reference.append(dataset.outputs[:-training_settings["seq_length"]+1])
+    reference.append(dataset.outputs[:-training_settings["seq_length"]+1].detach().cpu().numpy())
     i += reference[-1].shape[0]
     splits.append(i)
 

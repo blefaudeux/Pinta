@@ -161,20 +161,20 @@ class NN(nn.Module):
 
     def predict(self, data, seq_len=100):
         # FIXME: Ben - this is broken and clumsy
-        if not isinstance(data.inputs, list) and data.inputs.size == data.inputs.shape[0]:
-            # Only one sample, need some -constant- padding
-            data = TrainingSet([np.repeat(np.array([data.inputs]), seq_len, axis=0).transpose()],
-                               [np.repeat(np.array([data.outputs]), seq_len, axis=0).transpose()])
+        # if not isinstance(data.inputs, list) and data.inputs.size == data.inputs.shape[0]:
+        #     # Only one sample, need some -constant- padding
+        #     data = TrainingSet([np.repeat(np.array([data.inputs]), seq_len, axis=0).transpose()],
+        #                        [np.repeat(np.array([data.outputs]), seq_len, axis=0).transpose()])
 
         # batch and normalize
         test_seq, _, _ = self.prepare_data(data, seq_len, self_normalize=False)
-        test_seq = self.normalize(test_seq)
+        test_seq.normalize(self.mean, self.std)
 
         # De-normalize the output
         return torch.add(
             torch.mul(self(test_seq.inputs)[0], self.std[1]),
             self.mean[1]
-        ).detach().cpu().numpy()
+        )
 
     def forward(self, *inputs):
         """
