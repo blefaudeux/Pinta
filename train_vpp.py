@@ -6,9 +6,11 @@ from data_processing.load import load_folder, load_sets, get_train_test_list
 # from train.engine_rnn import ConvRNN
 from train.engine_cnn import Conv
 import settings
-
+import logging
 
 training_settings = settings.get_defaults()
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(training_settings["log"])
 
 # Load the dataset + some data augmentation
 data_list = load_sets(load_folder('data'), training_settings)
@@ -25,12 +27,13 @@ EPOCH = training_settings["epoch"]
 INPUT_SIZE = [len(training_settings["inputs"]),
               training_settings["seq_length"]]
 
-print(f"Training on {n_training_samples} samples. Batch is {BATCH_SIZE}")
+log.info(f"Training on {n_training_samples} samples. Batch is {BATCH_SIZE}")
 
 dnn = Conv(logdir='logs/' + settings.get_name(),
            input_size=INPUT_SIZE,
            hidden_size=training_settings["hidden_size"],
-           filename='trained/' + settings.get_name() + '.pt')
+           filename='trained/' + settings.get_name() + '.pt',
+           log_channel="DNN  ")
 
 # Load pre-computed normalization values
 dnn.updateNormalization(training_settings)
@@ -49,11 +52,11 @@ testScore = dnn.evaluate(
     testing_data,
     training_settings)
 
-print('Final test Score: %.2f RMSE' % np.sqrt(testScore))
+log.info('Final test Score: %.2f RMSE' % np.sqrt(testScore))
 
 
 # Compare visually the outputs
-print('---\nQuality evaluation:')
+log.info('---\nQuality evaluation:')
 prediction = dnn.predict(
     testing_data,
     seq_len=training_settings["seq_length"])
@@ -78,4 +81,4 @@ plt.parallel_plot(reference + prediction,
                   ["Conv" for _ in range(len(prediction))],
                   "Network predictions vs ground truth")
 
-print('--Done')
+log.info('--Done')

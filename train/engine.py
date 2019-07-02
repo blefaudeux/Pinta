@@ -11,6 +11,7 @@ from tensorboardX import SummaryWriter
 from settings import dtype
 from data_processing.training_set import TrainingSet, TrainingSetBundle, TrainingSample
 from typing import List
+import logging
 
 
 class NN(nn.Module):
@@ -19,12 +20,13 @@ class NN(nn.Module):
     This is an abstract class, a proper model needs to be implemented
     """
 
-    def __init__(self, logdir):
+    def __init__(self, logdir, log_channel="NN"):
         super(NN, self).__init__()
         self.model = None
         self._valid = False
         self.mean = None
         self.std = None
+        self.log = logging.getLogger(log_channel)
 
         # Set up TensorBoard
         self.summary_writer = SummaryWriter(logdir)
@@ -122,10 +124,11 @@ class NN(nn.Module):
         # Test data needs to be normalized with the same coefficients as training data
         test_seq.normalize(self.mean, self.std)
 
-        print("Training the network...")
+        self.log.info("Training the network...\n")
         i_log = 0
         for i in range(epoch):
-            print(f'\n***** Epoch {i}')
+
+            self.log.info(f'***** Epoch {i}')
 
             for batch_index in range(0, train_seq.inputs.shape[0], batch_size):
                 # Eval computation on the training data
@@ -136,7 +139,7 @@ class NN(nn.Module):
                     optimizer.zero_grad()
                     out, _ = self(data.inputs)
                     loss = criterion(out, data.outputs)
-                    print('Train loss: {:.4f}'.format(loss.item()))
+                    self.log.info('  Train loss: {:.4f}'.format(loss.item()))
                     self.summary_writer.add_scalar('train', loss.item(), i_log)
                     # Add to the gradient
                     loss.backward()
@@ -148,16 +151,16 @@ class NN(nn.Module):
                 pred, _ = self(test_seq.inputs)
                 loss = criterion(pred, test_seq.outputs)
                 self.summary_writer.add_scalar('test', loss.item(), i_log)
-                print("Test loss: {:.4f}\n".format(loss.item()))
+                self.log.info("  Test loss: {:.4f}\n".format(loss.item()))
                 i_log += 1
 
             # Update learning rate if needed
             if not (i + 1) % settings["training"]["lr_period_decrease"]:
-                print("Reducing learning rate")
+                self.log.info("  -- Reducing learning rate")
                 for g in optimizer.param_groups:
                     g['lr'] *= settings["training"]["lr_amount_decrease"]
 
-        print("... Done")
+        self.log.info("... Done")
 
     def predict(self, data, seq_len=100):
         if isinstance(data, TrainingSample) and data.inputs.size == data.inputs.shape[0]:

@@ -10,8 +10,8 @@ class Conv(NN):
     Pure Conv
     """
 
-    def __init__(self, logdir, input_size, hidden_size, filename=None):
-        super(Conv, self).__init__(logdir)
+    def __init__(self, logdir, log_channel, input_size, hidden_size, filename=None):
+        super(Conv, self).__init__(logdir, log_channel)
 
         # ----
         # Define the model
@@ -32,7 +32,7 @@ class Conv(NN):
                                   nn.ReLU())
 
         out_conv_size = self._get_conv_out(input_size)
-        print(f"Feature vector size out of the convolution is {out_conv_size}")
+        self.log.info(f"Feature vector size out of the convolution is {out_conv_size}")
 
         # Ends with two fully connected layers
         self.fc = nn.Sequential(nn.Linear(out_conv_size, 512),
@@ -43,7 +43,7 @@ class Conv(NN):
 
         # CUDA switch > Needs to be done after the model has been declared
         if dtype is torch.cuda.FloatTensor:
-            print("Using Pytorch CUDA backend. Moving the net definition to device")
+            self.log.info("Using Pytorch CUDA backend. Moving the net definition to device")
             self.cuda()
 
         # Load from trained NN if required
@@ -54,19 +54,19 @@ class Conv(NN):
         except RuntimeError:
             pass
 
-        print("Could not load the specified net, needs to be computed from scratch")
+        self.log.warning("Could not load the specified net, needs to be computed from scratch")
 
     def load(self, filename):
         try:
             with open(filename, "rb") as f:
                 self.load_state_dict(torch.load(f))
-                print("---\nNetwork {} loaded".format(filename))
-                print(self)
+                self.log.info("---\nNetwork {} loaded".format(filename))
+                self.log.info(self)
                 return True
 
         except (ValueError, OSError, IOError, TypeError) as e:
-            print(e)
-            print("Could not find or load existing NN")
+            self.log.warning(e)
+            self.log.warning("Could not find or load existing NN")
             return False
 
     def forward(self, inputs, hidden=None):
