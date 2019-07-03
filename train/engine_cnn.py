@@ -56,6 +56,12 @@ class Conv(NN):
 
         self.log.warning("Could not load the specified net, needs to be computed from scratch")
 
+        # Populate TensorboardX
+        self.summary_writer.add_graph(self.model, verbose=True)
+
+    def get_layer_weights(self):
+        return self.conv[0].weight
+
     def load(self, filename):
         try:
             with open(filename, "rb") as f:

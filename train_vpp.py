@@ -7,6 +7,7 @@ from data_processing.load import load_folder, load_sets, get_train_test_list
 from train.engine_cnn import Conv
 import settings
 import logging
+from datetime import datetime
 
 training_settings = settings.get_defaults()
 logging.basicConfig(level=logging.INFO)
@@ -29,7 +30,7 @@ INPUT_SIZE = [len(training_settings["inputs"]),
 
 log.info(f"Training on {n_training_samples} samples. Batch is {BATCH_SIZE}")
 
-dnn = Conv(logdir='logs/' + settings.get_name(),
+dnn = Conv(logdir='logs/' + settings.get_name() + str(datetime.now()),
            input_size=INPUT_SIZE,
            hidden_size=training_settings["hidden_size"],
            filename='trained/' + settings.get_name() + '.pt',

@@ -30,7 +30,6 @@ class NN(nn.Module):
 
         # Set up TensorBoard
         self.summary_writer = SummaryWriter(logdir)
-        self.summary_writer.add_graph(self.model)
 
     @property
     def valid(self):
@@ -39,6 +38,9 @@ class NN(nn.Module):
     def save(self, name):
         with open(name, "wb") as f:
             torch.save(self.state_dict(), f)
+
+    def get_layer_weights(self):
+        return None
 
     def updateNormalization(self, settings):
         assert "dataset_normalization" in settings.keys()
@@ -159,6 +161,11 @@ class NN(nn.Module):
                 self.log.info("  -- Reducing learning rate")
                 for g in optimizer.param_groups:
                     g['lr'] *= settings["training"]["lr_amount_decrease"]
+
+            # Display the layer weights
+            w = self.get_layer_weights()
+            if w is not None:
+                self.summary_writer.add_histogram("weights", w, i_log)
 
         self.log.info("... Done")
 
