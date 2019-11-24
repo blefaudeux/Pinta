@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 from settings import dtype
 from data_processing.training_set import TrainingSet, TrainingSetBundle, TrainingSample
 from typing import List
@@ -47,11 +47,13 @@ class NN(nn.Module):
 
         # Update reference mean and std
         self.mean = TrainingSample(
-            torch.Tensor(settings["dataset_normalization"]["input"]["mean"]).type(dtype),
+            torch.Tensor(settings["dataset_normalization"]
+                         ["input"]["mean"]).type(dtype),
             torch.Tensor(settings["dataset_normalization"]["output"]["mean"]).type(dtype))
 
         self.std = TrainingSample(
-            torch.Tensor(settings["dataset_normalization"]["input"]["std"]).type(dtype),
+            torch.Tensor(settings["dataset_normalization"]
+                         ["input"]["std"]).type(dtype),
             torch.Tensor(settings["dataset_normalization"]["output"]["std"]).type(dtype))
 
     def evaluate(self, data, settings):
