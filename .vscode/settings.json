@@ -6,8 +6,10 @@
     "python.formatting.provider": "autopep8",
     "editor.formatOnSave": true,
     "python.pythonPath": "/usr/bin/python3",
-    "python.jediEnabled": false,
     "workbench.settings.useSplitJSON": true,
     "editor.multiCursorModifier": "ctrlCmd",
-    "python.linting.pylintEnabled": true
+    "python.linting.pylintEnabled": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true
+    }
 }

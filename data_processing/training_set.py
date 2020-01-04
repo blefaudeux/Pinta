@@ -1,17 +1,20 @@
 from __future__ import annotations
 
-import torch
-import numpy as np
-from typing import List, Tuple, Optional
-from settings import dtype
-
 # Our lightweight base data structure..
 # specialize inputs/outputs, makes it readable down the line
 from collections import namedtuple
+from typing import List, Optional, Tuple
+
+import numpy as np
+import torch
+from torch.utils.data import Dataset
+
+from settings import dtype
+
 TrainingSample = namedtuple("TrainingSample", ["inputs", "outputs"])
 
 
-class TrainingSet:
+class TrainingSet(Dataset):
     """
     Holds the training or testing data, with some helper functions.
     This keeps all the time coherent data in one package
@@ -49,6 +52,12 @@ class TrainingSet:
         self.inputs = torch.cat((self.inputs, inputs), 0).type(dtype)
         self.outputs = torch.cat((self.inputs, inputs), 0).type(dtype)
 
+    def __getitem__(self, index):
+        return [self.inputs[index, :, :], self.outputs[index, :]]
+
+    def __len__(self):
+        return self.inputs.shape[0]
+
     def is_normalized(self):
         return self._normalized
 
@@ -70,7 +79,8 @@ class TrainingSet:
             torch.add(self.inputs, - mean.inputs.reshape(1, -1, 1)),
             std.inputs.reshape(1, -1, 1))
 
-        self.outputs = torch.div(torch.add(self.outputs, - mean.outputs), std.outputs)
+        self.outputs = torch.div(
+            torch.add(self.outputs, - mean.outputs), std.outputs)
 
         # Save new status for future use
         self._mean = mean
@@ -88,7 +98,8 @@ class TrainingSet:
             torch.add(self.inputs, _mean.inputs.reshape(1, -1, 1)),
             _std.inputs.reshape(1, -1, 1))
 
-        self.outputs = torch.mul(torch.add(self.outputs, _mean.outputs), _std.outputs)
+        self.outputs = torch.mul(
+            torch.add(self.outputs, _mean.outputs), _std.outputs)
 
         self._normalized = False
         self._mean = None
@@ -155,8 +166,10 @@ class TrainingSetBundle:
             std_outputs.append(t.outputs.std(dim=0))
 
         # To Torch tensor and mean
-        mean = [torch.stack(mean_inputs).mean(dim=0), torch.stack(mean_outputs).mean(dim=0)]
-        std = [torch.stack(std_inputs).mean(dim=0), torch.cat(std_outputs).mean(dim=0)]
+        mean = [torch.stack(mean_inputs).mean(
+            dim=0), torch.stack(mean_outputs).mean(dim=0)]
+        std = [torch.stack(std_inputs).mean(
+            dim=0), torch.cat(std_outputs).mean(dim=0)]
 
         return mean, std
 
@@ -167,11 +180,15 @@ class TrainingSetBundle:
         mean, std = self.get_norm()
 
         for training_set in self.sets:
-            training_set.inputs = np.subtract(training_set.inputs, mean[0]).transpose()
-            training_set.inputs = np.divide(training_set.inputs, std[0]).transpose()
+            training_set.inputs = np.subtract(
+                training_set.inputs, mean[0]).transpose()
+            training_set.inputs = np.divide(
+                training_set.inputs, std[0]).transpose()
 
-            training_set.outputs = np.subtract(training_set.outputs, mean[1]).transpose()
-            training_set.outputs = np.divide(training_set.outputs, std[1]).transpose()
+            training_set.outputs = np.subtract(
+                training_set.outputs, mean[1]).transpose()
+            training_set.outputs = np.divide(
+                training_set.outputs, std[1]).transpose()
 
     def get_sequences(self, seq_len) -> TrainingSet:
         """
@@ -182,7 +199,8 @@ class TrainingSetBundle:
         outputs = []
 
         for trainingSet in self.sets:
-            a, b = self.generate_temporal_seq(trainingSet.inputs, trainingSet.outputs, seq_len)
+            a, b = self.generate_temporal_seq(
+                trainingSet.inputs, trainingSet.outputs, seq_len)
             inputs.append(a)
             outputs.append(b)
 

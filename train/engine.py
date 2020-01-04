@@ -3,15 +3,18 @@
 Implement different NNs which best describe the behaviour of the system
 """
 
+import logging
+from typing import List
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
 from torch.utils.tensorboard import SummaryWriter
+
+from data_processing.training_set import (TrainingSample, TrainingSet,
+                                          TrainingSetBundle)
 from settings import dtype
-from data_processing.training_set import TrainingSet, TrainingSetBundle, TrainingSample
-from typing import List
-import logging
 
 
 class NN(nn.Module):
@@ -101,7 +104,7 @@ class NN(nn.Module):
         shuffle = torch.randperm(training_set.input.shape[0])
         return TrainingSet(training_set.input[shuffle], training_set.output[shuffle])
 
-    def fit(self, train, test, settings, epoch=50, batch_size=50, self_normalize=False):
+    def fit(self, train, test, settings, epochs=50, batch_size=50, self_normalize=False):
         optimizer = optim.SGD(self.parameters(), lr=0.01)
         criterion = nn.MSELoss()
 
@@ -130,19 +133,21 @@ class NN(nn.Module):
 
         self.log.info("Training the network...\n")
         i_log = 0
-        for i in range(epoch):
+        for epoch in range(epochs):
 
-            self.log.info(f'***** Epoch {i}')
+            self.log.info("***** Epoch %d", epoch)
 
             for batch_index in range(0, train_seq.inputs.shape[0], batch_size):
+
                 # Eval computation on the training data
-                def closure():
-                    data = TrainingSet(train_seq.inputs[batch_index:batch_index+batch_size, :, :],
-                                       train_seq.outputs[batch_index:batch_index+batch_size, :])
+                def closure(index=batch_index):
+                    data = TrainingSet(train_seq.inputs[index:index+batch_size, :, :],
+                                       train_seq.outputs[index:index+batch_size, :])
 
                     optimizer.zero_grad()
                     out, _ = self(data.inputs)
                     loss = criterion(out, data.outputs)
+
                     self.log.info('  Train loss: {:.4f}'.format(loss.item()))
                     self.summary_writer.add_scalar('train', loss.item(), i_log)
                     # Add to the gradient
@@ -159,7 +164,7 @@ class NN(nn.Module):
                 i_log += 1
 
             # Update learning rate if needed
-            if not (i + 1) % settings["training"]["lr_period_decrease"]:
+            if not (epoch + 1) % settings["training"]["lr_period_decrease"]:
                 self.log.info("  -- Reducing learning rate")
                 for g in optimizer.param_groups:
                     g['lr'] *= settings["training"]["lr_amount_decrease"]

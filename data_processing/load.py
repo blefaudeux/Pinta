@@ -1,10 +1,11 @@
 import os
+from typing import List, Tuple
+
+import numpy as np
 
 from data_processing.nmea2pandas import load_json
-from data_processing.whitening import whiten_angle
 from data_processing.training_set import TrainingSet
-import numpy as np
-from typing import List, Tuple
+from data_processing.whitening import whiten_angle
 
 
 def _angle_split(data):
@@ -39,7 +40,7 @@ def load(filename, clean_data=True, whiten_data=True):
     return [data_frame, df_white_angle]
 
 
-def toTrainingSet(raw_data, settings):
+def to_training_set(raw_data, settings):
     cat_in = settings["inputs"]
     cat_out = settings["outputs"]
 
@@ -83,8 +84,8 @@ def load_sets(raw, settings) -> List[TrainingSet]:
         raw_data_aug = _angle_split(pair[1])
 
         # Save both sets, original and flipped
-        training_sets.append(toTrainingSet(raw_data, settings))
-        training_sets.append(toTrainingSet(raw_data_aug, settings))
+        training_sets.append(to_training_set(raw_data, settings))
+        training_sets.append(to_training_set(raw_data_aug, settings))
 
     return training_sets
 

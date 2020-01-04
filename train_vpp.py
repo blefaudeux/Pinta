@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 
-import numpy as np
-from data_processing import plot as plt
-from data_processing.load import load_folder, load_sets, get_train_test_list
-# from train.engine_rnn import ConvRNN
-from train.engine_cnn import Conv
-import settings
 import logging
 from datetime import datetime
+
+import numpy as np
+from torch.utils.data import DataLoader, TensorDataset
+
+import settings
+from data_processing import plot as plt
+from data_processing.load import get_train_test_list, load_folder, load_sets
+# from train.engine_rnn import ConvRNN
+from train.engine_cnn import Conv
 
 training_settings = settings.get_defaults()
 logging.basicConfig(level=logging.INFO)
@@ -43,17 +46,14 @@ if not dnn.valid:
     dnn.fit(training_data,
             testing_data,
             settings=training_settings,
-            epoch=EPOCH,
+            epochs=EPOCH,
             batch_size=BATCH_SIZE,
             self_normalize=False)
     dnn.save('trained/' + settings.get_name() + '.pt')
 
-
-testScore = dnn.evaluate(
+log.info('Final test Score: %.2f RMSE' % np.sqrt(dnn.evaluate(
     testing_data,
-    training_settings)
-
-log.info('Final test Score: %.2f RMSE' % np.sqrt(testScore))
+    training_settings)))
 
 
 # Compare visually the outputs
@@ -71,7 +71,8 @@ splits = []
 i = 0
 
 for dataset in testing_data:
-    reference.append(dataset.outputs[:-training_settings["seq_length"]+1].detach().cpu().numpy())
+    reference.append(
+        dataset.outputs[:-training_settings["seq_length"]+1].detach().cpu().numpy())
     i += reference[-1].shape[0]
     splits.append(i)
 
