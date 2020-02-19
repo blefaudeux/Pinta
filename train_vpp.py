@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 
 import numpy as np
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import TensorDataset
 
 import settings
 from data_processing import plot as plt
@@ -40,7 +40,7 @@ dnn = Conv(logdir='logs/' + settings.get_name() + str(datetime.now()),
            log_channel="DNN  ")
 
 # Load pre-computed normalization values
-dnn.updateNormalization(training_settings)
+dnn.update_normalization(training_settings)
 
 if not dnn.valid:
     dnn.fit(training_data,

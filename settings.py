@@ -1,6 +1,6 @@
 import json
-import torch
 
+import torch
 
 # Select our target at runtime
 dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor

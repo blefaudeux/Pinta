@@ -1,6 +1,7 @@
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
+
 from settings import dtype
 from train.engine import NN
 
@@ -32,7 +33,8 @@ class Conv(NN):
                                   nn.ReLU())
 
         out_conv_size = self._get_conv_out(input_size)
-        self.log.info(f"Feature vector size out of the convolution is {out_conv_size}")
+        self.log.info(
+            "Feature vector size out of the convolution is {}".format(out_conv_size))
 
         # Ends with two fully connected layers
         self.fc = nn.Sequential(nn.Linear(out_conv_size, 512),
@@ -43,7 +45,8 @@ class Conv(NN):
 
         # CUDA switch > Needs to be done after the model has been declared
         if dtype is torch.cuda.FloatTensor:
-            self.log.info("Using Pytorch CUDA backend. Moving the net definition to device")
+            self.log.info(
+                "Using Pytorch CUDA backend. Moving the net definition to device")
             self.cuda()
 
         # Load from trained NN if required
@@ -54,7 +57,8 @@ class Conv(NN):
         except RuntimeError:
             pass
 
-        self.log.warning("Could not load the specified net, needs to be computed from scratch")
+        self.log.warning(
+            "Could not load the specified net, needs to be computed from scratch")
 
     def get_layer_weights(self):
         return self.conv[0].weight
@@ -67,12 +71,12 @@ class Conv(NN):
                 self.log.info(self)
                 return True
 
-        except (ValueError, OSError, IOError, TypeError) as e:
-            self.log.warning(e)
+        except (ValueError, OSError, IOError, TypeError) as exception:
+            self.log.warning(exception)
             self.log.warning("Could not find or load existing NN")
             return False
 
-    def forward(self, inputs, hidden=None):
+    def forward(self, inputs, *kwargs):
         # One feature vector per sample in. Rearrange accordingly
         features = self.conv(inputs).view(inputs.size()[0], -1)
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-from train.engine_cnn import Conv
 import settings
-from synthetic import polar
 from data_processing.plot import polar_plot
+from synthetic import polar
+from train.engine_cnn import Conv
 
 """
 Load a given engine, generate a couple of synthetic plots from it
@@ -27,10 +27,11 @@ if not engine.valid:
     print("Failed loading the model, cannot continue")
     exit(-1)
 
-engine.updateNormalization(training_settings)
+engine.update_normalization(training_settings)
 
 # Generate data all along the curve
-polar_data = polar.generate(engine, [5, 25], 5, .1, training_settings["seq_length"])
+POLAR_DATA = polar.generate(
+    engine, [5, 25], 5, .1, training_settings["seq_length"])
 
 # Plot all that stuff
-polar_plot(polar_data)
+polar_plot(POLAR_DATA)

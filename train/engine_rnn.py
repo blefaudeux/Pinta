@@ -1,12 +1,9 @@
+
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torch.autograd import Variable
-import numpy as np
-import logging
-from tensorboardX import SummaryWriter
-from train.engine import NN
+
 from settings import dtype
+from train.engine import NN
 
 
 class ConvRNN(NN):
@@ -65,11 +62,8 @@ class ConvRNN(NN):
         inputs = inputs.transpose(1, 2)
 
         # Run through Conv1d and Pool1d layers
-        c1 = self.conv1(inputs)
-        r1 = self.relu(c1)
-
-        c2 = self.conv2(r1)
-        r2 = self.relu(c2)
+        r1 = self.relu(self.conv1(inputs))
+        r2 = self.relu(self.conv2(r1))
 
         # Turn  (batch_size x input_size x batch_number)
         # back into (batch_size x batch_number x input_size)
@@ -80,7 +74,11 @@ class ConvRNN(NN):
         conv_seq_len = output.size(2)
 
         # Treating (conv_seq_len x batch_size) as batch_size for linear layer
-        output = output.view(batch_size//self.hidden_size, -1, self.hidden_size)
+        output = output.view(
+            batch_size//self.hidden_size, -1, self.hidden_size)
         output = self.out(output)
         output = output.view(conv_seq_len, -1, self.output_size)
         return output, hidden
+
+    def get_layer_weights(self):
+        return self.conv1.weight

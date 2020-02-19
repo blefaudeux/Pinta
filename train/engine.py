@@ -6,7 +6,6 @@ Implement different NNs which best describe the behaviour of the system
 import logging
 from typing import List
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -16,6 +15,7 @@ from data_processing.training_set import (TrainingSample, TrainingSet,
                                           TrainingSetBundle)
 from settings import dtype
 from utils import timing
+
 
 class NN(nn.Module):
     """
@@ -39,13 +39,13 @@ class NN(nn.Module):
         return self._valid
 
     def save(self, name):
-        with open(name, "wb") as f:
-            torch.save(self.state_dict(), f)
+        with open(name, "wb") as fileio:
+            torch.save(self.state_dict(), fileio)
 
     def get_layer_weights(self):
-        return None
+        raise NotImplementedError
 
-    def updateNormalization(self, settings):
+    def update_normalization(self, settings):
         assert "dataset_normalization" in settings.keys()
 
         # Update reference mean and std
@@ -167,13 +167,13 @@ class NN(nn.Module):
             # Update learning rate if needed
             if not (epoch + 1) % settings["training"]["lr_period_decrease"]:
                 self.log.info("  -- Reducing learning rate")
-                for g in optimizer.param_groups:
-                    g['lr'] *= settings["training"]["lr_amount_decrease"]
+                for group in optimizer.param_groups:
+                    group['lr'] *= settings["training"]["lr_amount_decrease"]
 
             # Display the layer weights
-            w = self.get_layer_weights()
-            if w is not None:
-                self.summary_writer.add_histogram("weights", w, i_log)
+            weight = self.get_layer_weights()
+            if weight is not None:
+                self.summary_writer.add_histogram("weights", weight, i_log)
 
         self.log.info("... Done")
 
@@ -192,7 +192,7 @@ class NN(nn.Module):
             self.mean[1]
         )
 
-    def forward(self, *inputs):
+    def forward(self, inputs, *kwargs):
         """
         Defines the computation performed at every call.
         Should be overriden by all subclasses.
