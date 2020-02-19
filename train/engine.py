@@ -15,7 +15,7 @@ from torch.utils.tensorboard import SummaryWriter
 from data_processing.training_set import (TrainingSample, TrainingSet,
                                           TrainingSetBundle)
 from settings import dtype
-
+from utils import timing
 
 class NN(nn.Module):
     """
@@ -140,6 +140,7 @@ class NN(nn.Module):
             for batch_index in range(0, train_seq.inputs.shape[0], batch_size):
 
                 # Eval computation on the training data
+                @timing
                 def closure(index=batch_index):
                     data = TrainingSet(train_seq.inputs[index:index+batch_size, :, :],
                                        train_seq.outputs[index:index+batch_size, :])
