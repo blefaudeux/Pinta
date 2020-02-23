@@ -2,14 +2,13 @@
 
 import logging
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
-from torch.utils.data import DataLoader, TensorDataset
 
 import settings
 from data_processing import plot as plt
 from data_processing.load import get_train_test_list, load_folder, load_sets
-# from train.engine_rnn import ConvRNN
 from train.engine_cnn import Conv
 
 training_settings = settings.get_defaults()
@@ -17,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(training_settings["log"])
 
 # Load the dataset + some data augmentation
-data_list = load_sets(load_folder('data'), training_settings)
+data_list = load_sets(load_folder(Path('data')), training_settings)
 training_data, testing_data = get_train_test_list(
     data_list, training_settings["training_ratio"], randomize=False)
 

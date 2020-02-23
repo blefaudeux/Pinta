@@ -1,4 +1,6 @@
+import logging
 import os
+from pathlib import Path
 from typing import List, Tuple
 
 import numpy as np
@@ -7,6 +9,8 @@ from data_processing.nmea2pandas import load_json
 from data_processing.training_set import TrainingSet
 from data_processing.whitening import whiten_angle
 
+LOG = logging.getLogger("DataLoad")
+
 
 def _angle_split(data):
     data['wind_angle_x'] = np.cos(np.radians(data['wind_angle']))
@@ -14,18 +18,19 @@ def _angle_split(data):
     return data
 
 
-def load_folder(folder_path, clean_data=True, whiten_data=True):
+def load_folder(folder_path: Path, clean_data=True, whiten_data=True):
     def valid(filepath):
         return os.path.isfile(filepath) and os.path.splitext(filepath)[1] == ".json"
 
     filelist = [os.path.join(folder_path, f) for f in os.listdir(
         folder_path) if valid(os.path.join(folder_path, f))]
-    return [load(f, clean_data, whiten_data) for f in filelist]
+
+    return [load(Path(f), clean_data, whiten_data) for f in filelist]
 
 
-def load(filename, clean_data=True, whiten_data=True):
-    print(f"Loading {filename}")
-    data_frame = load_json(filename, skip_zeros=True)
+def load(filepath: Path, clean_data=True, whiten_data=True):
+    print(f"Loading {filepath}")
+    data_frame = load_json(filepath, skip_zeros=True)
 
     # Fix a possible offset in the rudder angle sensor
     if clean_data:
@@ -90,12 +95,12 @@ def load_sets(raw, settings) -> List[TrainingSet]:
     return training_sets
 
 
-def get_train_test_list(trainingSets: List[TrainingSet], ratio: float, randomize: bool) \
+def get_train_test_list(training_sets: List[TrainingSet], ratio: float, randomize: bool) \
         -> Tuple[List[TrainingSet], List[TrainingSet]]:
 
     training_data, testing_data = [], []
 
-    for item in trainingSets:
+    for item in training_sets:
         train, test = item.get_train_test(ratio, randomize)
         training_data.append(train)
         testing_data.append(test)
@@ -103,10 +108,10 @@ def get_train_test_list(trainingSets: List[TrainingSet], ratio: float, randomize
     return training_data, testing_data
 
 
-def pack_sets(trainingSetlist: List[TrainingSet]) -> TrainingSet:
-    final_set = trainingSetlist[0]
+def pack_sets(training_sets: List[TrainingSet]) -> TrainingSet:
+    final_set = training_sets[0]
 
-    for trainingSet in trainingSetlist[1:]:
-        final_set.append(trainingSet.inputs, trainingSet.outputs)
+    for t_set in training_sets[1:]:
+        final_set.append(t_set.inputs, t_set.outputs)
 
     return final_set

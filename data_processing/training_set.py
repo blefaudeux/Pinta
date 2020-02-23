@@ -39,10 +39,10 @@ class TrainingSet(Dataset):
     @classmethod
     def from_training_sample(cls, sample: TrainingSample, seq_len: int):
         return cls(
-            torch.tensor(
+            torch.Tensor(
                 np.repeat(np.array([sample.inputs]), seq_len, axis=0)
             ).type(dtype),
-            torch.tensor(
+            torch.Tensor(
                 np.repeat(np.array([sample.outputs]), seq_len, axis=0)
             ).type(dtype))
 
@@ -198,9 +198,9 @@ class TrainingSetBundle:
         inputs = []
         outputs = []
 
-        for trainingSet in self.sets:
+        for training_set in self.sets:
             a, b = self.generate_temporal_seq(
-                trainingSet.inputs, trainingSet.outputs, seq_len)
+                training_set.inputs, training_set.outputs, seq_len)
             inputs.append(a)
             outputs.append(b)
 
@@ -211,17 +211,17 @@ class TrainingSetBundle:
         return TrainingSet(tensor_input, tensor_output)
 
     @staticmethod
-    def generate_temporal_seq(input, output, seq_len):
+    def generate_temporal_seq(tensor_input: torch.Tensor, tensor_output: torch.Tensor, seq_len: int):
         """
         Generate all the subsequences over time,
         Useful for instance for training a temporal conv net
         """
 
-        n_sequences = input.shape[0] - seq_len + 1
+        n_sequences = tensor_input.shape[0] - seq_len + 1
 
-        input_seq = torch.transpose(torch.stack([input[start:start+seq_len, :]
+        input_seq = torch.transpose(torch.stack([tensor_input[start:start+seq_len, :]
                                                  for start in range(n_sequences)], dim=0), 1, 2)
 
-        output_seq = output[:-seq_len+1, :]
+        output_seq = tensor_output[:-seq_len+1, :]
 
         return input_seq, output_seq

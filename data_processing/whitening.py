@@ -1,6 +1,3 @@
-import pandas as pd
-
-
 def whiten_angle(data):
     # Given a data frame with the fields:
     # 'wind_angle', 'boat_speed', 'wind_speed', 'rudder_angle'
