@@ -3,10 +3,11 @@ from __future__ import annotations
 # Our lightweight base data structure..
 # specialize inputs/outputs, makes it readable down the line
 from collections import namedtuple
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import numpy as np
 import torch
+import torchvision
 from torch.utils.data import Dataset
 
 from settings import dtype
@@ -25,10 +26,7 @@ class TrainingSet(Dataset):
 
         self.inputs = inputs    # type: torch.Tensor
         self.outputs = outputs  # type: torch.Tensor
-
-        self._normalized = False
-        self._mean = None  # type: Optional[TrainingSample]
-        self._std = None  # type: Optional[TrainingSample]
+        self.transform = lambda x: x
 
     # Alternative "constructor", straight from Numpy arrays
     @classmethod
@@ -39,10 +37,10 @@ class TrainingSet(Dataset):
     @classmethod
     def from_training_sample(cls, sample: TrainingSample, seq_len: int):
         return cls(
-            torch.tensor(
+            torch.Tensor(
                 np.repeat(np.array([sample.inputs]), seq_len, axis=0)
             ).type(dtype),
-            torch.tensor(
+            torch.Tensor(
                 np.repeat(np.array([sample.outputs]), seq_len, axis=0)
             ).type(dtype))
 
@@ -53,10 +51,13 @@ class TrainingSet(Dataset):
         self.outputs = torch.cat((self.inputs, inputs), 0).type(dtype)
 
     def __getitem__(self, index):
-        return [self.inputs[index, :, :], self.outputs[index, :]]
+        return self.transform(TrainingSample(inputs=self.inputs[index, :, :], outputs=self.outputs[index, :]))
 
     def __len__(self):
         return self.inputs.shape[0]
+
+    def set_transforms(self, transforms: List[Callable]):
+        self.transform = torchvision.transforms.Compose(transforms)
 
     def is_normalized(self):
         return self._normalized
@@ -93,7 +94,6 @@ class TrainingSet(Dataset):
         _mean = self._mean if mean is None else mean
         _std = self._std if std is None else std
 
-        # FIXME: Mypy is lost down there
         self.inputs = torch.mul(
             torch.add(self.inputs, _mean.inputs.reshape(1, -1, 1)),
             _std.inputs.reshape(1, -1, 1))
@@ -131,11 +131,11 @@ class TrainingSet(Dataset):
                             self.outputs[index[len_training_set:]]))
 
     def scale(self, mean: torch.Tensor, std: torch.Tensor):
-        self.input = torch.mul(
+        self.inputs = torch.mul(
             torch.add(self.inputs, mean[0].reshape(1, -1, 1)),
             std[0].reshape(1, -1, 1))
 
-        self.output = torch.mul(
+        self.outputs = torch.mul(
             torch.add(self.outputs, mean[1].reshape(1, -1, 1)),
             std[1].reshape(1, -1, 1))
 
@@ -198,9 +198,9 @@ class TrainingSetBundle:
         inputs = []
         outputs = []
 
-        for trainingSet in self.sets:
+        for training_set in self.sets:
             a, b = self.generate_temporal_seq(
-                trainingSet.inputs, trainingSet.outputs, seq_len)
+                training_set.inputs, training_set.outputs, seq_len)
             inputs.append(a)
             outputs.append(b)
 
@@ -211,17 +211,17 @@ class TrainingSetBundle:
         return TrainingSet(tensor_input, tensor_output)
 
     @staticmethod
-    def generate_temporal_seq(input, output, seq_len):
+    def generate_temporal_seq(tensor_input: torch.Tensor, tensor_output: torch.Tensor, seq_len: int):
         """
         Generate all the subsequences over time,
         Useful for instance for training a temporal conv net
         """
 
-        n_sequences = input.shape[0] - seq_len + 1
+        n_sequences = tensor_input.shape[0] - seq_len + 1
 
-        input_seq = torch.transpose(torch.stack([input[start:start+seq_len, :]
+        input_seq = torch.transpose(torch.stack([tensor_input[start:start+seq_len, :]
                                                  for start in range(n_sequences)], dim=0), 1, 2)
 
-        output_seq = output[:-seq_len+1, :]
+        output_seq = tensor_output[:-seq_len+1, :]
 
         return input_seq, output_seq

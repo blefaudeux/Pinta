@@ -1,0 +1,6 @@
+pandas
+torchvision
+pynmea2
+
+tensorboardX
+tensorflow
