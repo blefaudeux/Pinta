@@ -3,10 +3,11 @@ from __future__ import annotations
 # Our lightweight base data structure..
 # specialize inputs/outputs, makes it readable down the line
 from collections import namedtuple
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import numpy as np
 import torch
+import torchvision
 from torch.utils.data import Dataset
 
 from settings import dtype
@@ -25,10 +26,7 @@ class TrainingSet(Dataset):
 
         self.inputs = inputs    # type: torch.Tensor
         self.outputs = outputs  # type: torch.Tensor
-
-        self._normalized = False
-        self._mean = None  # type: Optional[TrainingSample]
-        self._std = None  # type: Optional[TrainingSample]
+        self.transform = lambda x: x
 
     # Alternative "constructor", straight from Numpy arrays
     @classmethod
@@ -53,10 +51,13 @@ class TrainingSet(Dataset):
         self.outputs = torch.cat((self.inputs, inputs), 0).type(dtype)
 
     def __getitem__(self, index):
-        return [self.inputs[index, :, :], self.outputs[index, :]]
+        return self.transform(TrainingSample(inputs=self.inputs[index, :, :], outputs=self.outputs[index, :]))
 
     def __len__(self):
         return self.inputs.shape[0]
+
+    def set_transforms(self, transforms: List[Callable]):
+        self.transform = torchvision.transforms.Compose(transforms)
 
     def is_normalized(self):
         return self._normalized
@@ -93,7 +94,6 @@ class TrainingSet(Dataset):
         _mean = self._mean if mean is None else mean
         _std = self._std if std is None else std
 
-        # FIXME: Mypy is lost down there
         self.inputs = torch.mul(
             torch.add(self.inputs, _mean.inputs.reshape(1, -1, 1)),
             _std.inputs.reshape(1, -1, 1))
@@ -131,11 +131,11 @@ class TrainingSet(Dataset):
                             self.outputs[index[len_training_set:]]))
 
     def scale(self, mean: torch.Tensor, std: torch.Tensor):
-        self.input = torch.mul(
+        self.inputs = torch.mul(
             torch.add(self.inputs, mean[0].reshape(1, -1, 1)),
             std[0].reshape(1, -1, 1))
 
-        self.output = torch.mul(
+        self.outputs = torch.mul(
             torch.add(self.outputs, mean[1].reshape(1, -1, 1)),
             std[1].reshape(1, -1, 1))
 
