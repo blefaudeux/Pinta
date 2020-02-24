@@ -59,57 +59,6 @@ class TrainingSet(Dataset):
     def set_transforms(self, transforms: List[Callable]):
         self.transform = torchvision.transforms.Compose(transforms)
 
-    def is_normalized(self):
-        return self._normalized
-
-    def normalize(self, mean: TrainingSample, std: TrainingSample):
-        """
-        Given mean and std of the appropriate dimensions,
-        bring the training set to a normalized state
-
-        Arguments:
-            mean {TrainingSample holding torch tensors} -- Expected distribution first moment
-            std {TrainingSample holding torch tensors} -- Expected distribution second moment
-        """
-
-        # Check sizes
-        assert mean.inputs.shape[0] == self.inputs.shape[1]
-        assert mean.outputs.shape[0] == self.outputs.shape[1]
-
-        self.inputs = torch.div(
-            torch.add(self.inputs, - mean.inputs.reshape(1, -1, 1)),
-            std.inputs.reshape(1, -1, 1))
-
-        self.outputs = torch.div(
-            torch.add(self.outputs, - mean.outputs), std.outputs)
-
-        # Save new status for future use
-        self._mean = mean
-        self._std = std
-        self._normalized = True
-
-    def denormalize(self, mean: Optional[TrainingSample] = None,
-                    std: Optional[TrainingSample] = None):
-
-        _mean = self._mean if mean is None else mean
-        _std = self._std if std is None else std
-
-        self.inputs = torch.mul(
-            torch.add(self.inputs, _mean.inputs.reshape(1, -1, 1)),
-            _std.inputs.reshape(1, -1, 1))
-
-        self.outputs = torch.mul(
-            torch.add(self.outputs, _mean.outputs), _std.outputs)
-
-        self._normalized = False
-        self._mean = None
-        self._std = None
-
-    def randomize(self):
-        shuffle = torch.randperm(self.inputs.shape[0])
-        self.inputs = self.inputs[shuffle]
-        self.outputs = self.outputs[shuffle]
-
     def get_train_test(self, ratio: float, randomize: bool) -> Tuple[TrainingSet, TrainingSet]:
         """
         Return two training sets, either randomly selected or sequential
@@ -118,12 +67,11 @@ class TrainingSet(Dataset):
             ratio {float} -- train/test ratio
         """
 
-        len_training_set = round(self.inputs.shape[0] * ratio)
+        n_samples = self.inputs.shape[0]
+        len_training_set = round(n_samples * ratio)
 
-        if randomize:
-            index = torch.randperm(self.inputs.shape[0])
-        else:
-            index = np.arange(self.inputs.shape[0])
+        index = torch.randperm(
+            n_samples) if randomize else np.arange(n_samples)
 
         return (TrainingSet(self.inputs[index[:len_training_set]],
                             self.outputs[index[:len_training_set]]),

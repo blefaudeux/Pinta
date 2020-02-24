@@ -9,10 +9,12 @@ from typing import List
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 from data_processing.training_set import (TrainingSample, TrainingSet,
                                           TrainingSetBundle)
+from data_processing.transforms import Normalize
 from settings import dtype
 from utils import timing
 
@@ -64,7 +66,7 @@ class NN(nn.Module):
         data_seq, _, _ = self.prepare_data(data, settings["seq_length"],
                                            self_normalize=False)
 
-        data_seq.normalize(self.mean, self.std)
+        data_seq.set_transforms([Normalize(self.mean, self.std)])
 
         # Re-use PyTorch losses on the fly
         criterion = nn.MSELoss()
@@ -96,14 +98,6 @@ class NN(nn.Module):
 
         return training_data, mean, std
 
-    @staticmethod
-    def randomize_data(training_set):
-        # Randomize the input/output pairs
-        assert training_set.input.shape[0] == training_set.output.shape[0]
-
-        shuffle = torch.randperm(training_set.input.shape[0])
-        return TrainingSet(training_set.input[shuffle], training_set.output[shuffle])
-
     def fit(self, train, test, settings, epochs=50, batch_size=50, self_normalize=False):
         optimizer = optim.SGD(self.parameters(), lr=0.01)
         criterion = nn.MSELoss()
@@ -115,21 +109,26 @@ class NN(nn.Module):
                                                 settings["seq_length"],
                                                 self_normalize=False)
 
-            train_seq.normalize(self.mean, self.std)
+            train_seq.set_transforms([Normalize(self.mean, self.std)])
+
         else:
             # Compute the dataset normalization on the fly
             train_seq, self.mean, self.std = self.prepare_data(train,
                                                                settings["seq_length"],
                                                                self_normalize=True)
 
-        train_seq.randomize()
-
         test_seq, _, _ = self.prepare_data(test,
                                            settings["seq_length"],
                                            self_normalize=False)
 
         # Test data needs to be normalized with the same coefficients as training data
-        test_seq.normalize(self.mean, self.std)
+        test_seq.set_transforms([Normalize(self.mean, self.std)])
+
+        train_dataload = DataLoader(
+            train_seq, batch_size=batch_size, shuffle=True)
+
+        test_dataload = DataLoader(
+            test_seq, batch_size=batch_size, shuffle=True)
 
         self.log.info("Training the network...\n")
         i_log = 0
@@ -137,14 +136,10 @@ class NN(nn.Module):
 
             self.log.info("***** Epoch %d", epoch)
 
-            for batch_index in range(0, train_seq.inputs.shape[0], batch_size):
-
+            for train_batch, test_batch in zip(train_dataload, test_dataload):
                 # Eval computation on the training data
                 @timing
-                def closure(index=batch_index):
-                    data = TrainingSet(train_seq.inputs[index:index+batch_size, :, :],
-                                       train_seq.outputs[index:index+batch_size, :])
-
+                def closure_train(data=train_batch):
                     optimizer.zero_grad()
                     out, _ = self(data.inputs)
                     loss = criterion(out, data.outputs)
@@ -155,13 +150,17 @@ class NN(nn.Module):
                     loss.backward()
                     return loss
 
-                optimizer.step(closure)
-
                 # Loss on the test data
-                pred, _ = self(test_seq.inputs)
-                loss = criterion(pred, test_seq.outputs)
-                self.summary_writer.add_scalar('test', loss.item(), i_log)
-                self.log.info("  Test loss: {:.4f}\n".format(loss.item()))
+                @timing
+                def closure_test(data=test_batch):
+                    pred, _ = self(data.inputs)
+                    loss = criterion(pred, data.outputs)
+                    self.summary_writer.add_scalar('test', loss.item(), i_log)
+                    self.log.info("  Test loss: {:.4f}\n".format(loss.item()))
+
+                optimizer.step(closure_train)
+                closure_test()
+
                 i_log += 1
 
             # Update learning rate if needed
@@ -184,7 +183,7 @@ class NN(nn.Module):
 
         # batch and normalize
         test_seq, _, _ = self.prepare_data(data, seq_len, self_normalize=False)
-        test_seq.normalize(self.mean, self.std)
+        test_seq.set_transforms([Normalize(self.mean, self.std)])
 
         # De-normalize the output
         return torch.add(
