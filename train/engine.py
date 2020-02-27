@@ -75,7 +75,7 @@ class NN(nn.Module):
         return loss.item()
 
     @staticmethod
-    def prepare_data(training_sets: List[TrainingSet], seq_len, self_normalize=True):
+    def prepare_data(training_sets: List[TrainingSet], seq_len):
         """
         Prepare sequences of a given length given the input data
         """
@@ -83,46 +83,20 @@ class NN(nn.Module):
         bundle = TrainingSetBundle(training_sets)
         mean, std = bundle.get_norm()
 
-        # except IndexError:
-        #     # The data is not packed in a tensor, we need to generate one on the fly
-        #     mean = [data_list.input, data_list.output]
-        #     std = [np.array([1.]), np.array([1.])]
-        #     pack_in = np.array([[data_list.input for i in range(seq_len)]])
-        #     pack_out = np.array([[data_list.output for i in range(seq_len)]])
-        #     data_list = TrainingSample(pack_in, pack_out)
+        return bundle.get_sequences(seq_len), mean, std
 
-        if self_normalize:
-            bundle.normalize()
-
-        training_data = bundle.get_sequences(seq_len)
-
-        return training_data, mean, std
-
-    def fit(self, train, test, settings, epochs=50, batch_size=50, self_normalize=False):
+    def fit(self, train, test, settings, epochs=50, batch_size=50):
         optimizer = optim.SGD(self.parameters(), lr=0.01)
         criterion = nn.MSELoss()
 
         # Prepare the data in batches
-        if not self_normalize:
-            # Use the normalization defined in the settings
-            train_seq, _, _ = self.prepare_data(train,
-                                                settings["seq_length"],
-                                                self_normalize=False)
-
-            train_seq.set_transforms([Normalize(self.mean, self.std)])
-
-        else:
-            # Compute the dataset normalization on the fly
-            train_seq, self.mean, self.std = self.prepare_data(train,
-                                                               settings["seq_length"],
-                                                               self_normalize=True)
-
-        test_seq, _, _ = self.prepare_data(test,
-                                           settings["seq_length"],
-                                           self_normalize=False)
+        # Use the normalization defined in the settings
+        train_seq, mean, std = self.prepare_data(train, settings["seq_length"])
+        train_seq.set_transforms([Normalize(mean, std)])
 
         # Test data needs to be normalized with the same coefficients as training data
-        test_seq.set_transforms([Normalize(self.mean, self.std)])
+        test_seq, _, _ = self.prepare_data(test, settings["seq_length"])
+        test_seq.set_transforms([Normalize(mean, std)])
 
         train_dataload = DataLoader(
             train_seq, batch_size=batch_size, shuffle=True)

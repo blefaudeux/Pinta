@@ -106,12 +106,12 @@ class TrainingSetBundle:
         """
 
         mean_inputs, mean_outputs, std_inputs, std_outputs = [], [], [], []
-        for t in self.sets:
-            mean_inputs.append(t.inputs.mean(dim=0))
-            mean_outputs.append(t.outputs.mean(dim=0))
+        for training_set in self.sets:
+            mean_inputs.append(training_set.inputs.mean(dim=0))
+            mean_outputs.append(training_set.outputs.mean(dim=0))
 
-            std_inputs.append(t.inputs.std(dim=0))
-            std_outputs.append(t.outputs.std(dim=0))
+            std_inputs.append(training_set.inputs.std(dim=0))
+            std_outputs.append(training_set.outputs.std(dim=0))
 
         # To Torch tensor and mean
         mean = [torch.stack(mean_inputs).mean(
@@ -173,3 +173,11 @@ class TrainingSetBundle:
         output_seq = tensor_output[:-seq_len+1, :]
 
         return input_seq, output_seq
+
+    def get_dataloaders(self, ratio: float, seq_len: int, shuffle: bool):
+        # TODO: fixme
+        sequences = self.get_sequences(seq_len)
+
+        torch.rand
+        train_dataload = DataLoader(
+            train_seq, batch_size=batch_size, shuffle=True)

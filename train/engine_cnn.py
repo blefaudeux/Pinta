@@ -22,7 +22,7 @@ class Conv(NN):
         KERNEL_SIZE = 16
 
         # Conv front end
-        # First conv is a depthwise convolution
+        # First conv is a depthfwise convolution
         # Remark: All inputs convolved to all outputs. This could be changed
         # with the groups flag
         self.conv = nn.Sequential(nn.Conv1d(input_size[0], hidden_size,
