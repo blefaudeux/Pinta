@@ -11,5 +11,9 @@
     "python.linting.pylintEnabled": true,
     "editor.codeActionsOnSave": {
         "source.organizeImports": true
-    }
+    },
+    "python.linting.pylintArgs": [
+        "--generate-members"
+    ],
+    "python.linting.mypyEnabled": true,
 }

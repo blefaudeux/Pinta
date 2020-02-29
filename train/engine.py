@@ -4,7 +4,7 @@ Implement different NNs which best describe the behaviour of the system
 """
 
 import logging
-from typing import List
+from typing import Any, Dict, List
 
 import torch
 import torch.nn as nn
@@ -85,24 +85,9 @@ class NN(nn.Module):
 
         return bundle.get_sequences(seq_len), mean, std
 
-    def fit(self, train, test, settings, epochs=50, batch_size=50):
+    def fit(self, trainer: DataLoader, tester: DataLoader, settings: Dict[str, Any], epochs=50):
         optimizer = optim.SGD(self.parameters(), lr=0.01)
         criterion = nn.MSELoss()
-
-        # Prepare the data in batches
-        # Use the normalization defined in the settings
-        train_seq, mean, std = self.prepare_data(train, settings["seq_length"])
-        train_seq.set_transforms([Normalize(mean, std)])
-
-        # Test data needs to be normalized with the same coefficients as training data
-        test_seq, _, _ = self.prepare_data(test, settings["seq_length"])
-        test_seq.set_transforms([Normalize(mean, std)])
-
-        train_dataload = DataLoader(
-            train_seq, batch_size=batch_size, shuffle=True)
-
-        test_dataload = DataLoader(
-            test_seq, batch_size=batch_size, shuffle=True)
 
         self.log.info("Training the network...\n")
         i_log = 0
@@ -110,7 +95,7 @@ class NN(nn.Module):
 
             self.log.info("***** Epoch %d", epoch)
 
-            for train_batch, test_batch in zip(train_dataload, test_dataload):
+            for train_batch, test_batch in zip(trainer, tester):
                 # Eval computation on the training data
                 @timing
                 def closure_train(data=train_batch):
@@ -156,7 +141,7 @@ class NN(nn.Module):
             data = [TrainingSet.from_training_sample(data, seq_len)]
 
         # batch and normalize
-        test_seq, _, _ = self.prepare_data(data, seq_len, self_normalize=False)
+        test_seq, _, _ = self.prepare_data(data, seq_len)
         test_seq.set_transforms([Normalize(self.mean, self.std)])
 
         # De-normalize the output

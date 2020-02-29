@@ -8,7 +8,7 @@ from typing import Callable, List, Optional, Tuple
 import numpy as np
 import torch
 import torchvision
-from torch.utils.data import Dataset
+from torch.utils.data import DataLoader, Dataset, random_split
 
 from settings import dtype
 
@@ -36,13 +36,14 @@ class TrainingSet(Dataset):
     # Alternative constructor: straight from TrainingSample, repeat
     @classmethod
     def from_training_sample(cls, sample: TrainingSample, seq_len: int):
-        return cls(
-            torch.Tensor(
-                np.repeat(np.array([sample.inputs]), seq_len, axis=0)
-            ).type(dtype),
-            torch.Tensor(
-                np.repeat(np.array([sample.outputs]), seq_len, axis=0)
-            ).type(dtype))
+        inputs = torch.tensor(
+            np.repeat(np.array([sample.inputs]), seq_len, axis=0), dtype=dtype
+        )
+        outputs = torch.tensor(
+            np.repeat(np.array([sample.outputs]), seq_len, axis=0), dtype=dtype
+        )
+
+        return cls(inputs, outputs)
 
     def append(self, inputs: torch.Tensor, outputs: torch.Tensor):
         assert inputs.shape[0] == outputs.shape[0], "Dimensions mismatch"
@@ -98,7 +99,10 @@ class TrainingSetBundle:
     def __init__(self, training_sets: List[TrainingSet]):
         self.sets = training_sets
 
-    def get_norm(self):
+    def __len__(self):
+        return sum(map(lambda x: len(x), self.sets))
+
+    def get_norm(self) -> Tuple[TrainingSample, TrainingSample]:
         """Get Mean and STD over the whole bundle
 
         Returns:
@@ -114,10 +118,11 @@ class TrainingSetBundle:
             std_outputs.append(training_set.outputs.std(dim=0))
 
         # To Torch tensor and mean
-        mean = [torch.stack(mean_inputs).mean(
-            dim=0), torch.stack(mean_outputs).mean(dim=0)]
-        std = [torch.stack(std_inputs).mean(
-            dim=0), torch.cat(std_outputs).mean(dim=0)]
+        mean = TrainingSample(torch.stack(mean_inputs).mean(
+            dim=0), torch.stack(mean_outputs).mean(dim=0))
+
+        std = TrainingSample(torch.stack(std_inputs).mean(
+            dim=0), torch.stack(std_outputs).mean(dim=0))
 
         return mean, std
 
@@ -174,10 +179,13 @@ class TrainingSetBundle:
 
         return input_seq, output_seq
 
-    def get_dataloaders(self, ratio: float, seq_len: int, shuffle: bool):
-        # TODO: fixme
+    def get_dataloaders(self, ratio: float, seq_len: int, batch_size: int, shuffle: bool) -> Tuple[DataLoader, DataLoader]:
         sequences = self.get_sequences(seq_len)
+        train_len = int(ratio * len(sequences))
+        test_len = len(sequences) - train_len
+        trainer, tester = random_split(sequences, [train_len, test_len])
 
-        torch.rand
-        train_dataload = DataLoader(
-            train_seq, batch_size=batch_size, shuffle=True)
+        return (
+            DataLoader(trainer, batch_size=batch_size, shuffle=shuffle),
+            DataLoader(tester, batch_size=batch_size, shuffle=shuffle)
+        )
