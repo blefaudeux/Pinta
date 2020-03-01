@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 
 import numpy as np
 
@@ -20,7 +20,8 @@ def _angle_split(data):
 
 def load_folder(folder_path: Path, clean_data=True, whiten_data=True):
     def valid(filepath):
-        return os.path.isfile(filepath) and os.path.splitext(filepath)[1] == ".json"
+        return (os.path.isfile(filepath)
+                and os.path.splitext(filepath)[1] == ".json")
 
     filelist = [os.path.join(folder_path, f) for f in os.listdir(
         folder_path) if valid(os.path.join(folder_path, f))]
@@ -36,7 +37,8 @@ def load(filepath: Path, clean_data=True, whiten_data=True):
     if clean_data:
         data_frame['rudder_angle'] -= data_frame['rudder_angle'].mean()
 
-    # Whiten the data, in that the boat supposedely goes at the same speed port and starboard
+    # Whiten the data, in that the boat supposedely goes at the same speed
+    # port and starboard
     if whiten_data:
         df_white_angle = whiten_angle(data_frame)
     else:
@@ -74,7 +76,8 @@ def split(raw_data, settings):
     train_output = np.array([train[cat].values for cat in cat_out]).transpose()
     test_output = np.array([test[cat].values for cat in cat_out]).transpose()
 
-    return TrainingSet(train_inputs, train_output), TrainingSet(test_inputs, test_output)
+    return (TrainingSet(train_inputs, train_output),
+            TrainingSet(test_inputs, test_output))
 
 
 def load_sets(raw, settings) -> List[TrainingSet]:
@@ -93,19 +96,6 @@ def load_sets(raw, settings) -> List[TrainingSet]:
         training_sets.append(to_training_set(raw_data_aug, settings))
 
     return training_sets
-
-
-def get_train_test_list(training_sets: List[TrainingSet], ratio: float, randomize: bool) \
-        -> Tuple[List[TrainingSet], List[TrainingSet]]:
-
-    training_data, testing_data = [], []
-
-    for item in training_sets:
-        train, test = item.get_train_test(ratio, randomize)
-        training_data.append(train)
-        testing_data.append(test)
-
-    return training_data, testing_data
 
 
 def pack_sets(training_sets: List[TrainingSet]) -> TrainingSet:

@@ -18,7 +18,8 @@ class Denormalize:
                 torch.add(sample.inputs, self.mean.inputs.reshape(1, -1, 1)),
                 self.std.inputs.reshape(1, -1, 1)),
             outputs=torch.mul(
-                torch.add(sample.outputs, self.mean.outputs), self.std.outputs))
+                torch.add(sample.outputs, self.mean.outputs),
+                self.std.outputs))
 
 
 class Normalize:
@@ -28,8 +29,10 @@ class Normalize:
         bring the training set to a normalized state
 
         Arguments:
-            mean {TrainingSample holding torch tensors} -- Expected distribution first moment
-            std {TrainingSample holding torch tensors} -- Expected distribution second moment
+            mean {TrainingSample holding torch tensors}
+                -- Expected distribution first moment
+            std {TrainingSample holding torch tensors}
+                -- Expected distribution second moment
         """
         self.mean = mean
         self.std = std
@@ -40,4 +43,5 @@ class Normalize:
                 torch.add(sample.inputs, - self.mean.inputs.reshape(1, -1, 1)),
                 self.std.inputs.reshape(1, -1, 1)),
             outputs=torch.div(
-                torch.add(sample.outputs, - self.mean.outputs), self.std.outputs))
+                torch.add(sample.outputs, - self.mean.outputs),
+                self.std.outputs))

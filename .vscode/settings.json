@@ -16,4 +16,5 @@
         "--generate-members"
     ],
     "python.linting.mypyEnabled": true,
+    "python.linting.flake8Enabled": true,
 }

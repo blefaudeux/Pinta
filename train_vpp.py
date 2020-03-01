@@ -8,9 +8,8 @@ import numpy as np
 
 import settings
 from data_processing import plot as plt
-from data_processing.load import get_train_test_list, load_folder, load_sets
+from data_processing.load import load_folder, load_sets
 from data_processing.training_set import TrainingSetBundle
-from data_processing.transforms import *
 from train.engine_cnn import Conv
 
 training_settings = settings.get_defaults()
@@ -72,7 +71,10 @@ i = 0
 
 for dataset in tester:
     reference.append(
-        dataset.outputs[:-training_settings["seq_length"]+1].detach().cpu().numpy())
+        dataset.outputs[:-training_settings["seq_length"]+1]
+        .detach()
+        .cpu()
+        .numpy())
     i += reference[-1].shape[0]
     splits.append(i)
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 # Our lightweight base data structure..
 # specialize inputs/outputs, makes it readable down the line
 from collections import namedtuple
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Tuple
 
 import numpy as np
 import torch
@@ -31,7 +31,8 @@ class TrainingSet(Dataset):
     # Alternative "constructor", straight from Numpy arrays
     @classmethod
     def from_numpy(cls, inputs: np.array, outputs: np.array):
-        return cls(torch.from_numpy(inputs).type(dtype), torch.from_numpy(outputs).type(dtype))
+        return cls(torch.from_numpy(inputs).type(dtype),
+                   torch.from_numpy(outputs).type(dtype))
 
     # Alternative constructor: straight from TrainingSample, repeat
     @classmethod
@@ -48,36 +49,20 @@ class TrainingSet(Dataset):
     def append(self, inputs: torch.Tensor, outputs: torch.Tensor):
         assert inputs.shape[0] == outputs.shape[0], "Dimensions mismatch"
 
-        self.inputs = torch.cat((self.inputs, inputs), 0).type(dtype)
-        self.outputs = torch.cat((self.inputs, inputs), 0).type(dtype)
+        self.inputs = torch.cat((self.inputs, inputs), 0)
+        self.inputs.type(dtype)
+        self.outputs = torch.cat((self.inputs, inputs), 0)
+        self.outputs.type(dtype)
 
     def __getitem__(self, index):
-        return self.transform(TrainingSample(inputs=self.inputs[index, :, :], outputs=self.outputs[index, :]))
+        return self.transform(TrainingSample(inputs=self.inputs[index, :, :],
+                                             outputs=self.outputs[index, :]))
 
     def __len__(self):
         return self.inputs.shape[0]
 
     def set_transforms(self, transforms: List[Callable]):
         self.transform = torchvision.transforms.Compose(transforms)
-
-    def get_train_test(self, ratio: float, randomize: bool) -> Tuple[TrainingSet, TrainingSet]:
-        """
-        Return two training sets, either randomly selected or sequential
-
-        Arguments:
-            ratio {float} -- train/test ratio
-        """
-
-        n_samples = self.inputs.shape[0]
-        len_training_set = round(n_samples * ratio)
-
-        index = torch.randperm(
-            n_samples) if randomize else np.arange(n_samples)
-
-        return (TrainingSet(self.inputs[index[:len_training_set]],
-                            self.outputs[index[:len_training_set]]),
-                TrainingSet(self.inputs[index[len_training_set:]],
-                            self.outputs[index[len_training_set:]]))
 
     def scale(self, mean: torch.Tensor, std: torch.Tensor):
         self.inputs = torch.mul(
@@ -92,8 +77,10 @@ class TrainingSet(Dataset):
 class TrainingSetBundle:
     """
     Hold a list of training sets, with some helper functions.
-    This allows us to maintain a bigger pool of data without any time coherency / time continuity constraints.
-    All the data can be used for training, but we can enfore time-continuous streams where needed.
+    This allows us to maintain a bigger pool of data
+    without any time coherency / time continuity constraints.
+    All the data can be used for training, but we can enforce
+    time-continuous streams where needed.c
     """
 
     def __init__(self, training_sets: List[TrainingSet]):
@@ -157,14 +144,15 @@ class TrainingSetBundle:
             inputs.append(a)
             outputs.append(b)
 
-        # Handle possible type mismatchs (cpu/cuda)
         tensor_input = torch.cat(inputs)
         tensor_output = torch.cat(outputs)
 
         return TrainingSet(tensor_input, tensor_output)
 
     @staticmethod
-    def generate_temporal_seq(tensor_input: torch.Tensor, tensor_output: torch.Tensor, seq_len: int):
+    def generate_temporal_seq(tensor_input: torch.Tensor,
+                              tensor_output: torch.Tensor,
+                              seq_len: int):
         """
         Generate all the subsequences over time,
         Useful for instance for training a temporal conv net
@@ -172,14 +160,19 @@ class TrainingSetBundle:
 
         n_sequences = tensor_input.shape[0] - seq_len + 1
 
-        input_seq = torch.transpose(torch.stack([tensor_input[start:start+seq_len, :]
-                                                 for start in range(n_sequences)], dim=0), 1, 2)
+        input_seq = torch.transpose(
+            torch.stack([tensor_input[start:start+seq_len, :]
+                         for start in range(n_sequences)], dim=0), 1, 2)
 
         output_seq = tensor_output[:-seq_len+1, :]
 
         return input_seq, output_seq
 
-    def get_dataloaders(self, ratio: float, seq_len: int, batch_size: int, shuffle: bool) -> Tuple[DataLoader, DataLoader]:
+    def get_dataloaders(self,
+                        ratio: float,
+                        seq_len: int,
+                        batch_size: int,
+                        shuffle: bool) -> Tuple[DataLoader, DataLoader]:
         sequences = self.get_sequences(seq_len)
         train_len = int(ratio * len(sequences))
         test_len = len(sequences) - train_len
