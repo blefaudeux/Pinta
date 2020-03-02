@@ -16,10 +16,12 @@ class Denormalize:
         return TrainingSample(
             inputs=torch.mul(
                 torch.add(sample.inputs, self.mean.inputs.reshape(1, -1, 1)),
-                self.std.inputs.reshape(1, -1, 1)),
+                self.std.inputs.reshape(1, -1, 1),
+            ),
             outputs=torch.mul(
-                torch.add(sample.outputs, self.mean.outputs),
-                self.std.outputs))
+                torch.add(sample.outputs, self.mean.outputs), self.std.outputs
+            ),
+        )
 
 
 class Normalize:
@@ -40,8 +42,10 @@ class Normalize:
     def __call__(self, sample: TrainingSample):
         return TrainingSample(
             inputs=torch.div(
-                torch.add(sample.inputs, - self.mean.inputs.reshape(1, -1, 1)),
-                self.std.inputs.reshape(1, -1, 1)),
+                torch.add(sample.inputs, -self.mean.inputs.reshape(1, -1, 1)),
+                self.std.inputs.reshape(1, -1, 1),
+            ),
             outputs=torch.div(
-                torch.add(sample.outputs, - self.mean.outputs),
-                self.std.outputs))
+                torch.add(sample.outputs, -self.mean.outputs), self.std.outputs
+            ),
+        )
