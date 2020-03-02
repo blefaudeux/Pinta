@@ -13,7 +13,12 @@ class ConvRNN(NN):
 
     """
 
-    def __init__(self, logdir, input_size, hidden_size, filename=None, n_gru_layers=1):
+    def __init__(self,
+                 logdir,
+                 input_size,
+                 hidden_size,
+                 filename=None,
+                 n_gru_layers=1):
         super(ConvRNN, self).__init__(logdir)
 
         # Load from trained NN if required
@@ -51,7 +56,8 @@ class ConvRNN(NN):
 
         # CUDA switch > Needs to be done after the model has been declared
         if dtype == torch.cuda.FloatTensor:
-            print("Using Pytorch CUDA backend. Moving the net definition to device")
+            print("Using Pytorch CUDA backend."
+                  "Moving the net definition to device")
             self.cuda()
 
     def forward(self, inputs, hidden=None):

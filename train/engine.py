@@ -53,13 +53,15 @@ class NN(nn.Module):
         # Update reference mean and std
         self.mean = TrainingSample(
             torch.Tensor(settings["dataset_normalization"]
-                         ["input"]["mean"]).type(dtype),
-            torch.Tensor(settings["dataset_normalization"]["output"]["mean"]).type(dtype))
+                         ["input"]["mean"]).to(dtype=dtype),
+            torch.Tensor(settings["dataset_normalization"]["output"]["mean"])
+            .to(dtype=dtype))
 
         self.std = TrainingSample(
             torch.Tensor(settings["dataset_normalization"]
-                         ["input"]["std"]).type(dtype),
-            torch.Tensor(settings["dataset_normalization"]["output"]["std"]).type(dtype))
+                         ["input"]["std"]).to(dtype=dtype),
+            torch.Tensor(settings["dataset_normalization"]["output"]["std"])
+            .to(dtype=dtype))
 
     def evaluate(self, data, settings):
         # Move the data to the proper format
@@ -85,7 +87,11 @@ class NN(nn.Module):
 
         return bundle.get_sequences(seq_len), mean, std
 
-    def fit(self, trainer: DataLoader, tester: DataLoader, settings: Dict[str, Any], epochs=50):
+    def fit(self,
+            trainer: DataLoader,
+            tester: DataLoader,
+            settings: Dict[str, Any],
+            epochs=50):
         optimizer = optim.SGD(self.parameters(), lr=0.01)
         criterion = nn.MSELoss()
 
@@ -135,7 +141,9 @@ class NN(nn.Module):
 
         self.log.info("... Done")
 
-    def predict(self, data, seq_len=100):
+    def predict(self,
+                data,
+                seq_len: int = 100):
         if isinstance(data, TrainingSample) and data.inputs.size == data.inputs.shape[0]:
             # Only one sample, need some -constant- padding
             data = [TrainingSet.from_training_sample(data, seq_len)]

@@ -10,7 +10,7 @@ import torch
 import torchvision
 from torch.utils.data import DataLoader, Dataset, random_split
 
-from settings import dtype
+from settings import device, dtype
 
 TrainingSample = namedtuple("TrainingSample", ["inputs", "outputs"])
 
@@ -31,8 +31,10 @@ class TrainingSet(Dataset):
     # Alternative "constructor", straight from Numpy arrays
     @classmethod
     def from_numpy(cls, inputs: np.array, outputs: np.array):
-        return cls(torch.from_numpy(inputs).type(dtype),
-                   torch.from_numpy(outputs).type(dtype))
+        input_tensor = torch.from_numpy(inputs).to(device=device)
+        output_tensor = torch.from_numpy(outputs).to(device=device)
+
+        return cls(input_tensor, output_tensor)
 
     # Alternative constructor: straight from TrainingSample, repeat
     @classmethod
@@ -49,10 +51,10 @@ class TrainingSet(Dataset):
     def append(self, inputs: torch.Tensor, outputs: torch.Tensor):
         assert inputs.shape[0] == outputs.shape[0], "Dimensions mismatch"
 
-        self.inputs = torch.cat((self.inputs, inputs), 0)
-        self.inputs.type(dtype)
-        self.outputs = torch.cat((self.inputs, inputs), 0)
-        self.outputs.type(dtype)
+        self.inputs = torch.cat((self.inputs, inputs), 0).to(
+            device=device, dtype=dtype)
+        self.outputs = torch.cat((self.inputs, inputs), 0).to(
+            device=device, dtype=dtype)
 
     def __getitem__(self, index):
         return self.transform(TrainingSample(inputs=self.inputs[index, :, :],
@@ -144,8 +146,8 @@ class TrainingSetBundle:
             inputs.append(a)
             outputs.append(b)
 
-        tensor_input = torch.cat(inputs)
-        tensor_output = torch.cat(outputs)
+        tensor_input = torch.cat(inputs).to(device=device)
+        tensor_output = torch.cat(outputs).to(device=device)
 
         return TrainingSet(tensor_input, tensor_output)
 
@@ -162,9 +164,10 @@ class TrainingSetBundle:
 
         input_seq = torch.transpose(
             torch.stack([tensor_input[start:start+seq_len, :]
-                         for start in range(n_sequences)], dim=0), 1, 2)
+                         for start in range(n_sequences)],
+                        dim=0), 1, 2).type(dtype)
 
-        output_seq = tensor_output[:-seq_len+1, :]
+        output_seq = tensor_output[:-seq_len+1, :].type(dtype)
 
         return input_seq, output_seq
 

@@ -3,9 +3,14 @@ import json
 import torch
 
 # Select our target at runtime
-dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
+dtype = torch.cuda.FloatTensor \
+    if torch.cuda.is_available() else torch.FloatTensor
 
-if dtype == torch.cuda.FloatTensor:
+device = torch.device("cuda") \
+    if torch.cuda.is_available() else torch.device("cpu")
+
+
+if torch.cuda.is_available():
     print("CUDA enabled")
 else:
     print("CPU enabled")
@@ -44,7 +49,8 @@ def get_defaults():
 
 def get_name():
     return _DEFAULTS["network_root_name"] + "_seq_" + \
-        str(_DEFAULTS["seq_length"]) + "_hidden_" + str(_DEFAULTS["hidden_size"]) + \
+        str(_DEFAULTS["seq_length"]) + "_hidden_"\
+        + str(_DEFAULTS["hidden_size"]) + \
         "_batch_" + str(_DEFAULTS["batch_size"]) \
         + "_lr_" + str(_DEFAULTS["training"]["lr_period_decrease"]) \
         + "_" + str(_DEFAULTS["training"]["lr_amount_decrease"])
