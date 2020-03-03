@@ -2,12 +2,9 @@ import json
 
 import torch
 
-# Select our target at runtime
-dtype = torch.cuda.FloatTensor \
-    if torch.cuda.is_available() else torch.FloatTensor
-
-device = torch.device("cuda") \
-    if torch.cuda.is_available() else torch.device("cpu")
+# Select our target at runtime # FIXME: target intel mkldnn ?
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+dtype = torch.float32
 
 
 if torch.cuda.is_available():
@@ -17,29 +14,20 @@ else:
 
 
 _DEFAULTS = {
-    "inputs": ['wind_speed', 'wind_angle_x', 'wind_angle_y', 'rudder_angle'],
-    "outputs": ['boat_speed'],
+    "inputs": ["wind_speed", "wind_angle_x", "wind_angle_y", "rudder_angle"],
+    "outputs": ["boat_speed"],
     "network_root_name": "conv",
     "hidden_size": 96,
     "seq_length": 64,
     "training_ratio": 0.9,
-    "batch_size": 30000,
+    "batch_size": 3000,
     "epoch": 200,
     "dataset_normalization": {
-        "input": {
-            "mean": [13.60, -0.08, 0.28, -0.57],
-            "std": [2.41, 0.32, 0.52, 7.22]
-        },
-        "output": {
-            "mean": [6.48],
-            "std": [1.69]
-        }
+        "input": {"mean": [13.60, -0.08, 0.28, -0.57], "std": [2.41, 0.32, 0.52, 7.22]},
+        "output": {"mean": [6.48], "std": [1.69]},
     },
-    "training": {
-        "lr_period_decrease": 20,
-        "lr_amount_decrease": 0.9
-    },
-    "log": "pinta"
+    "training": {"lr_period_decrease": 20, "lr_amount_decrease": 0.9},
+    "log": "pinta",
 }
 
 
@@ -48,12 +36,19 @@ def get_defaults():
 
 
 def get_name():
-    return _DEFAULTS["network_root_name"] + "_seq_" + \
-        str(_DEFAULTS["seq_length"]) + "_hidden_"\
-        + str(_DEFAULTS["hidden_size"]) + \
-        "_batch_" + str(_DEFAULTS["batch_size"]) \
-        + "_lr_" + str(_DEFAULTS["training"]["lr_period_decrease"]) \
-        + "_" + str(_DEFAULTS["training"]["lr_amount_decrease"])
+    return (
+        _DEFAULTS["network_root_name"]
+        + "_seq_"
+        + str(_DEFAULTS["seq_length"])
+        + "_hidden_"
+        + str(_DEFAULTS["hidden_size"])
+        + "_batch_"
+        + str(_DEFAULTS["batch_size"])
+        + "_lr_"
+        + str(_DEFAULTS["training"]["lr_period_decrease"])
+        + "_"
+        + str(_DEFAULTS["training"]["lr_amount_decrease"])
+    )
 
 
 def save(filename, settings):

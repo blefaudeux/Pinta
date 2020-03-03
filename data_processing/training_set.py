@@ -10,7 +10,7 @@ import torch
 import torchvision
 from torch.utils.data import DataLoader, Dataset, random_split
 
-from settings import device, dtype
+import settings
 
 TrainingSample = namedtuple("TrainingSample", ["inputs", "outputs"])
 
@@ -24,15 +24,15 @@ class TrainingSet(Dataset):
     def __init__(self, inputs: torch.Tensor, outputs: torch.Tensor):
         assert inputs.shape[0] == outputs.shape[0], "Dimensions mismatch"
 
-        self.inputs = inputs    # type: torch.Tensor
+        self.inputs = inputs  # type: torch.Tensor
         self.outputs = outputs  # type: torch.Tensor
         self.transform = lambda x: x
 
     # Alternative "constructor", straight from Numpy arrays
     @classmethod
     def from_numpy(cls, inputs: np.array, outputs: np.array):
-        input_tensor = torch.from_numpy(inputs).to(device=device)
-        output_tensor = torch.from_numpy(outputs).to(device=device)
+        input_tensor = torch.from_numpy(inputs)
+        output_tensor = torch.from_numpy(outputs)
 
         return cls(input_tensor, output_tensor)
 
@@ -40,10 +40,10 @@ class TrainingSet(Dataset):
     @classmethod
     def from_training_sample(cls, sample: TrainingSample, seq_len: int):
         inputs = torch.tensor(
-            np.repeat(np.array([sample.inputs]), seq_len, axis=0), dtype=dtype
+            np.repeat(np.array([sample.inputs]), seq_len, axis=0), dtype=settings.dtype
         )
         outputs = torch.tensor(
-            np.repeat(np.array([sample.outputs]), seq_len, axis=0), dtype=dtype
+            np.repeat(np.array([sample.outputs]), seq_len, axis=0), dtype=settings.dtype
         )
 
         return cls(inputs, outputs)
@@ -52,13 +52,18 @@ class TrainingSet(Dataset):
         assert inputs.shape[0] == outputs.shape[0], "Dimensions mismatch"
 
         self.inputs = torch.cat((self.inputs, inputs), 0).to(
-            device=device, dtype=dtype)
+            device=settings.device, dtype=settings.dtype
+        )
         self.outputs = torch.cat((self.inputs, inputs), 0).to(
-            device=device, dtype=dtype)
+            device=settings.device, dtype=settings.dtype
+        )
 
     def __getitem__(self, index):
-        return self.transform(TrainingSample(inputs=self.inputs[index, :, :],
-                                             outputs=self.outputs[index, :]))
+        return self.transform(
+            TrainingSample(
+                inputs=self.inputs[index, :, :], outputs=self.outputs[index, :]
+            )
+        )
 
     def __len__(self):
         return self.inputs.shape[0]
@@ -68,12 +73,12 @@ class TrainingSet(Dataset):
 
     def scale(self, mean: torch.Tensor, std: torch.Tensor):
         self.inputs = torch.mul(
-            torch.add(self.inputs, mean[0].reshape(1, -1, 1)),
-            std[0].reshape(1, -1, 1))
+            torch.add(self.inputs, mean[0].reshape(1, -1, 1)), std[0].reshape(1, -1, 1)
+        )
 
         self.outputs = torch.mul(
-            torch.add(self.outputs, mean[1].reshape(1, -1, 1)),
-            std[1].reshape(1, -1, 1))
+            torch.add(self.outputs, mean[1].reshape(1, -1, 1)), std[1].reshape(1, -1, 1)
+        )
 
 
 class TrainingSetBundle:
@@ -107,32 +112,19 @@ class TrainingSetBundle:
             std_outputs.append(training_set.outputs.std(dim=0))
 
         # To Torch tensor and mean
-        mean = TrainingSample(torch.stack(mean_inputs).mean(
-            dim=0), torch.stack(mean_outputs).mean(dim=0))
+        mean = TrainingSample(
+            torch.stack(mean_inputs).mean(dim=0), torch.stack(mean_outputs).mean(dim=0)
+        )
 
-        std = TrainingSample(torch.stack(std_inputs).mean(
-            dim=0), torch.stack(std_outputs).mean(dim=0))
+        std = TrainingSample(
+            torch.stack(std_inputs).mean(dim=0), torch.stack(std_outputs).mean(dim=0)
+        )
 
         return mean, std
 
-    def normalize(self):
-        """
-        Normalize the data, bring it back to zero mean and STD of 1
-        """
-        mean, std = self.get_norm()
-
-        for training_set in self.sets:
-            training_set.inputs = np.subtract(
-                training_set.inputs, mean[0]).transpose()
-            training_set.inputs = np.divide(
-                training_set.inputs, std[0]).transpose()
-
-            training_set.outputs = np.subtract(
-                training_set.outputs, mean[1]).transpose()
-            training_set.outputs = np.divide(
-                training_set.outputs, std[1]).transpose()
-
-    def get_sequences(self, seq_len) -> TrainingSet:
+    def get_sequences(
+        self, seq_len: int, type: torch.dtype = torch.float32
+    ) -> TrainingSet:
         """
         Prepare sequences of a given length given the input data
         """
@@ -142,19 +134,20 @@ class TrainingSetBundle:
 
         for training_set in self.sets:
             a, b = self.generate_temporal_seq(
-                training_set.inputs, training_set.outputs, seq_len)
+                training_set.inputs, training_set.outputs, seq_len
+            )
             inputs.append(a)
             outputs.append(b)
 
-        tensor_input = torch.cat(inputs).to(device=device)
-        tensor_output = torch.cat(outputs).to(device=device)
+        tensor_input = torch.cat(inputs).to(device=settings.device, dtype=type)
+        tensor_output = torch.cat(outputs).to(device=settings.device, dtype=type)
 
         return TrainingSet(tensor_input, tensor_output)
 
     @staticmethod
-    def generate_temporal_seq(tensor_input: torch.Tensor,
-                              tensor_output: torch.Tensor,
-                              seq_len: int):
+    def generate_temporal_seq(
+        tensor_input: torch.Tensor, tensor_output: torch.Tensor, seq_len: int
+    ):
         """
         Generate all the subsequences over time,
         Useful for instance for training a temporal conv net
@@ -163,25 +156,64 @@ class TrainingSetBundle:
         n_sequences = tensor_input.shape[0] - seq_len + 1
 
         input_seq = torch.transpose(
-            torch.stack([tensor_input[start:start+seq_len, :]
-                         for start in range(n_sequences)],
-                        dim=0), 1, 2).type(dtype)
+            torch.stack(
+                [
+                    tensor_input[start : start + seq_len, :]
+                    for start in range(n_sequences)
+                ],
+                dim=0,
+            ),
+            1,
+            2,
+        )
 
-        output_seq = tensor_output[:-seq_len+1, :].type(dtype)
+        output_seq = tensor_output[: -seq_len + 1, :]
 
         return input_seq, output_seq
 
-    def get_dataloaders(self,
-                        ratio: float,
-                        seq_len: int,
-                        batch_size: int,
-                        shuffle: bool) -> Tuple[DataLoader, DataLoader]:
-        sequences = self.get_sequences(seq_len)
+    def get_dataloaders(
+        self,
+        ratio: float,
+        seq_len: int,
+        batch_size: int,
+        shuffle: bool,
+        transforms: List[Callable],
+        device: torch.device = torch.device("cpu"),
+        dtype: torch.dtype = torch.float32,
+    ) -> Tuple[DataLoader, DataLoader]:
+        # Create a dataset on the fly, with the appropriate sequence cuts
+        sequences = self.get_sequences(seq_len, type=dtype)
+        sequences.set_transforms(transforms)
+
+        # Split the dataset in train/test instances
         train_len = int(ratio * len(sequences))
         test_len = len(sequences) - train_len
         trainer, tester = random_split(sequences, [train_len, test_len])
 
+        # Collate needs to enforce device and type somehow
+        def collate(samples: List[TrainingSample]):
+            return TrainingSample(
+                inputs=torch.stack([t.inputs for t in samples])
+                .squeeze()
+                .to(device, dtype),
+                outputs=torch.stack([t.outputs for t in samples])
+                .squeeze()
+                .to(device, dtype),
+            )
+
         return (
-            DataLoader(trainer, batch_size=batch_size, shuffle=shuffle),
-            DataLoader(tester, batch_size=batch_size, shuffle=shuffle)
+            DataLoader(
+                trainer,
+                collate_fn=collate,
+                batch_size=batch_size,
+                shuffle=shuffle,
+                drop_last=True,
+            ),
+            DataLoader(
+                tester,
+                collate_fn=collate,
+                batch_size=batch_size,
+                shuffle=shuffle,
+                drop_last=True,
+            ),
         )

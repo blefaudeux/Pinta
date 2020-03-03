@@ -12,11 +12,9 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from data_processing.training_set import (TrainingSample, TrainingSet,
-                                          TrainingSetBundle)
+from data_processing.training_set import TrainingSample, TrainingSet, TrainingSetBundle
 from data_processing.transforms import Normalize
 from settings import dtype
-from utils import timing
 
 
 class NN(nn.Module):
@@ -52,21 +50,28 @@ class NN(nn.Module):
 
         # Update reference mean and std
         self.mean = TrainingSample(
-            torch.Tensor(settings["dataset_normalization"]
-                         ["input"]["mean"]).to(dtype=dtype),
-            torch.Tensor(settings["dataset_normalization"]["output"]["mean"])
-            .to(dtype=dtype))
+            torch.Tensor(settings["dataset_normalization"]["input"]["mean"]).to(
+                dtype=dtype
+            ),
+            torch.Tensor(settings["dataset_normalization"]["output"]["mean"]).to(
+                dtype=dtype
+            ),
+        )
 
         self.std = TrainingSample(
-            torch.Tensor(settings["dataset_normalization"]
-                         ["input"]["std"]).to(dtype=dtype),
-            torch.Tensor(settings["dataset_normalization"]["output"]["std"])
-            .to(dtype=dtype))
+            torch.Tensor(settings["dataset_normalization"]["input"]["std"]).to(
+                dtype=dtype
+            ),
+            torch.Tensor(settings["dataset_normalization"]["output"]["std"]).to(
+                dtype=dtype
+            ),
+        )
 
     def evaluate(self, data, settings):
         # Move the data to the proper format
-        data_seq, _, _ = self.prepare_data(data, settings["seq_length"],
-                                           self_normalize=False)
+        data_seq, _, _ = self.prepare_data(
+            data, settings["seq_length"], self_normalize=False
+        )
 
         data_seq.set_transforms([Normalize(self.mean, self.std)])
 
@@ -87,11 +92,13 @@ class NN(nn.Module):
 
         return bundle.get_sequences(seq_len), mean, std
 
-    def fit(self,
-            trainer: DataLoader,
-            tester: DataLoader,
-            settings: Dict[str, Any],
-            epochs=50):
+    def fit(
+        self,
+        trainer: DataLoader,
+        tester: DataLoader,
+        settings: Dict[str, Any],
+        epochs=50,
+    ):
         optimizer = optim.SGD(self.parameters(), lr=0.01)
         criterion = nn.MSELoss()
 
@@ -103,24 +110,22 @@ class NN(nn.Module):
 
             for train_batch, test_batch in zip(trainer, tester):
                 # Eval computation on the training data
-                @timing
                 def closure_train(data=train_batch):
                     optimizer.zero_grad()
                     out, _ = self(data.inputs)
                     loss = criterion(out, data.outputs)
 
-                    self.log.info('  Train loss: {:.4f}'.format(loss.item()))
-                    self.summary_writer.add_scalar('train', loss.item(), i_log)
+                    self.log.info("  Train loss: {:.4f}".format(loss.item()))
+                    self.summary_writer.add_scalar("train", loss.item(), i_log)
                     # Add to the gradient
                     loss.backward()
                     return loss
 
                 # Loss on the test data
-                @timing
                 def closure_test(data=test_batch):
                     pred, _ = self(data.inputs)
                     loss = criterion(pred, data.outputs)
-                    self.summary_writer.add_scalar('test', loss.item(), i_log)
+                    self.summary_writer.add_scalar("test", loss.item(), i_log)
                     self.log.info("  Test loss: {:.4f}\n".format(loss.item()))
 
                 optimizer.step(closure_train)
@@ -132,7 +137,7 @@ class NN(nn.Module):
             if not (epoch + 1) % settings["training"]["lr_period_decrease"]:
                 self.log.info("  -- Reducing learning rate")
                 for group in optimizer.param_groups:
-                    group['lr'] *= settings["training"]["lr_amount_decrease"]
+                    group["lr"] *= settings["training"]["lr_amount_decrease"]
 
             # Display the layer weights
             weight = self.get_layer_weights()
@@ -141,10 +146,11 @@ class NN(nn.Module):
 
         self.log.info("... Done")
 
-    def predict(self,
-                data,
-                seq_len: int = 100):
-        if isinstance(data, TrainingSample) and data.inputs.size == data.inputs.shape[0]:
+    def predict(self, data, seq_len: int = 100):
+        if (
+            isinstance(data, TrainingSample)
+            and data.inputs.size == data.inputs.shape[0]
+        ):
             # Only one sample, need some -constant- padding
             data = [TrainingSet.from_training_sample(data, seq_len)]
 
@@ -153,10 +159,7 @@ class NN(nn.Module):
         test_seq.set_transforms([Normalize(self.mean, self.std)])
 
         # De-normalize the output
-        return torch.add(
-            torch.mul(self(test_seq.inputs)[0], self.std[1]),
-            self.mean[1]
-        )
+        return torch.add(torch.mul(self(test_seq.inputs)[0], self.std[1]), self.mean[1])
 
     def forward(self, inputs, *kwargs):
         """
