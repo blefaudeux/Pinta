@@ -113,7 +113,7 @@ class NN(nn.Module):
                 def closure_train(data=train_batch):
                     optimizer.zero_grad()
                     out, _ = self(data.inputs)
-                    loss = criterion(out, data.outputs)
+                    loss = criterion(out.squeeze(), data.outputs)
 
                     self.log.info("  Train loss: {:.4f}".format(loss.item()))
                     self.summary_writer.add_scalar("train", loss.item(), i_log)
@@ -124,7 +124,7 @@ class NN(nn.Module):
                 # Loss on the test data
                 def closure_test(data=test_batch):
                     pred, _ = self(data.inputs)
-                    loss = criterion(pred, data.outputs)
+                    loss = criterion(pred.squeeze(), data.outputs.squeeze())
                     self.summary_writer.add_scalar("test", loss.item(), i_log)
                     self.log.info("  Test loss: {:.4f}\n".format(loss.item()))
 

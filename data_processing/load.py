@@ -7,7 +7,6 @@ import numpy as np
 
 from data_processing.nmea2pandas import load_json
 from data_processing.training_set import TrainingSet
-from data_processing.whitening import whiten_angle
 
 LOG = logging.getLogger("DataLoad")
 
@@ -18,7 +17,7 @@ def _angle_split(data):
     return data
 
 
-def load_folder(folder_path: Path, clean_data=True, whiten_data=True):
+def load_folder(folder_path: Path, clean_data=True):
     def valid(filepath):
         return os.path.isfile(filepath) and os.path.splitext(filepath)[1] == ".json"
 
@@ -28,10 +27,10 @@ def load_folder(folder_path: Path, clean_data=True, whiten_data=True):
         if valid(os.path.join(folder_path, f))
     ]
 
-    return [load(Path(f), clean_data, whiten_data) for f in filelist]
+    return [load(Path(f), clean_data) for f in filelist]
 
 
-def load(filepath: Path, clean_data=True, whiten_data=True):
+def load(filepath: Path, clean_data=True):
     LOG.info("Loading %s" % filepath)
     data_frame = load_json(filepath, skip_zeros=True)
 
@@ -39,14 +38,7 @@ def load(filepath: Path, clean_data=True, whiten_data=True):
     if clean_data:
         data_frame["rudder_angle"] -= data_frame["rudder_angle"].mean()
 
-    # Whiten the data, in that the boat supposedely goes at the same speed
-    # port and starboard
-    if whiten_data:
-        df_white_angle = whiten_angle(data_frame)
-    else:
-        df_white_angle = None
-
-    return [data_frame, df_white_angle]
+    return data_frame
 
 
 def to_training_set(raw_data, settings):
@@ -83,22 +75,11 @@ def split(raw_data, settings):
     )
 
 
-def load_sets(raw, settings) -> List[TrainingSet]:
-    if not isinstance(raw, list):
-        raw = [raw]
+def load_sets(raw_list, settings) -> List[TrainingSet]:
+    if not isinstance(raw_list, list):
+        raw_list = [raw_list]
 
-    training_sets = []
-
-    for pair in raw:
-        # Handle the angular coordinates discontinuity -> split x/y components
-        raw_data = _angle_split(pair[0])
-        raw_data_aug = _angle_split(pair[1])
-
-        # Save both sets, original and flipped
-        training_sets.append(to_training_set(raw_data, settings))
-        training_sets.append(to_training_set(raw_data_aug, settings))
-
-    return training_sets
+    return [to_training_set(_angle_split(x), settings) for x in raw_list]
 
 
 def pack_sets(training_sets: List[TrainingSet]) -> TrainingSet:

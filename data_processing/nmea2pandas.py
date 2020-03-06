@@ -119,7 +119,7 @@ def save_json(dataframe: pd.DataFrame, filepath: Path):
         json.dump(dataframe.to_json(), outfile)
 
 
-def load_json(filepath: Path, skip_zeros=True):
+def load_json(filepath: Path, skip_zeros=True) -> pd.DataFrame:
     with filepath.open("r") as infile:
         data = json.load(infile)
 

@@ -51,6 +51,7 @@ transforms: List[Callable] = [
         std.to(settings.device, settings.dtype),
     ),
     RandomFlip(dimension=training_settings["inputs"].index("wind_angle_x"), odds=0.5),
+    RandomFlip(dimension=training_settings["inputs"].index("rudder_angle"), odds=0.5),
 ]
 
 # Get the train and test data loaders
