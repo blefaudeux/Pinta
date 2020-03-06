@@ -12,7 +12,16 @@ from torch.utils.data import DataLoader, Dataset, random_split
 
 import settings
 
-TrainingSample = namedtuple("TrainingSample", ["inputs", "outputs"])
+TrainingSample_base = namedtuple("TrainingSample", ["inputs", "outputs"])
+
+
+class TrainingSample(TrainingSample_base):
+    def to(
+        self, device: torch.device = None, dtype: torch.dtype = None
+    ) -> TrainingSample:
+        return TrainingSample(
+            inputs=self.inputs.to(device, dtype), outputs=self.outputs.to(device, dtype)
+        )
 
 
 class TrainingSet(Dataset):

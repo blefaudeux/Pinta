@@ -30,6 +30,7 @@ dnn = Conv(
     filename="trained/" + settings.get_name() + ".pt",
     log_channel="DNN  ",
 )
+dnn.to(settings.device)
 
 
 # Load the dataset
@@ -45,7 +46,12 @@ log.info(
 
 # Data augmentation / preparation
 # TODO: add random horizontal flip
-transforms: List[Callable] = [Normalize(mean, std)]
+transforms: List[Callable] = [
+    Normalize(
+        mean.to(settings.device, settings.dtype),
+        std.to(settings.device, settings.dtype),
+    )
+]
 
 # Get the train and test data loaders
 trainer, tester = training_bundle.get_dataloaders(
