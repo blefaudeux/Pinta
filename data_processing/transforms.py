@@ -2,6 +2,7 @@
 
 
 import torch
+from numpy.random import random_sample
 
 from .training_set import TrainingSample
 
@@ -49,3 +50,28 @@ class Normalize:
                 torch.add(sample.outputs, -self.mean.outputs), self.std.outputs
             ),
         )
+
+
+class RandomFlip:
+    def __init__(
+        self, dimension: int, odds: float,
+    ):
+        """
+        Randomly flip the given dimension.
+
+        Arguments:
+            odds {float}
+                -- odds [0,1] of the flip happening
+            dimension {int}
+                -- which dimension should be flipped
+        """
+        self.odds = odds
+        self.dim = dimension
+
+    def __call__(self, sample: TrainingSample):
+        if random_sample() < self.odds:
+            inputs = sample.inputs
+            inputs[0, self.dim, :] *= -1
+            return TrainingSample(inputs=inputs, outputs=sample.outputs)
+
+        return sample

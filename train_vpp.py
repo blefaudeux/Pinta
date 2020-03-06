@@ -11,7 +11,7 @@ import settings
 from data_processing import plot as plt
 from data_processing.load import load_folder, load_sets
 from data_processing.training_set import TrainingSetBundle
-from data_processing.transforms import Normalize
+from data_processing.transforms import Normalize, RandomFlip
 from train.engine_cnn import Conv
 
 # Basic setup: get config and logger
@@ -45,12 +45,12 @@ log.info(
 )
 
 # Data augmentation / preparation
-# TODO: add random horizontal flip
 transforms: List[Callable] = [
     Normalize(
         mean.to(settings.device, settings.dtype),
         std.to(settings.device, settings.dtype),
-    )
+    ),
+    RandomFlip(dimension=training_settings["inputs"].index("wind_angle_x"), odds=0.5),
 ]
 
 # Get the train and test data loaders
