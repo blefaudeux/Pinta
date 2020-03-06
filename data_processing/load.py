@@ -13,29 +13,31 @@ LOG = logging.getLogger("DataLoad")
 
 
 def _angle_split(data):
-    data['wind_angle_x'] = np.cos(np.radians(data['wind_angle']))
-    data['wind_angle_y'] = np.sin(np.radians(data['wind_angle']))
+    data["wind_angle_x"] = np.cos(np.radians(data["wind_angle"]))
+    data["wind_angle_y"] = np.sin(np.radians(data["wind_angle"]))
     return data
 
 
 def load_folder(folder_path: Path, clean_data=True, whiten_data=True):
     def valid(filepath):
-        return (os.path.isfile(filepath)
-                and os.path.splitext(filepath)[1] == ".json")
+        return os.path.isfile(filepath) and os.path.splitext(filepath)[1] == ".json"
 
-    filelist = [os.path.join(folder_path, f) for f in os.listdir(
-        folder_path) if valid(os.path.join(folder_path, f))]
+    filelist = [
+        os.path.join(folder_path, f)
+        for f in os.listdir(folder_path)
+        if valid(os.path.join(folder_path, f))
+    ]
 
     return [load(Path(f), clean_data, whiten_data) for f in filelist]
 
 
 def load(filepath: Path, clean_data=True, whiten_data=True):
-    print(f"Loading {filepath}")
+    LOG.info("Loading %s" % filepath)
     data_frame = load_json(filepath, skip_zeros=True)
 
     # Fix a possible offset in the rudder angle sensor
     if clean_data:
-        data_frame['rudder_angle'] -= data_frame['rudder_angle'].mean()
+        data_frame["rudder_angle"] -= data_frame["rudder_angle"].mean()
 
     # Whiten the data, in that the boat supposedely goes at the same speed
     # port and starboard
@@ -64,10 +66,9 @@ def split(raw_data, settings):
     ratio = settings["training_ratio"]
 
     train_size = int(len(raw_data) * ratio)
-    print("Training set is {} samples long".format(train_size))
+    LOG.info("Training set is {} samples long".format(train_size))
 
-    train, test = raw_data.iloc[:train_size], \
-        raw_data.iloc[train_size:len(raw_data)]
+    train, test = raw_data.iloc[:train_size], raw_data.iloc[train_size : len(raw_data)]
 
     train_inputs = np.array([train[cat].values for cat in cat_in])
     test_inputs = np.array([test[cat].values for cat in cat_in])
@@ -76,8 +77,10 @@ def split(raw_data, settings):
     train_output = np.array([train[cat].values for cat in cat_out]).transpose()
     test_output = np.array([test[cat].values for cat in cat_out]).transpose()
 
-    return (TrainingSet(train_inputs, train_output),
-            TrainingSet(test_inputs, test_output))
+    return (
+        TrainingSet(train_inputs, train_output),
+        TrainingSet(test_inputs, test_output),
+    )
 
 
 def load_sets(raw, settings) -> List[TrainingSet]:

@@ -16,6 +16,11 @@ TrainingSample_base = namedtuple("TrainingSample", ["inputs", "outputs"])
 
 
 class TrainingSample(TrainingSample_base):
+    """
+    Holds one or many training samples. Make sure that the dimensions
+    and matching in between inputs and outputs are always respected
+    """
+
     def to(
         self, device: torch.device = None, dtype: torch.dtype = None
     ) -> TrainingSample:
@@ -37,17 +42,21 @@ class TrainingSet(Dataset):
         self.outputs = outputs  # type: torch.Tensor
         self.transform = lambda x: x
 
-    # Alternative "constructor", straight from Numpy arrays
     @classmethod
     def from_numpy(cls, inputs: np.array, outputs: np.array):
+        """
+        Alternative "constructor", straight from Numpy arrays
+        """
         input_tensor = torch.from_numpy(inputs)
         output_tensor = torch.from_numpy(outputs)
 
         return cls(input_tensor, output_tensor)
 
-    # Alternative constructor: straight from TrainingSample, repeat
     @classmethod
     def from_training_sample(cls, sample: TrainingSample, seq_len: int):
+        """
+        Alternative constructor: straight from TrainingSample, repeat
+        """
         inputs = torch.tensor(
             np.repeat(np.array([sample.inputs]), seq_len, axis=0), dtype=settings.dtype
         )
@@ -58,6 +67,9 @@ class TrainingSet(Dataset):
         return cls(inputs, outputs)
 
     def append(self, inputs: torch.Tensor, outputs: torch.Tensor):
+        """
+        Concatenate another TrainingSet
+        """
         assert inputs.shape[0] == outputs.shape[0], "Dimensions mismatch"
 
         self.inputs = torch.cat((self.inputs, inputs), 0).to(
@@ -78,16 +90,10 @@ class TrainingSet(Dataset):
         return self.inputs.shape[0]
 
     def set_transforms(self, transforms: List[Callable]):
+        """
+        Pass a list of transforms which are applied on a per sample fetch basis
+        """
         self.transform = torchvision.transforms.Compose(transforms)
-
-    def scale(self, mean: torch.Tensor, std: torch.Tensor):
-        self.inputs = torch.mul(
-            torch.add(self.inputs, mean[0].reshape(1, -1, 1)), std[0].reshape(1, -1, 1)
-        )
-
-        self.outputs = torch.mul(
-            torch.add(self.outputs, mean[1].reshape(1, -1, 1)), std[1].reshape(1, -1, 1)
-        )
 
 
 class TrainingSetBundle:
@@ -190,6 +196,10 @@ class TrainingSetBundle:
         device: torch.device = torch.device("cpu"),
         dtype: torch.dtype = torch.float32,
     ) -> Tuple[DataLoader, DataLoader]:
+        """
+        Create two PyTorch DataLoaders out of this dataset, randomly splitting
+        the data in between training and testing
+        """
         # Create a dataset on the fly, with the appropriate sequence cuts
         sequences = self.get_sequences(seq_len, type=dtype)
         sequences.set_transforms(transforms)
