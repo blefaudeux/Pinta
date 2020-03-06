@@ -9,6 +9,16 @@ from .training_set import TrainingSample
 
 class Denormalize:
     def __init__(self, mean: TrainingSample, std: TrainingSample):
+        """
+        Given mean and std of the appropriate dimensions,
+        restore the training set to the original, de-normalized state
+
+        Arguments:
+            mean {TrainingSample holding torch tensors}
+                -- Expected distribution first moment
+            std {TrainingSample holding torch tensors}
+                -- Expected distribution second moment
+        """
         self.mean = mean
         self.std = std
 

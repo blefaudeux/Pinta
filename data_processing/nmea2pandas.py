@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 from pathlib import Path
 from typing import Any, Dict
@@ -11,6 +12,7 @@ import pynmea2 as nmea
     Extra functions to load/save json files to speed up subsequent uses.
 """
 
+LOG = logging.getLogger("NMEA2Pandas")
 
 # The fields that we know of, and which can be parsed into the dataframe
 nmea_fields = {
@@ -43,8 +45,8 @@ def parse_nmea(filepath: Path, wind_bias=0):
         # Parse everything & dispatch in the appropriate categories
         skipped_fields: Dict[str, int] = {}
         timestamp = None
-        print("\nParsing the NMEA file {}".format(filepath))
-        print("Wind direction bias: {}".format(wind_bias))
+        LOG.info("Parsing the NMEA file {}".format(filepath))
+        LOG.info("Wind direction bias: {}".format(wind_bias))
         for line in fileIO:
             try:
                 sample = nmea.parse(line)
@@ -61,15 +63,17 @@ def parse_nmea(filepath: Path, wind_bias=0):
                 except KeyError:
                     # We discard this field for now
                     if key not in skipped_fields.keys():
-                        print("Unknown field: {}".format(sample.identifier()[:-1]))
+                        LOG.warning(
+                            "Unknown field: {}".format(sample.identifier()[:-1])
+                        )
                         skipped_fields[key] = 1
 
             except (nmea.ParseError, nmea.nmea.ChecksumError, TypeError) as exception:
                 # Corrupted data, skip
-                print(exception)
+                LOG.warning(exception)
 
     # Reorganize for faster processing afterwards, save in a pandas dataframe
-    print("\nReorganizing data per timestamp")
+    LOG.info("Reorganizing data per timestamp")
     wa = []
     wa_index = []
     for ts in data["Speed"].keys():
