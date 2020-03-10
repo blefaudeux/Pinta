@@ -27,8 +27,6 @@ class NN(nn.Module):
         super(NN, self).__init__()
         self.model = None
         self._valid = False
-        self.mean = None
-        self.std = None
         self.log = logging.getLogger(log_channel)
 
         # Set up TensorBoard
@@ -45,41 +43,17 @@ class NN(nn.Module):
     def get_layer_weights(self):
         raise NotImplementedError
 
-    def update_normalization(self, settings):
-        assert "dataset_normalization" in settings.keys()
-
-        # Update reference mean and std
-        self.mean = TrainingSample(
-            torch.Tensor(settings["dataset_normalization"]["input"]["mean"]).to(
-                dtype=dtype
-            ),
-            torch.Tensor(settings["dataset_normalization"]["output"]["mean"]).to(
-                dtype=dtype
-            ),
-        )
-
-        self.std = TrainingSample(
-            torch.Tensor(settings["dataset_normalization"]["input"]["std"]).to(
-                dtype=dtype
-            ),
-            torch.Tensor(settings["dataset_normalization"]["output"]["std"]).to(
-                dtype=dtype
-            ),
-        )
-
-    def evaluate(self, data, settings):
-        # Move the data to the proper format
-        data_seq, _, _ = self.prepare_data(
-            data, settings["seq_length"], self_normalize=False
-        )
-
-        data_seq.set_transforms([Normalize(self.mean, self.std)])
-
-        # Re-use PyTorch losses on the fly
+    def evaluate(self, dataloader: DataLoader, settings: Dict[str, Any]):
+        #  Re-use PyTorch losses on the fly
         criterion = nn.MSELoss()
-        out, _ = self(data_seq.inputs)
-        loss = criterion(out, data_seq.outputs.view(out.size()[0], -1))
-        return loss.item()
+        losses = []
+
+        for seq in dataloader:
+            out, _ = self(seq.inputs)
+            loss = criterion(out, seq.outputs.view(out.size()[0], -1))
+            losses.append(loss.item())
+
+        return losses
 
     @staticmethod
     def prepare_data(training_sets: List[TrainingSet], seq_len):
@@ -146,20 +120,19 @@ class NN(nn.Module):
 
         self.log.info("... Done")
 
-    def predict(self, data, seq_len: int = 100):
-        if (
-            isinstance(data, TrainingSample)
-            and data.inputs.size == data.inputs.shape[0]
-        ):
-            # Only one sample, need some -constant- padding
-            data = [TrainingSet.from_training_sample(data, seq_len)]
-
-        # batch and normalize
-        test_seq, _, _ = self.prepare_data(data, seq_len)
-        test_seq.set_transforms([Normalize(self.mean, self.std)])
+    def predict(
+        self,
+        dataloader: DataLoader,
+        mean: torch.Tensor = None,
+        std: torch.Tensor = None,
+    ):
+        predictions = torch.stack([self(test_seq.inputs)[0] for test_seq in dataloader])
 
         # De-normalize the output
-        return torch.add(torch.mul(self(test_seq.inputs)[0], self.std[1]), self.mean[1])
+        if mean and std:
+            return torch.add(torch.mul(predictions, std), mean)
+
+        return predictions
 
     def forward(self, inputs, *kwargs):
         """

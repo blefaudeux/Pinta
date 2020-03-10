@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 
 
+import logging
+
 import torch
 from numpy.random import random_sample
 
 from .training_set import TrainingSample
+
+LOG = logging.getLogger("Transforms")
 
 
 class Denormalize:
@@ -21,6 +25,12 @@ class Denormalize:
         """
         self.mean = mean
         self.std = std
+
+        LOG.info(
+            "Initializing De-Normalize transform with mean {} and std {}".format(
+                mean, std
+            )
+        )
 
     def __call__(self, sample: TrainingSample):
 
@@ -50,6 +60,10 @@ class Normalize:
         self.mean = mean
         self.std = std
 
+        LOG.info(
+            "Initializing Normalize transform with mean {} and std {}".format(mean, std)
+        )
+
     def __call__(self, sample: TrainingSample):
         return TrainingSample(
             inputs=torch.div(
@@ -77,6 +91,11 @@ class RandomFlip:
         """
         self.odds = odds
         self.dim = dimension
+        LOG.info(
+            "Initializing Random flip transform on dimension {} with odds {}".format(
+                dimension, odds
+            )
+        )
 
     def __call__(self, sample: TrainingSample):
         if random_sample() < self.odds:
