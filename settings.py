@@ -21,7 +21,7 @@ _DEFAULTS = {
     "seq_length": 64,
     "training_ratio": 0.9,
     "batch_size": 3000,
-    "epoch": 200,
+    "epoch": 10,
     "dataset_normalization": {
         "input": {"mean": [13.60, -0.08, 0.28, -0.57], "std": [2.41, 0.32, 0.52, 7.22]},
         "output": {"mean": [6.48], "std": [1.69]},

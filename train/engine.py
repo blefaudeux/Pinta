@@ -69,9 +69,7 @@ class NN(nn.Module):
 
     def evaluate(self, data, settings):
         # Move the data to the proper format
-        data_seq, _, _ = self.prepare_data(
-            data, settings["seq_length"], self_normalize=False
-        )
+        data_seq, _, _ = self.prepare_data(data, settings["seq_length"])
 
         data_seq.set_transforms([Normalize(self.mean, self.std)])
 
@@ -99,7 +97,7 @@ class NN(nn.Module):
         settings: Dict[str, Any],
         epochs=50,
     ):
-        optimizer = optim.SGD(self.parameters(), lr=0.01)
+        optimizer = optim.SGD(self.parameters(), lr=0.1)
         criterion = nn.MSELoss()
 
         self.log.info("Training the network...\n")
