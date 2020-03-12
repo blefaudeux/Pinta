@@ -1,6 +1,8 @@
 pandas
 torchvision
 pynmea2
-
-tensorboardX
+numpy
+numpy-quaternion
+tensorboard
 tensorflow
+numba

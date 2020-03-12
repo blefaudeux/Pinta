@@ -12,9 +12,9 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from data_processing.training_set import TrainingSample, TrainingSet, TrainingSetBundle
+from data_processing.training_set import (TrainingSample, TrainingSet,
+                                          TrainingSetBundle)
 from data_processing.transforms import Normalize
-from settings import dtype
 
 
 class NN(nn.Module):
@@ -27,8 +27,6 @@ class NN(nn.Module):
         super(NN, self).__init__()
         self.model = None
         self._valid = False
-        self.mean = None
-        self.std = None
         self.log = logging.getLogger(log_channel)
 
         # Set up TensorBoard
@@ -44,28 +42,6 @@ class NN(nn.Module):
 
     def get_layer_weights(self):
         raise NotImplementedError
-
-    def update_normalization(self, settings):
-        assert "dataset_normalization" in settings.keys()
-
-        # Update reference mean and std
-        self.mean = TrainingSample(
-            torch.Tensor(settings["dataset_normalization"]["input"]["mean"]).to(
-                dtype=dtype
-            ),
-            torch.Tensor(settings["dataset_normalization"]["output"]["mean"]).to(
-                dtype=dtype
-            ),
-        )
-
-        self.std = TrainingSample(
-            torch.Tensor(settings["dataset_normalization"]["input"]["std"]).to(
-                dtype=dtype
-            ),
-            torch.Tensor(settings["dataset_normalization"]["output"]["std"]).to(
-                dtype=dtype
-            ),
-        )
 
     def evaluate(self, data, settings):
         # Move the data to the proper format

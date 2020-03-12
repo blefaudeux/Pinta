@@ -39,7 +39,7 @@ training_bundle = TrainingSetBundle(data_list)
 mean, std = training_bundle.get_norm()
 
 log.info(
-    "Training on {} samples. Batch is {}".format(
+    "Loaded {} samples. Batch is {}".format(
         len(training_bundle), training_settings["batch_size"]
     )
 )

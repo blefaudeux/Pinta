@@ -37,10 +37,11 @@ nmea_fields = {
 
 
 def parse_nmea(filepath: Path, wind_bias=0):
+    if not isinstance(filepath, Path):
+        filepath = Path(filepath)
+
     with filepath.open("r") as fileIO:
-        data: Dict[str, Any] = {}
-        for key in nmea_fields:
-            data[nmea_fields[key]] = {}
+        data: Dict[str, Any] = {key: {} for key in nmea_fields}
 
         # Parse everything & dispatch in the appropriate categories
         skipped_fields: Dict[str, int] = {}
@@ -115,11 +116,17 @@ def parse_nmea(filepath: Path, wind_bias=0):
 
 
 def save_json(dataframe: pd.DataFrame, filepath: Path):
+    if not isinstance(filepath, Path):
+        filepath = Path(filepath)
+
     with filepath.open("w") as outfile:
         json.dump(dataframe.to_json(), outfile)
 
 
 def load_json(filepath: Path, skip_zeros=True) -> pd.DataFrame:
+    if not isinstance(filepath, Path):
+        filepath = Path(filepath)
+
     with filepath.open("r") as infile:
         data = json.load(infile)
 
