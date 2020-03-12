@@ -73,7 +73,7 @@ class NN(nn.Module):
         settings: Dict[str, Any],
         epochs=50,
     ):
-        optimizer = optim.SGD(self.parameters(), lr=0.01)
+        optimizer = optim.SGD(self.parameters(), lr=0.1)
         criterion = nn.MSELoss()
 
         self.log.info("Training the network...\n")
