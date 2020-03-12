@@ -12,9 +12,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from data_processing.training_set import TrainingSample, TrainingSet, TrainingSetBundle
-from data_processing.transforms import Normalize
-from settings import dtype
+from data_processing.training_set import TrainingSet, TrainingSetBundle
 
 
 class NN(nn.Module):

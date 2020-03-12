@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 
@@ -13,12 +12,7 @@ class ConvRNN(NN):
 
     """
 
-    def __init__(self,
-                 logdir,
-                 input_size,
-                 hidden_size,
-                 filename=None,
-                 n_gru_layers=1):
+    def __init__(self, logdir, input_size, hidden_size, filename=None, n_gru_layers=1):
         super(ConvRNN, self).__init__(logdir)
 
         # Load from trained NN if required
@@ -27,9 +21,7 @@ class ConvRNN(NN):
             if self.valid:
                 return
 
-            print(
-                "Could not load the specified net, computing it from scratch"
-            )
+            print("Could not load the specified net, computing it from scratch")
 
         # ----
         # Define the model
@@ -40,11 +32,11 @@ class ConvRNN(NN):
 
         # Conv front end
         # First conv is a depthwise convolution
-        self.conv1 = nn.Conv1d(input_size, hidden_size,
-                               kernel_size=10, padding=3, groups=input_size)
+        self.conv1 = nn.Conv1d(
+            input_size, hidden_size, kernel_size=10, padding=3, groups=input_size
+        )
 
-        self.conv2 = nn.Conv1d(hidden_size, hidden_size,
-                               kernel_size=6, padding=4)
+        self.conv2 = nn.Conv1d(hidden_size, hidden_size, kernel_size=6, padding=4)
 
         self.relu = nn.ReLU()
 
@@ -53,12 +45,6 @@ class ConvRNN(NN):
 
         # Ends with a fully connected layer
         self.out = nn.Linear(hidden_size, self.output_size)
-
-        # CUDA switch > Needs to be done after the model has been declared
-        if dtype == torch.cuda.FloatTensor:
-            print("Using Pytorch CUDA backend."
-                  "Moving the net definition to device")
-            self.cuda()
 
     def forward(self, inputs, hidden=None):
         batch_size = inputs.size(0)
@@ -80,8 +66,7 @@ class ConvRNN(NN):
         conv_seq_len = output.size(2)
 
         # Treating (conv_seq_len x batch_size) as batch_size for linear layer
-        output = output.view(
-            batch_size//self.hidden_size, -1, self.hidden_size)
+        output = output.view(batch_size // self.hidden_size, -1, self.hidden_size)
         output = self.out(output)
         output = output.view(conv_seq_len, -1, self.output_size)
         return output, hidden
