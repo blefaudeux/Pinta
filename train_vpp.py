@@ -70,16 +70,22 @@ if not dnn.valid:
     dnn.fit(trainer, tester, settings=training_settings, epochs=EPOCH)
     dnn.save("trained/" + settings.get_name() + ".pt")
 
-log.info(
-    "Final test Score: %.2f RMSE" % np.sqrt(dnn.evaluate(tester, training_settings))
-)
+losses = dnn.evaluate(tester, training_settings)
+log.info("Final test Score: %.2f RMSE" % np.sqrt(sum(losses) / len(losses)))
 
 
 # Compare visually the outputs
 log.info("---\nQuality evaluation:")
-prediction = dnn.predict(tester, seq_len=training_settings["seq_length"])
-
-prediction = prediction.detach().cpu().numpy()
+prediction = (
+    dnn.predict(
+        tester,
+        mean=mean.to(settings.device, settings.dtype).outputs,
+        std=std.to(settings.device, settings.dtype).outputs,
+    )
+    .detach()
+    .cpu()
+    .numpy()
+)
 
 # Split the output sequence to re-align,
 # ! need to take sequence length into account, offset

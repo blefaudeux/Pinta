@@ -2,7 +2,7 @@ import json
 
 import torch
 
-# Select our target at runtime # FIXME: target intel mkldnn ?
+# Select our target at runtime
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 dtype = torch.float32
 
