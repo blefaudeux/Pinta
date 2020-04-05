@@ -18,9 +18,9 @@
     "python.linting.mypyEnabled": true,
     "python.linting.flake8Enabled": true,
     "python.linting.flake8Args": [
-        "max-line-length",
+        "--max-line-length",
         "88",
-        "extend-ignore",
+        "--extend-ignore",
         "E203"
     ],
     "editor.trimAutoWhitespace": true,

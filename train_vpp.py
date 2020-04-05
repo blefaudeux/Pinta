@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Callable, List
 
 import numpy as np
+import torch
 
 import settings
 from data_processing import plot as plt
@@ -19,7 +20,7 @@ training_settings = settings.get_defaults()
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(training_settings["log"])
 
-#  ConvRNN
+#  ConvNN
 EPOCH = training_settings["epoch"]
 INPUT_SIZE = [len(training_settings["inputs"]), training_settings["seq_length"]]
 
@@ -93,9 +94,21 @@ reference = []
 splits = []
 i = 0
 
+
+# De-whiten the data
+def denormalize(data: torch.Tensor):
+    return torch.add(
+        torch.mul(data, std.to(settings.device, settings.dtype).outputs),
+        mean.to(settings.device, settings.dtype).outputs,
+    )
+
+
 for dataset in tester:
     reference.append(
-        dataset.outputs[: -training_settings["seq_length"] + 1].detach().cpu().numpy()
+        denormalize(dataset.outputs[: -training_settings["seq_length"] + 1])
+        .detach()
+        .cpu()
+        .numpy()
     )
     i += reference[-1].shape[0]
     splits.append(i)

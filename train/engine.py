@@ -12,8 +12,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from data_processing.training_set import TrainingSample, TrainingSet, TrainingSetBundle
-from data_processing.transforms import Normalize
+from data_processing.training_set import TrainingSet, TrainingSetBundle
 
 
 class NN(nn.Module):
@@ -73,6 +72,7 @@ class NN(nn.Module):
         epochs=50,
     ):
         optimizer = optim.SGD(self.parameters(), lr=0.1)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
         criterion = nn.MSELoss()
 
         self.log.info("Training the network...\n")
@@ -94,23 +94,21 @@ class NN(nn.Module):
                     loss.backward()
                     return loss
 
-                # Loss on the test data
-                def closure_test(data=test_batch):
+                # Loss on the validation data
+                def closure_validation(data=test_batch):
                     pred, _ = self(data.inputs)
                     loss = criterion(pred.squeeze(), data.outputs.squeeze())
                     self.summary_writer.add_scalar("test", loss.item(), i_log)
                     self.log.info("  Test loss: {:.4f}\n".format(loss.item()))
+                    return loss
 
                 optimizer.step(closure_train)
-                closure_test()
+                validation_loss = closure_validation()
 
                 i_log += 1
 
-            # Update learning rate if needed
-            if not (epoch + 1) % settings["training"]["lr_period_decrease"]:
-                self.log.info("  -- Reducing learning rate")
-                for group in optimizer.param_groups:
-                    group["lr"] *= settings["training"]["lr_amount_decrease"]
+            # Adjust learning rate if needed
+            scheduler.step(validation_loss)
 
             # Display the layer weights
             weight = self.get_layer_weights()

@@ -26,9 +26,9 @@ class Conv(NN):
         # with the groups flag
         self.conv = nn.Sequential(
             nn.Conv1d(input_size[0], hidden_size, kernel_size=KERNEL_SIZE),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Conv1d(hidden_size, hidden_size, kernel_size=KERNEL_SIZE),
-            nn.ReLU(),
+            nn.LeakyReLU(),
         )
 
         out_conv_size = self._get_conv_out(input_size)
