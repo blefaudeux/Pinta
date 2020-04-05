@@ -8,7 +8,7 @@ from typing import Callable, List, Tuple
 import numpy as np
 import torch
 import torchvision
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, Dataset, SequentialSampler, random_split
 
 import settings
 
@@ -209,6 +209,8 @@ class TrainingSetBundle:
         test_len = len(sequences) - train_len
         trainer, tester = random_split(sequences, [train_len, test_len])
 
+        # FIXME - tester is randomized here
+
         # Collate needs to enforce device and type somehow
         def collate(samples: List[TrainingSample]):
             return TrainingSample(
@@ -232,7 +234,7 @@ class TrainingSetBundle:
                 tester,
                 collate_fn=collate,
                 batch_size=batch_size,
-                shuffle=shuffle,
+                shuffle=False,
                 drop_last=True,
             ),
         )

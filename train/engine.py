@@ -4,6 +4,7 @@ Implement different NNs which best describe the behaviour of the system
 """
 
 import logging
+from itertools import cycle
 from typing import Any, Dict, List
 
 import torch
@@ -75,11 +76,15 @@ class NN(nn.Module):
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
         criterion = nn.MSELoss()
 
+        if len(tester) < len(trainer):
+            tester = cycle(tester)
+
         self.log.info("Training the network...\n")
         i_log = 0
-        for epoch in range(epochs):
+        for i_epoch in range(epochs):
 
-            self.log.info("***** Epoch %d", epoch)
+            self.log.info("***** Epoch %d", i_epoch)
+            i_batch = 0
 
             for train_batch, test_batch in zip(trainer, tester):
                 # Eval computation on the training data
@@ -88,7 +93,11 @@ class NN(nn.Module):
                     out, _ = self(data.inputs)
                     loss = criterion(out.squeeze(), data.outputs)
 
-                    self.log.info("  Train loss: {:.4f}".format(loss.item()))
+                    self.log.info(
+                        " {},{} Train loss: {:.4f}".format(
+                            i_epoch, i_batch, loss.item()
+                        )
+                    )
                     self.summary_writer.add_scalar("train", loss.item(), i_log)
                     # Add to the gradient
                     loss.backward()
@@ -99,13 +108,18 @@ class NN(nn.Module):
                     pred, _ = self(data.inputs)
                     loss = criterion(pred.squeeze(), data.outputs.squeeze())
                     self.summary_writer.add_scalar("test", loss.item(), i_log)
-                    self.log.info("  Test loss: {:.4f}\n".format(loss.item()))
+                    self.log.info(
+                        " {},{} Validation loss: {:.4f}\n".format(
+                            i_epoch, i_batch, loss.item()
+                        )
+                    )
                     return loss
 
                 optimizer.step(closure_train)
                 validation_loss = closure_validation()
 
                 i_log += 1
+                i_batch += 1
 
             # Adjust learning rate if needed
             scheduler.step(validation_loss)
