@@ -258,11 +258,13 @@ class TrainingSetBundle:
         def collate(samples: List[TrainingSample]):
             return TrainingSample(
                 inputs=torch.stack([t.inputs for t in samples])
-                .squeeze(dim=1)
+                .squeeze()
                 .to(device, dtype),
                 outputs=torch.stack([t.outputs for t in samples])
-                .squeeze(dim=1)
+                .squeeze()
                 .to(device, dtype),
             )
 
-        return DataLoader(sequences, collate_fn=collate, batch_size=1,)
+        return DataLoader(
+            sequences, collate_fn=collate, batch_size=2048, drop_last=True
+        )

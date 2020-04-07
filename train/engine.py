@@ -54,16 +54,22 @@ class NN(nn.Module):
 
         return losses
 
-    @staticmethod
-    def prepare_data(training_sets: List[TrainingSet], seq_len):
-        """
-        Prepare sequences of a given length given the input data
-        """
+    def predict(
+        self,
+        dataloader: DataLoader,
+        mean: torch.Tensor = None,
+        std: torch.Tensor = None,
+    ):
+        predictions = [self(seq.inputs)[0].squeeze() for seq in dataloader]
+        predictions_tensor = torch.cat(predictions)
 
-        bundle = TrainingSetBundle(training_sets)
-        mean, std = bundle.get_norm()
+        print(predictions_tensor.shape)
 
-        return bundle.get_sequences(seq_len), mean, std
+        # De-normalize the output
+        if mean and std:
+            return torch.add(torch.mul(predictions_tensor, std), mean)
+
+        return predictions_tensor
 
     def fit(
         self,
@@ -130,20 +136,6 @@ class NN(nn.Module):
                 self.summary_writer.add_histogram("weights", weight, i_log)
 
         self.log.info("... Done")
-
-    def predict(
-        self,
-        dataloader: DataLoader,
-        mean: torch.Tensor = None,
-        std: torch.Tensor = None,
-    ):
-        predictions = torch.stack([self(test_seq.inputs)[0] for test_seq in dataloader])
-
-        # De-normalize the output
-        if mean and std:
-            return torch.add(torch.mul(predictions, std), mean)
-
-        return predictions
 
     def forward(self, inputs, *kwargs):
         """
