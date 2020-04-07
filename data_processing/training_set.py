@@ -234,7 +234,35 @@ class TrainingSetBundle:
                 tester,
                 collate_fn=collate,
                 batch_size=batch_size,
-                shuffle=False,
+                shuffle=shuffle,
                 drop_last=True,
             ),
         )
+
+    def get_sequential_sampler(
+        self,
+        seq_len: int,
+        transforms: List[Callable],
+        device: torch.device = torch.device("cpu"),
+        dtype: torch.dtype = torch.float32,
+    ) -> DataLoader:
+        """
+        Create two PyTorch DataLoaders out of this dataset, randomly splitting
+        the data in between training and testing
+        """
+        # Create a dataset on the fly, with the appropriate sequence cuts
+        sequences = self.get_sequences(seq_len, type=dtype)
+        sequences.set_transforms(transforms)
+
+        # Collate needs to enforce device and type somehow
+        def collate(samples: List[TrainingSample]):
+            return TrainingSample(
+                inputs=torch.stack([t.inputs for t in samples])
+                .squeeze(dim=1)
+                .to(device, dtype),
+                outputs=torch.stack([t.outputs for t in samples])
+                .squeeze(dim=1)
+                .to(device, dtype),
+            )
+
+        return DataLoader(sequences, collate_fn=collate, batch_size=1,)

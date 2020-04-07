@@ -55,22 +55,32 @@ transforms: List[Callable] = [
     RandomFlip(dimension=training_settings["inputs"].index("rudder_angle"), odds=0.5),
 ]
 
-# Get the train and test data loaders
-trainer, tester = training_bundle.get_dataloaders(
-    training_settings["training_ratio"],
+# Train a new model from scratch if need be
+if not dnn.valid:
+    trainer, valider = training_bundle.get_dataloaders(
+        training_settings["training_ratio"],
+        training_settings["seq_length"],
+        training_settings["batch_size"],
+        shuffle=True,
+        transforms=transforms,
+        dtype=settings.dtype,
+        device=settings.device,
+    )
+
+    dnn.fit(trainer, valider, settings=training_settings, epochs=EPOCH)
+    dnn.save("trained/" + settings.get_name() + ".pt")
+
+tester = training_bundle.get_sequential_sampler(
     training_settings["seq_length"],
-    training_settings["batch_size"],
-    shuffle=True,
-    transforms=transforms,
+    transforms=[
+        Normalize(
+            mean.to(settings.device, settings.dtype),
+            std.to(settings.device, settings.dtype),
+        )
+    ],
     dtype=settings.dtype,
     device=settings.device,
 )
-
-
-if not dnn.valid:
-    dnn.fit(trainer, tester, settings=training_settings, epochs=EPOCH)
-    dnn.save("trained/" + settings.get_name() + ".pt")
-
 losses = dnn.evaluate(tester, training_settings)
 log.info("Final test Score: %.2f RMSE" % np.sqrt(sum(losses) / len(losses)))
 
