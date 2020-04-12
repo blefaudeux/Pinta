@@ -113,9 +113,9 @@ def denormalize(data: torch.Tensor):
     )
 
 
-for dataset in tester:
+for sequence in tester:
     reference.append(
-        denormalize(dataset.outputs[: -training_settings["seq_length"] + 1])
+        denormalize(sequence.outputs[: -training_settings["seq_length"] + 1])
         .detach()
         .cpu()
         .numpy()
