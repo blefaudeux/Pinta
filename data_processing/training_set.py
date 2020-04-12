@@ -200,7 +200,8 @@ class TrainingSetBundle:
         Create two PyTorch DataLoaders out of this dataset, randomly splitting
         the data in between training and testing
         """
-        # Create a dataset on the fly, with the appropriate sequence cuts
+        # Create a consolidated dataset on the fly,
+        # with the appropriate sequence cuts
         sequences = self.get_sequences(seq_len, type=dtype)
         sequences.set_transforms(transforms)
 
@@ -208,8 +209,6 @@ class TrainingSetBundle:
         train_len = int(ratio * len(sequences))
         test_len = len(sequences) - train_len
         trainer, tester = random_split(sequences, [train_len, test_len])
-
-        # FIXME - tester is randomized here
 
         # Collate needs to enforce device and type somehow
         def collate(samples: List[TrainingSample]):
@@ -250,7 +249,8 @@ class TrainingSetBundle:
         Create two PyTorch DataLoaders out of this dataset, randomly splitting
         the data in between training and testing
         """
-        # Create a dataset on the fly, with the appropriate sequence cuts
+        # Create a consolidated dataset on the fly,
+        # with the appropriate sequence cuts
         sequences = self.get_sequences(seq_len, type=dtype)
         sequences.set_transforms(transforms)
 
