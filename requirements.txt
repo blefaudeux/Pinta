@@ -6,3 +6,4 @@ numpy-quaternion
 tensorboard
 tensorflow
 numba
+plotly

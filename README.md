@@ -2,12 +2,9 @@
 Pilot, machine learning, fitering and physics experiment
 
 ## Requirements
-Everything is in python3. You can use *pip* to install dependencies, or your favorite package manager (brew, apt-get, whatever crap there is on windows)
+Everything is in python3. You can use *pip* to install dependencies, or your favorite package manager. One option is simply (preferably from a virtual environment)
 
-Required libs:
-* PyTorch
-* h5py
-* plotly
+`pip install -r requirements.txt`
 
 ## Data
 ### Format
