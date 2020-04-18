@@ -261,10 +261,10 @@ class TrainingSetBundle:
         def collate(samples: List[TrainingSample]):
             return TrainingSample(
                 inputs=torch.stack([t.inputs for t in samples])
-                .squeeze(dim=1)
+                .squeeze()
                 .to(device, dtype),
                 outputs=torch.stack([t.outputs for t in samples])
-                .squeeze(dim=1)
+                .squeeze()
                 .to(device, dtype),
             )
 
