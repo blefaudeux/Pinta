@@ -70,7 +70,8 @@ if not dnn.valid:
     dnn.fit(trainer, valider, settings=training_settings, epochs=EPOCH)
     dnn.save("trained/" + settings.get_name() + ".pt")
 
-tester = training_bundle.get_sequential_sampler(
+# Check the training
+tester, split_indices = training_bundle.get_sequential_dataloader(
     training_settings["seq_length"],
     transforms=[
         Normalize(
@@ -86,7 +87,17 @@ log.info("Final test Score: %.2f RMSE" % np.sqrt(sum(losses) / len(losses)))
 
 
 # Compare visually the outputs
+# - de-whiten the data
+def denormalize(data: torch.Tensor):
+    return torch.add(
+        torch.mul(data, std.to(settings.device, settings.dtype).outputs),
+        mean.to(settings.device, settings.dtype).outputs,
+    )
+
+
+# - prediction: go through the net, split the output sequence to re-align,
 log.info("---\nQuality evaluation:")
+
 prediction = (
     dnn.predict(
         tester,
@@ -98,32 +109,17 @@ prediction = (
     .numpy()
 )
 
-# Split the output sequence to re-align,
-# ! need to take sequence length into account, offset
-reference = []
-splits = []
-i = 0
+reference = [
+    denormalize(batch.outputs[: -training_settings["seq_length"] + 1])
+    .detach()
+    .cpu()
+    .numpy()
+    for batch in tester
+]
 
-
-# De-whiten the data
-def denormalize(data: torch.Tensor):
-    return torch.add(
-        torch.mul(data, std.to(settings.device, settings.dtype).outputs),
-        mean.to(settings.device, settings.dtype).outputs,
-    )
-
-
-for dataset in tester:
-    reference.append(
-        denormalize(dataset.outputs[: -training_settings["seq_length"] + 1])
-        .detach()
-        .cpu()
-        .numpy()
-    )
-    i += reference[-1].shape[0]
-    splits.append(i)
-
-prediction = np.split(prediction, splits)
+# - split back to restore the individual datasets
+prediction = np.split(prediction, split_indices)
+reference = np.split(reference, split_indices)
 
 plt.parallel_plot(
     reference + prediction,

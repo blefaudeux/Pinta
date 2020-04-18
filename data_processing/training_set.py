@@ -137,11 +137,11 @@ class TrainingSetBundle:
 
         return mean, std
 
-    def get_sequences(
+    def get_training_set(
         self, seq_len: int, type: torch.dtype = torch.float32
-    ) -> TrainingSet:
+    ) -> Tuple[TrainingSet, List[int]]:
         """
-        Prepare sequences of a given length given the input data
+        Generate a single TrainingSet from a bundle
         """
 
         inputs = []
@@ -157,7 +157,10 @@ class TrainingSetBundle:
         tensor_input = torch.cat(inputs).to(device=settings.device, dtype=type)
         tensor_output = torch.cat(outputs).to(device=settings.device, dtype=type)
 
-        return TrainingSet(tensor_input, tensor_output)
+        return (
+            TrainingSet(tensor_input, tensor_output),
+            [len(sequence) for sequence in inputs],
+        )
 
     @staticmethod
     def generate_temporal_seq(
@@ -202,13 +205,13 @@ class TrainingSetBundle:
         """
         # Create a consolidated dataset on the fly,
         # with the appropriate sequence cuts
-        sequences = self.get_sequences(seq_len, type=dtype)
-        sequences.set_transforms(transforms)
+        training_set, _ = self.get_training_set(seq_len, type=dtype)
+        training_set.set_transforms(transforms)
 
         # Split the dataset in train/test instances
-        train_len = int(ratio * len(sequences))
-        test_len = len(sequences) - train_len
-        trainer, tester = random_split(sequences, [train_len, test_len])
+        train_len = int(ratio * len(training_set))
+        test_len = len(training_set) - train_len
+        trainer, tester = random_split(training_set, [train_len, test_len])
 
         # Collate needs to enforce device and type somehow
         def collate(samples: List[TrainingSample]):
@@ -238,21 +241,21 @@ class TrainingSetBundle:
             ),
         )
 
-    def get_sequential_sampler(
+    def get_sequential_dataloader(
         self,
         seq_len: int,
         transforms: List[Callable],
         device: torch.device = torch.device("cpu"),
         dtype: torch.dtype = torch.float32,
-    ) -> DataLoader:
+    ) -> Tuple[DataLoader, List[int]]:
         """
         Create two PyTorch DataLoaders out of this dataset, randomly splitting
         the data in between training and testing
         """
         # Create a consolidated dataset on the fly,
         # with the appropriate sequence cuts
-        sequences = self.get_sequences(seq_len, type=dtype)
-        sequences.set_transforms(transforms)
+        training_set, split_indices = self.get_training_set(seq_len, type=dtype)
+        training_set.set_transforms(transforms)
 
         # Collate needs to enforce device and type somehow
         def collate(samples: List[TrainingSample]):
@@ -265,4 +268,7 @@ class TrainingSetBundle:
                 .to(device, dtype),
             )
 
-        return DataLoader(sequences, collate_fn=collate, batch_size=1,)
+        return (
+            DataLoader(training_set, collate_fn=collate, batch_size=1,),
+            split_indices,
+        )
