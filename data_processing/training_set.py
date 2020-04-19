@@ -111,6 +111,33 @@ class TrainingSetBundle:
     def __len__(self):
         return sum(map(lambda x: len(x), self.sets))
 
+    @staticmethod
+    def generate_temporal_seq(
+        tensor_input: torch.Tensor, tensor_output: torch.Tensor, seq_len: int
+    ):
+        """
+        Generate all the subsequences over time,
+        Useful for instance for training a temporal conv net
+        """
+
+        n_sequences = tensor_input.shape[0] - seq_len + 1
+
+        input_seq = torch.transpose(
+            torch.stack(
+                [
+                    tensor_input[start : start + seq_len, :]
+                    for start in range(n_sequences)
+                ],
+                dim=0,
+            ),
+            1,
+            2,
+        )
+
+        output_seq = tensor_output[: -seq_len + 1, :]
+
+        return input_seq, output_seq
+
     def get_norm(self) -> Tuple[TrainingSample, TrainingSample]:
         """Get Mean and STD over the whole bundle
 
@@ -161,33 +188,6 @@ class TrainingSetBundle:
             TrainingSet(tensor_input, tensor_output),
             [len(sequence) for sequence in inputs],
         )
-
-    @staticmethod
-    def generate_temporal_seq(
-        tensor_input: torch.Tensor, tensor_output: torch.Tensor, seq_len: int
-    ):
-        """
-        Generate all the subsequences over time,
-        Useful for instance for training a temporal conv net
-        """
-
-        n_sequences = tensor_input.shape[0] - seq_len + 1
-
-        input_seq = torch.transpose(
-            torch.stack(
-                [
-                    tensor_input[start : start + seq_len, :]
-                    for start in range(n_sequences)
-                ],
-                dim=0,
-            ),
-            1,
-            2,
-        )
-
-        output_seq = tensor_output[: -seq_len + 1, :]
-
-        return input_seq, output_seq
 
     def get_dataloaders(
         self,

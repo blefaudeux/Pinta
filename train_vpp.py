@@ -109,13 +109,7 @@ prediction = (
     .numpy()
 )
 
-reference = [
-    denormalize(batch.outputs[: -training_settings["seq_length"] + 1])
-    .detach()
-    .cpu()
-    .numpy()
-    for batch in tester
-]
+reference = [denormalize(batch.outputs).detach().cpu().numpy() for batch in tester]
 
 # - split back to restore the individual datasets
 prediction = np.split(prediction, split_indices)
@@ -123,7 +117,7 @@ reference = np.split(reference, split_indices)
 
 plt.parallel_plot(
     reference + prediction,
-    ["Ground truth" for _ in range(len(tester))]
+    ["Ground truth" for _ in range(len(reference))]
     + ["Conv" for _ in range(len(prediction))],
     "Network predictions vs ground truth",
 )

@@ -58,10 +58,8 @@ class NN(nn.Module):
         mean: torch.Tensor = None,
         std: torch.Tensor = None,
     ):
-        predictions = [self(seq.inputs.unsqueeze(0))[0].squeeze() for seq in dataloader]
-        predictions_tensor = torch.cat(predictions)
-
-        print(predictions_tensor.shape)
+        predictions = [self(seq.inputs.unsqueeze(0))[0] for seq in dataloader]
+        predictions_tensor = torch.cat(predictions).squeeze()
 
         # De-normalize the output
         if mean and std:
@@ -88,9 +86,8 @@ class NN(nn.Module):
         for i_epoch in range(epochs):
 
             self.log.info("***** Epoch %d", i_epoch)
-            i_batch = 0
 
-            for train_batch, test_batch in zip(trainer, tester):
+            for i_batch, (train_batch, test_batch) in enumerate(zip(trainer, tester)):
                 # Eval computation on the training data
                 def closure_train(data=train_batch):
                     optimizer.zero_grad()
@@ -98,8 +95,8 @@ class NN(nn.Module):
                     loss = criterion(out.squeeze(), data.outputs)
 
                     self.log.info(
-                        " {},{} Train loss: {:.4f}".format(
-                            i_epoch, i_batch, loss.item()
+                        " {}/{},{} Train loss: {:.4f}".format(
+                            i_epoch, epochs, i_batch, loss.item()
                         )
                     )
                     self.summary_writer.add_scalar("train", loss.item(), i_log)
@@ -113,8 +110,8 @@ class NN(nn.Module):
                     loss = criterion(pred.squeeze(), data.outputs.squeeze())
                     self.summary_writer.add_scalar("test", loss.item(), i_log)
                     self.log.info(
-                        " {},{} Validation loss: {:.4f}\n".format(
-                            i_epoch, i_batch, loss.item()
+                        " {}/{},{} Validation loss: {:.4f}\n".format(
+                            i_epoch, epochs, i_batch, loss.item()
                         )
                     )
                     return loss
@@ -123,7 +120,6 @@ class NN(nn.Module):
                 validation_loss = closure_validation()
 
                 i_log += 1
-                i_batch += 1
 
             # Adjust learning rate if needed
             scheduler.step(validation_loss)
