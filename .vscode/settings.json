@@ -1,4 +1,5 @@
 {
+    "debug.toolBarLocation": "docked",
     "python.testing.promptToConfigure": false,
     "python.testing.pytestEnabled": false,
     "python.testing.unittestEnabled": false,

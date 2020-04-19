@@ -5,15 +5,13 @@ Implement different NNs which best describe the behaviour of the system
 
 import logging
 from itertools import cycle
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-
-from data_processing.training_set import TrainingSet, TrainingSetBundle
 
 
 class NN(nn.Module):
@@ -48,7 +46,7 @@ class NN(nn.Module):
         losses = []
 
         for seq in dataloader:
-            out, _ = self(seq.inputs)
+            out, _ = self(seq.inputs.unsqueeze(0))
             loss = criterion(out, seq.outputs.view(out.size()[0], -1))
             losses.append(loss.item())
 
@@ -60,7 +58,7 @@ class NN(nn.Module):
         mean: torch.Tensor = None,
         std: torch.Tensor = None,
     ):
-        predictions = [self(seq.inputs)[0].squeeze() for seq in dataloader]
+        predictions = [self(seq.inputs.unsqueeze(0))[0].squeeze() for seq in dataloader]
         predictions_tensor = torch.cat(predictions)
 
         print(predictions_tensor.shape)

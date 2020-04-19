@@ -8,7 +8,7 @@ from typing import Callable, List, Tuple
 import numpy as np
 import torch
 import torchvision
-from torch.utils.data import DataLoader, Dataset, SequentialSampler, random_split
+from torch.utils.data import DataLoader, Dataset, random_split
 
 import settings
 
