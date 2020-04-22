@@ -58,7 +58,7 @@ class NN(nn.Module):
         mean: torch.Tensor = None,
         std: torch.Tensor = None,
     ):
-        predictions = [self(seq.inputs.unsqueeze(0))[0] for seq in dataloader]
+        predictions = [self(seq.inputs)[0] for seq in dataloader]
         predictions_tensor = torch.cat(predictions).squeeze()
 
         # De-normalize the output

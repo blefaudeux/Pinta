@@ -30,7 +30,7 @@ if not engine.valid:
     exit(-1)
 
 # Generate data all along the curve
-POLAR_DATA = polar.generate(engine, [5, 25], 5, 0.1, training_settings["seq_length"])
+polar_data = polar.generate(engine, [5, 25], 5, 0.1, training_settings["seq_length"])
 
 # Plot all that stuff
-polar_plot(POLAR_DATA)
+polar_plot(polar_data)

@@ -102,7 +102,7 @@ class TrainingSetBundle:
     This allows us to maintain a bigger pool of data
     without any time coherency / time continuity constraints.
     All the data can be used for training, but we can enforce
-    time-continuous streams where needed.c
+    time-continuous streams where needed.
     """
 
     def __init__(self, training_sets: List[TrainingSet]):
