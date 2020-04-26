@@ -22,7 +22,7 @@ mean, std = TrainingSetBundle(
 ).get_norm()
 
 
-BATCH_SIZE = training_settings["batch_size"]
+BATCH_SIZE = training_settings["val_batch_size"]
 EPOCH = training_settings["epoch"]
 INPUT_SIZE = [len(training_settings["inputs"]), training_settings["seq_length"]]
 
