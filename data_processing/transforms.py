@@ -65,6 +65,19 @@ class Normalize:
         )
 
     def __call__(self, sample: TrainingSample):
+        # Non batched data
+        if sample.inputs.shape[0] == 1:
+            return TrainingSample(
+                inputs=torch.div(
+                    torch.add(sample.inputs, -self.mean.inputs.reshape(1, -1)),
+                    self.std.inputs.reshape(1, -1),
+                ),
+                outputs=torch.div(
+                    torch.add(sample.outputs, -self.mean.outputs), self.std.outputs
+                ),
+            )
+
+        # Batch data coming in. Could also be handled through broadcasting
         return TrainingSample(
             inputs=torch.div(
                 torch.add(sample.inputs, -self.mean.inputs.reshape(1, -1, 1)),

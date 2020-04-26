@@ -46,7 +46,7 @@ class NN(nn.Module):
         losses = []
 
         for seq in dataloader:
-            out, _ = self(seq.inputs.unsqueeze(0))
+            out, _ = self(seq.inputs)
             loss = criterion(out, seq.outputs.view(out.size()[0], -1))
             losses.append(loss.item())
 
@@ -87,6 +87,8 @@ class NN(nn.Module):
 
             self.log.info("***** Epoch %d", i_epoch)
 
+            validation_loss = torch.zeros(1)
+
             for i_batch, (train_batch, test_batch) in enumerate(zip(trainer, tester)):
                 # Eval computation on the training data
                 def closure_train(data=train_batch):
@@ -117,7 +119,7 @@ class NN(nn.Module):
                     return loss
 
                 optimizer.step(closure_train)
-                validation_loss = closure_validation()
+                validation_loss += closure_validation()
 
                 i_log += 1
 

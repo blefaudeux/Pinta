@@ -33,6 +33,8 @@ class TrainingSet(Dataset):
     """
     Holds the training or testing data, with some helper functions.
     This keeps all the time coherent data in one package
+
+    Expected shape is [Time sample x Channels]
     """
 
     def __init__(self, inputs: torch.Tensor, outputs: torch.Tensor):
@@ -56,15 +58,9 @@ class TrainingSet(Dataset):
     def from_training_sample(cls, sample: TrainingSample, seq_len: int):
         """
         Alternative constructor: straight from TrainingSample, repeat
+        Expected size is [Time sequence x Channels]
         """
-        inputs = torch.tensor(
-            np.repeat(np.array([sample.inputs]), seq_len, axis=0), dtype=settings.dtype
-        )
-        outputs = torch.tensor(
-            np.repeat(np.array([sample.outputs]), seq_len, axis=0), dtype=settings.dtype
-        )
-
-        return cls(inputs, outputs)
+        return cls(sample.inputs.repeat(seq_len, 1), sample.outputs.repeat(seq_len, 1))
 
     def append(self, inputs: torch.Tensor, outputs: torch.Tensor):
         """
@@ -269,6 +265,6 @@ class TrainingSetBundle:
             )
 
         return (
-            DataLoader(training_set, collate_fn=collate, batch_size=1,),
+            DataLoader(training_set, collate_fn=collate, batch_size=8000,),
             split_indices,
         )

@@ -20,13 +20,8 @@ _DEFAULTS = {
     "hidden_size": 96,
     "seq_length": 64,
     "training_ratio": 0.9,
-    "batch_size": 5000,
-    "epoch": 100,
-    "dataset_normalization": {
-        "input": {"mean": [13.60, -0.08, 0.28, -0.57], "std": [2.41, 0.32, 0.52, 7.22]},
-        "output": {"mean": [6.48], "std": [1.69]},
-    },
-    "training": {"lr_period_decrease": 20, "lr_amount_decrease": 0.9},
+    "batch_size": 9000,
+    "epoch": 10,
     "log": "pinta",
 }
 
@@ -44,10 +39,6 @@ def get_name():
         + str(_DEFAULTS["hidden_size"])
         + "_batch_"
         + str(_DEFAULTS["batch_size"])
-        + "_lr_"
-        + str(_DEFAULTS["training"]["lr_period_decrease"])
-        + "_"
-        + str(_DEFAULTS["training"]["lr_amount_decrease"])
     )
 
 
