@@ -46,7 +46,7 @@ class NN(nn.Module):
         losses = []
 
         for seq in dataloader:
-            out, _ = self(seq.inputs.unsqueeze(0))
+            out, _ = self(seq.inputs)
             loss = criterion(out, seq.outputs.view(out.size()[0], -1))
             losses.append(loss.item())
 

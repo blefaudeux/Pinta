@@ -20,8 +20,8 @@ _DEFAULTS = {
     "hidden_size": 96,
     "seq_length": 64,
     "training_ratio": 0.9,
-    "batch_size": 5000,
-    "epoch": 100,
+    "batch_size": 9000,
+    "epoch": 10,
     "log": "pinta",
 }
 

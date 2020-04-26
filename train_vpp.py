@@ -57,6 +57,8 @@ transforms: List[Callable] = [
 
 # Train a new model from scratch if need be
 if not dnn.valid:
+    log.info("Training a new model, this can take a while")
+
     trainer, valider = training_bundle.get_dataloaders(
         training_settings["training_ratio"],
         training_settings["seq_length"],
@@ -71,6 +73,7 @@ if not dnn.valid:
     dnn.save("trained/" + settings.get_name() + ".pt")
 
 # Check the training
+log.info("Evaluating the model")
 tester, split_indices = training_bundle.get_sequential_dataloader(
     training_settings["seq_length"],
     transforms=[

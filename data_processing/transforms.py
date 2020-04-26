@@ -66,7 +66,7 @@ class Normalize:
 
     def __call__(self, sample: TrainingSample):
         # Non batched data
-        if sample.inputs.shape[0] > sample.inputs.shape[1]:
+        if sample.inputs.shape[0] == 1:
             return TrainingSample(
                 inputs=torch.div(
                     torch.add(sample.inputs, -self.mean.inputs.reshape(1, -1)),

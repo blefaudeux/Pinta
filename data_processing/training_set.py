@@ -265,6 +265,6 @@ class TrainingSetBundle:
             )
 
         return (
-            DataLoader(training_set, collate_fn=collate, batch_size=1,),
+            DataLoader(training_set, collate_fn=collate, batch_size=8000,),
             split_indices,
         )
