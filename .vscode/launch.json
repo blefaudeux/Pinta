@@ -18,6 +18,9 @@
             "pythonPath": "${config:python.pythonPath}",
             "program": "${workspaceRoot}/train_vpp.py",
             "cwd": "${workspaceRoot}",
+            "args": [
+                "--plot",
+            ]
         },
         {
             "name": "Polar",

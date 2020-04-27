@@ -27,6 +27,9 @@ def load_folder(folder_path: Path, clean_data=True):
         if valid(os.path.join(folder_path, f))
     ]
 
+    # DEBUG
+    filelist = [filelist[0]]
+
     return [load(Path(f), clean_data) for f in filelist]
 
 

@@ -17,11 +17,12 @@ _DEFAULTS = {
     "inputs": ["wind_speed", "wind_angle_x", "wind_angle_y", "rudder_angle"],
     "outputs": ["boat_speed"],
     "network_root_name": "conv",
-    "hidden_size": 96,
-    "seq_length": 64,
+    "hidden_size": 128,
+    "seq_length": 96,
     "training_ratio": 0.9,
-    "batch_size": 9000,
-    "epoch": 10,
+    "train_batch_size": 16000,
+    "val_batch_size": 1000,
+    "epoch": 50,
     "log": "pinta",
 }
 
@@ -38,7 +39,7 @@ def get_name():
         + "_hidden_"
         + str(_DEFAULTS["hidden_size"])
         + "_batch_"
-        + str(_DEFAULTS["batch_size"])
+        + str(_DEFAULTS["train_batch_size"])
     )
 
 
