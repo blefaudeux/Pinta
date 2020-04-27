@@ -1,11 +1,13 @@
+import os
+from math import ceil
+from typing import Any, Dict, List
+
 import numpy as np
 import plotly.graph_objs as go
 import plotly.offline as py
 from plotly import tools
-from math import ceil
-import os
+
 from synthetic.polar import SpeedPolarPoint
-from typing import List, Dict
 
 """ Several helper functions to produce plots, pretty self-explanatory """
 
@@ -135,7 +137,7 @@ def speed_plot(df, decimation=2, filename='speed_polar_raw'):
 
 
 # Plot any traces in parallel
-def parallel_plot(data_list, legend_list, title=None):
+def parallel_plot(data_list: List[Any], legend_list: List[str], title=None):
     traces = []
 
     for data, name in zip(data_list, legend_list):

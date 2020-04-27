@@ -79,9 +79,7 @@ def run(args):
         dnn.fit(trainer, valider, settings=training_settings, epochs=EPOCH)
         dnn.save("trained/" + settings.get_name() + ".pt")
 
-    # Check the training
-    if args.evaluate is True:
-        log.info("Evaluating the model")
+    if args.evaluate or args.plot:
         tester, split_indices = training_bundle.get_sequential_dataloader(
             training_settings["seq_length"],
             transforms=[
@@ -93,11 +91,16 @@ def run(args):
             dtype=settings.dtype,
             device=settings.device,
         )
+
+    # Check the training
+    if args.evaluate:
+        log.info("Evaluating the model")
+
         losses = dnn.evaluate(tester, training_settings)
         log.info("Final test Score: %.2f RMSE" % np.sqrt(sum(losses) / len(losses)))
 
     # Compare visually the outputs
-    if args.plot is True:
+    if args.plot:
         log.info("---\nQuality evaluation:")
 
         # - de-whiten the data
@@ -119,18 +122,25 @@ def run(args):
             .numpy()
         )
 
-        reference = [
-            denormalize(batch.outputs).detach().cpu().numpy() for batch in tester
-        ]
+        reference = (
+            torch.cat([denormalize(batch.outputs) for batch in tester])
+            .detach()
+            .cpu()
+            .numpy()
+        )
 
         # - split back to restore the individual datasets
-        prediction = np.split(prediction, split_indices)
-        reference = np.split(reference, split_indices)
+        if len(split_indices) > 1:
+            prediction = np.split(prediction, split_indices)
+            reference = np.split(reference, split_indices)
+        else:
+            prediction = [prediction]
+            reference = [reference]
 
         plt.parallel_plot(
             reference + prediction,
-            ["Ground truth" for _ in range(len(reference))]
-            + ["Conv" for _ in range(len(prediction))],
+            [f"Ground truth {i}" for i in range(len(reference))]
+            + [f"Conv {i}" for i in range(len(prediction))],
             "Network predictions vs ground truth",
         )
 
@@ -139,6 +149,7 @@ def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Generate VPP")
+
     parser.add_argument(
         "--model_path",
         action="store",
@@ -151,6 +162,7 @@ if __name__ == "__main__":
         action="store_true",
         help="evaluate an existing model, compute error metrics",
     )
+
     parser.add_argument(
         "--plot",
         action="store_true",
