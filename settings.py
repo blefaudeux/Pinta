@@ -18,7 +18,7 @@ _DEFAULTS = {
     "outputs": ["boat_speed"],
     "network_root_name": "conv",
     "hidden_size": 128,
-    "seq_length": 96,
+    "seq_length": 64,
     "training_ratio": 0.9,
     "train_batch_size": 16000,
     "val_batch_size": 1000,
