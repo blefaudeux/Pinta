@@ -31,7 +31,7 @@ def run(args):
         logdir="logs/" + settings.get_name() + str(datetime.now()),
         input_size=INPUT_SIZE,
         hidden_size=training_settings["hidden_size"],
-        filename="trained/" + settings.get_name() + ".pt",
+        filename=args.model_path,
         log_channel="DNN  ",
     )
     dnn.to(settings.device)
@@ -77,7 +77,7 @@ def run(args):
         )
 
         dnn.fit(trainer, valider, settings=training_settings, epochs=EPOCH)
-        dnn.save("trained/" + settings.get_name() + ".pt")
+        dnn.save(args.model_path)
 
     if args.evaluate or args.plot:
         tester, split_indices = training_bundle.get_sequential_dataloader(
