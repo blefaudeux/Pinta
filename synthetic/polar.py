@@ -5,8 +5,10 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from data_processing.training_set import TrainingSample, TrainingSet, TrainingSetBundle
+from data_processing.training_set import (TrainingSample, TrainingSet,
+                                          TrainingSetBundle)
 from data_processing.transforms import Normalize
+from settings import device
 
 SpeedPolarPoint = namedtuple(
     "SpeedPolarPoint", ["wind_angle", "wind_speed", "rudder_angle", "boat_speed"]
@@ -27,10 +29,7 @@ def generate(
     # (repeat the same inputs for the whole sequence)
     datasets = []
 
-    normalizer = Normalize(
-        mean.to(torch.device("cpu"), torch.float),
-        std.to(torch.device("cpu"), torch.float),
-    )
+    normalizer = Normalize(mean.to(device, torch.float), std.to(device, torch.float),)
 
     for w in range(wind_range[0], wind_range[1], wind_step):
         for a in np.arange(0.0, np.pi, angular_step):
@@ -38,8 +37,10 @@ def generate(
             # Expected size for transform is [Time x Channels],
             # so we unsqueeze front
             sample = TrainingSample(
-                inputs=torch.tensor([w, np.cos(a), np.sin(a), 0.0]).unsqueeze(0),
-                outputs=torch.zeros(1, 1),
+                inputs=torch.tensor(
+                    [w, np.cos(a), np.sin(a), 0.0], device=device
+                ).unsqueeze(0),
+                outputs=torch.zeros(1, 1).to(device=device),
             )
 
             # Normalize to get to the range the model has learnt
@@ -58,7 +59,7 @@ def generate(
 
     # FW pass in the DNN.
     # Passing in the mean and std allows for de-normalization on the way out
-    pred = engine.predict(dataloader, mean.outputs, std.outputs)
+    pred = engine.predict(dataloader, mean.outputs.to(device=device), std.outputs.to(device=device))
     pred = pred.detach().cpu().numpy()
 
     # Unpack, generate the appropriate list of points for plotting
