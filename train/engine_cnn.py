@@ -7,7 +7,7 @@ from train.engine import NN
 
 class Conv(NN):
     """
-    Pure Conv
+    Two layers of convolutions, then fully connected, fairly naive but baseline
     """
 
     def __init__(self, logdir, log_channel, input_size, hidden_size, filename=None):
