@@ -22,7 +22,7 @@ _DEFAULTS = {
     "training_ratio": 0.9,
     "train_batch_size": 16000,
     "val_batch_size": 1000,
-    "epoch": 50,
+    "epoch": 200,
     "log": "pinta",
 }
 
