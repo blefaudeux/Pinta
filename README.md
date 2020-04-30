@@ -20,8 +20,8 @@ Visualisations for the NN could be added, probably a good idea (can also be adde
 - Plot a given file:
 `./plot_data_file.py {pathToDataFile.json} `
 
-![Experimental polar plot](../blob/master/ressources/polar_experimental.png?raw=true)
-![Experimental trace](../blob/master/ressources/trace.png?raw=true)
+![Experimental polar plot](../master/ressources/polar_experimental.png?raw=true "Experimental polar plot")
+![Experimental trace](../master/ressources/trace.png?raw=true "Experimental trace")
 
 ## Neural nets - behaviour simulation
 All the behaviour simulators inherit from the same NN class (defined in /train/behaviour), they can all basically be trained and predict output from inputs. All the trained networks can be saved as torchscript (.pt) files, in the /trained folder. This should simplify comprehensive testing of a lot of different NN architectures (with or without states, with different layer configurations, etc..).
@@ -32,14 +32,14 @@ An example of training is done through the *train_vpp.py* script, feel free to i
   
 This saves the resulting model, and produces a predicted curve against the ground truth, similar to 
 
-![Prediction vs. Ground truth example](../blob/master/ressources/evaluation.jpg?raw=true)
+![Prediction vs. Ground truth example](../master/ressources/evaluation.jpg?raw=true "Prediction vs. Ground truth example")
 
 
 - Generate a polar plot from a trained model: `./polar_from_vpp.py --model_path={pathToTrainedModel.pt}`
 
 This does not use the whole model capacity, but can be useful to check that the results are meaningful
 
-![Simulated polar](../blob/master/ressources/polar_eval.jpg?raw=true)
+![Simulated polar](../master/ressources/polar_eval.jpg?raw=true "Simulated polar")
 
 
 ## GPU-based machine learning (nvidia at least, not sure about AMD/ROCm)
