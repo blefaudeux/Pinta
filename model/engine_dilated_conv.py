@@ -94,11 +94,7 @@ class TemporalModelBase(NN):
         x = x.permute(0, 2, 1)
         x = x.view(sz[0], -1, self.num_output_channels)
 
-<<<<<<< HEAD:model/engine_dilated_conv.py
         return x, None
-=======
-        return x
->>>>>>> 601d3380828d8a50b424b40023c3b63e6ea4148c:train/engine_dilated_conv.py
 
 
 class TemporalModel(TemporalModelBase):
