@@ -3,8 +3,9 @@
 import argparse
 import logging
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
-from typing import Callable, List
+from typing import Any, Callable, Dict, List
 
 import numpy as np
 import torch
@@ -14,36 +15,62 @@ from data_processing import plot as plt
 from data_processing.load import load_folder, load_sets
 from data_processing.training_set import TrainingSetBundle
 from data_processing.transforms import Normalize, RandomFlip
-from train.engine_cnn import Conv
+from model.engine_cnn import Conv
+from model.engine_dilated_conv import TemporalModel
+
+
+class ModelType(Enum):
+    Conv = 0
+    DilatedConv = 1
+
+
+def model_factory(model_type: ModelType, params: Dict[str, Any]):
+
+    if model_type == ModelType.Conv:
+        INPUT_SIZE = [len(params["inputs"]), params["seq_length"]]
+
+        dnn = Conv(
+            logdir="logs/" + settings.get_name() + str(datetime.now()),
+            input_size=INPUT_SIZE,
+            hidden_size=params["hidden_size"],
+            kernel_size=params["conv_width"],
+            filename=args.model_path,
+            log_channel="DNN  ",
+        )
+
+    if model_type == ModelType.DilatedConv:
+        dnn = TemporalModel(
+            len(params["inputs"]),
+            len(params["outputs"]),
+            params["conv_width"],
+            causal=True,
+            dropout=0.25,
+            channels=1024,
+        )
+
+    dnn.to(settings.device)
+    return dnn
 
 
 def run(args):
     # Basic setup: get config and logger
-    training_settings = settings.get_defaults()
+    params = settings.get_default_params()
     logging.basicConfig(level=logging.INFO)
-    log = logging.getLogger(training_settings["log"])
+    log = logging.getLogger(params["log"])
 
     #  ConvNN
-    EPOCH = training_settings["epoch"]
-    INPUT_SIZE = [len(training_settings["inputs"]), training_settings["seq_length"]]
+    EPOCH = params["epoch"]
 
-    dnn = Conv(
-        logdir="logs/" + settings.get_name() + str(datetime.now()),
-        input_size=INPUT_SIZE,
-        hidden_size=training_settings["hidden_size"],
-        filename=args.model_path,
-        log_channel="DNN  ",
-    )
-    dnn.to(settings.device)
+    dnn = model_factory(ModelType.DilatedConv, params)
 
     # Load the dataset
-    data_list = load_sets(load_folder(Path("data")), training_settings)
+    data_list = load_sets(load_folder(Path("data")), params)
     training_bundle = TrainingSetBundle(data_list)
     mean, std = training_bundle.get_norm()
 
     log.info(
         "Loaded {} samples. Batch is {}".format(
-            len(training_bundle), training_settings["train_batch_size"]
+            len(training_bundle), params["train_batch_size"]
         )
     )
 
@@ -53,12 +80,8 @@ def run(args):
             mean.to(settings.device, settings.dtype),
             std.to(settings.device, settings.dtype),
         ),
-        RandomFlip(
-            dimension=training_settings["inputs"].index("wind_angle_y"), odds=0.5
-        ),
-        RandomFlip(
-            dimension=training_settings["inputs"].index("rudder_angle"), odds=0.5
-        ),
+        RandomFlip(dimension=params["inputs"].index("wind_angle_y"), odds=0.5),
+        RandomFlip(dimension=params["inputs"].index("rudder_angle"), odds=0.5),
     ]
 
     # Train a new model from scratch if need be
@@ -66,22 +89,22 @@ def run(args):
         log.info("Training a new model, this can take a while")
 
         trainer, valider = training_bundle.get_dataloaders(
-            training_settings["training_ratio"],
-            training_settings["seq_length"],
-            training_settings["train_batch_size"],
-            training_settings["val_batch_size"],
+            params["training_ratio"],
+            params["seq_length"],
+            params["train_batch_size"],
+            params["val_batch_size"],
             shuffle=True,
             transforms=transforms,
             dtype=settings.dtype,
             device=settings.device,
         )
 
-        dnn.fit(trainer, valider, settings=training_settings, epochs=EPOCH)
+        dnn.fit(trainer, valider, settings=params, epochs=EPOCH)
         dnn.save(args.model_path)
 
     if args.evaluate or args.plot:
         tester, split_indices = training_bundle.get_sequential_dataloader(
-            training_settings["seq_length"],
+            params["seq_length"],
             transforms=[
                 Normalize(
                     mean.to(settings.device, settings.dtype),
@@ -96,7 +119,7 @@ def run(args):
     if args.evaluate:
         log.info("Evaluating the model")
 
-        losses = dnn.evaluate(tester, training_settings)
+        losses = dnn.evaluate(tester, params)
         log.info("Final test Score: %.2f RMSE" % np.sqrt(sum(losses) / len(losses)))
 
     # Compare visually the outputs

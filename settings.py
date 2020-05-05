@@ -19,6 +19,7 @@ _DEFAULTS = {
     "network_root_name": "conv",
     "hidden_size": 128,
     "seq_length": 64,
+    "conv_width": [3, 3, 3],
     "training_ratio": 0.9,
     "train_batch_size": 16000,
     "val_batch_size": 1000,
@@ -27,7 +28,7 @@ _DEFAULTS = {
 }
 
 
-def get_defaults():
+def get_default_params():
     return _DEFAULTS
 
 
