@@ -3,7 +3,7 @@ from typing import List
 
 import torch.nn as nn
 
-from model.engine import NN
+from model.model_base import NN
 
 LOG = logging.getLogger("DilatedConvModel")
 
@@ -29,14 +29,14 @@ class TemporalModelBase(NN):
 
     def __init__(
         self,
+        log_dir,
         num_input_channels: int,
         num_output_channels: int,
         filter_widths: List[int],
         dropout: float,
         channels: int,
-        logdir: str = "runs",
     ):
-        super().__init__(logdir, "TemporalModel")
+        super().__init__(log_dir, "TemporalDilatedConv")
 
         # Validate input
         for fw in filter_widths:
@@ -106,6 +106,7 @@ class TemporalModel(TemporalModelBase):
 
     def __init__(
         self,
+        log_dir,
         num_input_channels,
         num_output_channels,
         filter_widths,
@@ -128,7 +129,12 @@ class TemporalModel(TemporalModelBase):
         channels -- number of convolution channels
         """
         super().__init__(
-            num_input_channels, num_output_channels, filter_widths, dropout, channels,
+            log_dir,
+            num_input_channels,
+            num_output_channels,
+            filter_widths,
+            dropout,
+            channels,
         )
 
         self.expand_conv = nn.Conv1d(

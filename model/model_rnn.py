@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-from model.engine import NN
+from model.model_base import NN
 
 
 class ConvRNN(NN):

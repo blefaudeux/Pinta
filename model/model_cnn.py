@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from model.engine import NN
+from model.model_base import NN
 
 
 class Conv(NN):
@@ -10,10 +10,8 @@ class Conv(NN):
     Two layers of convolutions, then fully connected, fairly naive but baseline
     """
 
-    def __init__(
-        self, logdir, log_channel, input_size, hidden_size, kernel_size, filename=None
-    ):
-        super(Conv, self).__init__(logdir, log_channel)
+    def __init__(self, logdir, input_size, hidden_size, kernel_size, filename=None):
+        super(Conv, self).__init__(logdir, "TemporalConv")
 
         # ----
         # Define the model

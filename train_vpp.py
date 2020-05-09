@@ -14,36 +14,7 @@ from data_processing import plot as plt
 from data_processing.load import load_folder, load_sets
 from data_processing.training_set import TrainingSetBundle
 from data_processing.transforms import Normalize, RandomFlip
-from model.engine_cnn import Conv
-from model.engine_dilated_conv import TemporalModel
-from settings import ModelType
-
-
-def model_factory(params: Dict[str, Any]):
-
-    if params["model_type"] == ModelType.Conv:
-        INPUT_SIZE = [len(params["inputs"]), params["seq_length"]]
-
-        dnn = Conv(
-            logdir="logs/" + settings.get_name() + str(datetime.now()),
-            input_size=INPUT_SIZE,
-            hidden_size=params["hidden_size"],
-            kernel_size=params["conv_width"],
-            filename=args.model_path,
-            log_channel="DNN  ",
-        )
-
-    if params["model_type"] == ModelType.DilatedConv:
-        dnn = TemporalModel(
-            len(params["inputs"]),
-            len(params["outputs"]),
-            params["conv_width"],
-            dropout=0.25,
-            channels=params["hidden_size"],
-        )
-
-    dnn.to(settings.device)
-    return dnn
+from model.model_factory import model_factory
 
 
 def run(args):
