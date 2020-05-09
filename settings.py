@@ -21,7 +21,11 @@ _DEFAULTS = {
     "seq_length": 27,
     "conv_width": [3, 3, 3],
     "training_ratio": 0.9,
+<<<<<<< HEAD
     "train_batch_size": 5000,
+=======
+    "train_batch_size": 4000,
+>>>>>>> 089db344a7220ae9ef9e54e6e1aa5d6660f057fb
     "val_batch_size": 500,
     "epoch": 200,
     "learning_rate": 1e-4,
