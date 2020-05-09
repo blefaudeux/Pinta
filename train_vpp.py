@@ -39,7 +39,7 @@ def model_factory(params: Dict[str, Any]):
             len(params["outputs"]),
             params["conv_width"],
             dropout=0.25,
-            channels=1024,
+            channels=params["hidden_size"],
         )
 
     dnn.to(settings.device)
@@ -55,7 +55,7 @@ def run(args):
     #  ConvNN
     EPOCH = params["epoch"]
 
-    dnn = model_factory(ModelType.DilatedConv, params)
+    dnn = model_factory(params)
 
     # Load the dataset
     data_list = load_sets(load_folder(Path("data")), params)
