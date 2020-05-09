@@ -1,9 +1,11 @@
+import logging
 from typing import List
 
 import torch.nn as nn
 
 from model.engine import NN
 
+LOG = logging.getLogger("DilatedConvModel")
 
 """
 Code from https://github.com/facebookresearch/VideoPose3D
@@ -30,7 +32,6 @@ class TemporalModelBase(NN):
         num_input_channels: int,
         num_output_channels: int,
         filter_widths: List[int],
-        causal: bool,
         dropout: float,
         channels: int,
         logdir: str = "runs",
@@ -108,7 +109,6 @@ class TemporalModel(TemporalModelBase):
         num_input_channels,
         num_output_channels,
         filter_widths,
-        causal=False,
         dropout=0.25,
         channels=1024,
     ):
@@ -121,19 +121,13 @@ class TemporalModel(TemporalModelBase):
         filter_widths -- list of convolution widths,
          which also determines the # of blocks and receptive field
 
-        causal -- use causal convolutions instead of symmetric convolutions
-         (for real-time applications)
+
 
         dropout -- dropout probability
         channels -- number of convolution channels
         """
         super().__init__(
-            num_input_channels,
-            num_output_channels,
-            filter_widths,
-            causal,
-            dropout,
-            channels,
+            num_input_channels, num_output_channels, filter_widths, dropout, channels,
         )
 
         self.expand_conv = nn.Conv1d(
@@ -143,13 +137,11 @@ class TemporalModel(TemporalModelBase):
         layers_conv = []
         layers_bn = []
 
-        self.causal_shift = [(filter_widths[0]) // 2 if causal else 0]
+        self.causal_shift = [(filter_widths[0]) // 2]
         next_dilation = filter_widths[0]
         for i in range(1, len(filter_widths)):
             self.pad.append((filter_widths[i] - 1) * next_dilation // 2)
-            self.causal_shift.append(
-                (filter_widths[i] // 2 * next_dilation) if causal else 0
-            )
+            self.causal_shift.append((filter_widths[i] // 2 * next_dilation))
 
             layers_conv.append(
                 nn.Conv1d(
@@ -169,6 +161,8 @@ class TemporalModel(TemporalModelBase):
         self.layers_conv = nn.ModuleList(layers_conv)
         self.layers_bn = nn.ModuleList(layers_bn)
         self._valid = False
+
+        LOG.info("Model created. Receptive field is {} samples".format(self.receptive_field()))
 
     def _forward_blocks(self, x):
         x = self.drop(self.relu(self.expand_bn(self.expand_conv(x))))

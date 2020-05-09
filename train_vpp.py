@@ -43,7 +43,6 @@ def model_factory(model_type: ModelType, params: Dict[str, Any]):
             len(params["inputs"]),
             len(params["outputs"]),
             params["conv_width"],
-            causal=True,
             dropout=0.25,
             channels=1024,
         )

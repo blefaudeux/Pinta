@@ -74,7 +74,9 @@ class NN(nn.Module):
         settings: Dict[str, Any],
         epochs=50,
     ):
-        optimizer = optim.SGD(self.parameters(), lr=0.1)
+        optimizer = optim.Adam(
+            self.parameters(), lr=settings["learning_rate"], amsgrad=True
+        )
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
         criterion = nn.MSELoss()
 
@@ -89,12 +91,14 @@ class NN(nn.Module):
 
             validation_loss = torch.zeros(1)
 
-            for i_batch, (train_batch, test_batch) in enumerate(zip(trainer, tester)):
+            for i_batch, (train_batch, validation_batch) in enumerate(
+                zip(trainer, tester)
+            ):
                 # Eval computation on the training data
                 def closure_train(data=train_batch):
                     optimizer.zero_grad()
                     out, _ = self(data.inputs)
-                    loss = criterion(out.squeeze(), data.outputs)
+                    loss = criterion(out.squeeze(), data.outputs.squeeze())
 
                     self.log.info(
                         " {}/{},{} Train loss: {:.4f}".format(
@@ -107,10 +111,10 @@ class NN(nn.Module):
                     return loss
 
                 # Loss on the validation data
-                def closure_validation(data=test_batch):
+                def closure_validation(data=validation_batch):
                     pred, _ = self(data.inputs)
                     loss = criterion(pred.squeeze(), data.outputs.squeeze())
-                    self.summary_writer.add_scalar("test", loss.item(), i_log)
+                    self.summary_writer.add_scalar("validation", loss.item(), i_log)
                     self.log.info(
                         " {}/{},{} Validation loss: {:.4f}\n".format(
                             i_epoch, epochs, i_batch, loss.item()
