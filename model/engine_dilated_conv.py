@@ -162,7 +162,11 @@ class TemporalModel(TemporalModelBase):
         self.layers_bn = nn.ModuleList(layers_bn)
         self._valid = False
 
-        LOG.info("Model created. Receptive field is {} samples".format(self.receptive_field()))
+        LOG.info(
+            "Model created. Receptive field is {} samples".format(
+                self.receptive_field()
+            )
+        )
 
     def _forward_blocks(self, x):
         x = self.drop(self.relu(self.expand_bn(self.expand_conv(x))))
@@ -179,3 +183,6 @@ class TemporalModel(TemporalModelBase):
 
         x = self.shrink(x)
         return x
+
+    def get_layer_weights(self, index: int = 0):
+        return [layer.weight for layer in self.layers_conv]

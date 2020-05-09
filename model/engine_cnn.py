@@ -59,7 +59,7 @@ class Conv(NN):
         )
 
     def get_layer_weights(self):
-        return self.conv[0].weight
+        return [layer.weight for layer in self.conv]
 
     def load(self, filename):
         try:

@@ -131,9 +131,10 @@ class NN(nn.Module):
             scheduler.step(validation_loss)
 
             # Display the layer weights
-            weight = self.get_layer_weights()
-            if weight is not None:
-                self.summary_writer.add_histogram("weights", weight, i_log)
+            weights = self.get_layer_weights()
+            if weights is not None:
+                for i, w in enumerate(weights):
+                    self.summary_writer.add_histogram(f"weights_layer_{i}", w, i_log)
 
         self.log.info("... Done")
 
