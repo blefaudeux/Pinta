@@ -4,6 +4,7 @@ Implement different NNs which best describe the behaviour of the system
 """
 
 import logging
+import time
 from itertools import cycle
 from typing import Any, Dict
 
@@ -94,6 +95,8 @@ class NN(nn.Module):
             for i_batch, (train_batch, validation_batch) in enumerate(
                 zip(trainer, tester)
             ):
+                batch_start = time.time()
+
                 # Eval computation on the training data
                 def closure_train(data=train_batch):
                     optimizer.zero_grad()
@@ -116,7 +119,7 @@ class NN(nn.Module):
                     loss = criterion(pred.squeeze(), data.outputs.squeeze())
                     self.summary_writer.add_scalar("validation", loss.item(), i_log)
                     self.log.info(
-                        " {}/{},{} Validation loss: {:.4f}\n".format(
+                        " {}/{},{} Validation loss: {:.4f}".format(
                             i_epoch, epochs, i_batch, loss.item()
                         )
                     )
@@ -124,6 +127,23 @@ class NN(nn.Module):
 
                 optimizer.step(closure_train)
                 validation_loss += closure_validation()
+
+                # Time some operations
+                batch_stop = time.time()
+                elapsed = batch_stop - batch_start
+
+                samples_per_sec = (
+                    train_batch.inputs.shape[0] + validation_batch.inputs.shape[0]
+                ) / elapsed
+
+                self.summary_writer.add_scalar(
+                    f"Samples_per_sec", samples_per_sec, i_log
+                )
+                self.log.info(
+                    " {}/{},{} {:.1f} samples/sec \n".format(
+                        i_epoch, epochs, i_batch, samples_per_sec
+                    )
+                )
 
                 i_log += 1
 
