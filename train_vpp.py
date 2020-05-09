@@ -3,7 +3,6 @@
 import argparse
 import logging
 from datetime import datetime
-from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 
@@ -17,16 +16,12 @@ from data_processing.training_set import TrainingSetBundle
 from data_processing.transforms import Normalize, RandomFlip
 from model.engine_cnn import Conv
 from model.engine_dilated_conv import TemporalModel
+from settings import ModelType
 
 
-class ModelType(Enum):
-    Conv = 0
-    DilatedConv = 1
+def model_factory(params: Dict[str, Any]):
 
-
-def model_factory(model_type: ModelType, params: Dict[str, Any]):
-
-    if model_type == ModelType.Conv:
+    if params["model_type"] == ModelType.Conv:
         INPUT_SIZE = [len(params["inputs"]), params["seq_length"]]
 
         dnn = Conv(
@@ -38,7 +33,7 @@ def model_factory(model_type: ModelType, params: Dict[str, Any]):
             log_channel="DNN  ",
         )
 
-    if model_type == ModelType.DilatedConv:
+    if params["model_type"] == ModelType.DilatedConv:
         dnn = TemporalModel(
             len(params["inputs"]),
             len(params["outputs"]),

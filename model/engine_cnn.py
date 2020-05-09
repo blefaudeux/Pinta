@@ -61,19 +61,6 @@ class Conv(NN):
     def get_layer_weights(self):
         return [layer.weight for layer in self.conv]
 
-    def load(self, filename):
-        try:
-            with open(filename, "rb") as f:
-                self.load_state_dict(torch.load(f))
-                self.log.info("---\nNetwork {} loaded".format(filename))
-                self.log.info(self)
-                return True
-
-        except (ValueError, OSError, IOError, TypeError) as exception:
-            self.log.warning(exception)
-            self.log.warning("Could not find or load existing NN")
-            return False
-
     def forward(self, inputs, *kwargs):
         # One feature vector per sample in. Rearrange accordingly
         features = self.conv(inputs).view(inputs.size()[0], -1)

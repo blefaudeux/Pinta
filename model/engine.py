@@ -164,3 +164,16 @@ class NN(nn.Module):
         Should be overriden by all subclasses.
         """
         raise NotImplementedError
+
+    def load(self, filename):
+        try:
+            with open(filename, "rb") as f:
+                self.load_state_dict(torch.load(f))
+                self.log.info("---\nNetwork {} loaded".format(filename))
+                self.log.info(self)
+                return True
+
+        except (ValueError, OSError, IOError, TypeError) as exception:
+            self.log.warning(exception)
+            self.log.warning("Could not find or load existing NN")
+            return False

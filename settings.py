@@ -1,4 +1,6 @@
 import json
+from enum import Enum
+from typing import Any, Dict
 
 import torch
 
@@ -13,19 +15,20 @@ else:
     print("CPU enabled")
 
 
+class ModelType(str, Enum):
+    Conv = "conv"
+    DilatedConv = "dilated_conv"
+
+
 _DEFAULTS = {
     "inputs": ["wind_speed", "wind_angle_x", "wind_angle_y", "rudder_angle"],
     "outputs": ["boat_speed"],
-    "network_root_name": "conv",
+    "model_type": ModelType.DilatedConv,
     "hidden_size": 128,
     "seq_length": 27,
     "conv_width": [3, 3, 3],
     "training_ratio": 0.9,
-<<<<<<< HEAD
-    "train_batch_size": 5000,
-=======
     "train_batch_size": 4000,
->>>>>>> 089db344a7220ae9ef9e54e6e1aa5d6660f057fb
     "val_batch_size": 500,
     "epoch": 200,
     "learning_rate": 1e-4,
@@ -37,15 +40,15 @@ def get_default_params():
     return _DEFAULTS
 
 
-def get_name():
+def get_name(params: Dict[str, Any] = _DEFAULTS):
     return (
-        _DEFAULTS["network_root_name"]
+        params["model_type"]
         + "_seq_"
-        + str(_DEFAULTS["seq_length"])
+        + str(params["seq_length"])
         + "_hidden_"
-        + str(_DEFAULTS["hidden_size"])
+        + str(params["hidden_size"])
         + "_batch_"
-        + str(_DEFAULTS["train_batch_size"])
+        + str(params["train_batch_size"])
     )
 
 

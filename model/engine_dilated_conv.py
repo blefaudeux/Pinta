@@ -111,6 +111,7 @@ class TemporalModel(TemporalModelBase):
         filter_widths,
         dropout=0.25,
         channels=1024,
+        filename="",
     ):
         """
         Initialize this model.
@@ -166,6 +167,18 @@ class TemporalModel(TemporalModelBase):
             "Model created. Receptive field is {} samples".format(
                 self.receptive_field()
             )
+        )
+
+        # Load from trained NN if required
+        try:
+            if filename is not None and self.load(filename):
+                self._valid = True
+                return
+        except RuntimeError:
+            pass
+
+        self.log.warning(
+            "Could not load the specified net," " needs to be computed from scratch"
         )
 
     def _forward_blocks(self, x):
