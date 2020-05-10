@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import torch.nn as nn
-
 from model.model_base import NN
 
 
@@ -10,14 +9,22 @@ class Conv(NN):
     Two layers of convolutions, then fully connected, fairly naive but baseline
     """
 
-    def __init__(self, logdir, input_size, hidden_size, kernel_size, filename=None):
+    def __init__(
+        self,
+        logdir,
+        input_size,
+        hidden_size,
+        kernel_size,
+        output_size: int = 1,
+        filename=None,
+    ):
         super(Conv, self).__init__(logdir, "TemporalConv")
 
         # ----
         # Define the model
         self.input_size = input_size
         self.hidden_size = hidden_size
-        self.output_size = 1
+        self.output_size = output_size
 
         # Conv front end
         # First conv is a depthfwise convolution
