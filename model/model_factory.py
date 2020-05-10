@@ -9,7 +9,7 @@ from settings import ModelType
 
 def model_factory(params: Dict[str, Any], model_path: str):
 
-    log_directory = "logs/" + settings.get_name() + str(datetime.now())
+    log_directory = "logs/" + settings.get_name() + "_" + str(datetime.now())
 
     if params["model_type"] == ModelType.Conv:
         INPUT_SIZE = [len(params["inputs"]), params["seq_length"]]
