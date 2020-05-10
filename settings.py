@@ -23,14 +23,14 @@ class ModelType(str, Enum):
 _DEFAULTS = {
     "inputs": ["wind_speed", "wind_angle_x", "wind_angle_y", "rudder_angle"],
     "outputs": ["boat_speed"],
-    "model_type": ModelType.DilatedConv,
-    "hidden_size": 512,
+    "model_type": ModelType.Conv,
+    "hidden_size": 256,
     "seq_length": 27,
     "conv_width": [3, 3, 3],
     "training_ratio": 0.9,
     "train_batch_size": 4000,
     "val_batch_size": 500,
-    "epoch": 200,
+    "epoch": 100,
     "learning_rate": 1e-4,
     "log": "pinta",
 }

@@ -59,12 +59,13 @@ class NN(nn.Module):
         mean: torch.Tensor = None,
         std: torch.Tensor = None,
     ):
-        predictions = [self(seq.inputs)[0] for seq in dataloader]
+        # Move the predictions to cpu() on the fly to save on GPU memory
+        predictions = [self(seq.inputs)[0].detach().cpu() for seq in dataloader]
         predictions_tensor = torch.cat(predictions).squeeze()
 
         # De-normalize the output
         if mean and std:
-            return torch.add(torch.mul(predictions_tensor, std), mean)
+            return torch.add(torch.mul(predictions_tensor, std.cpu()), mean.cpu())
 
         return predictions_tensor
 

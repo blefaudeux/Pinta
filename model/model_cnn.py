@@ -23,6 +23,9 @@ class Conv(NN):
         # First conv is a depthfwise convolution
         # Remark: All inputs convolved to all outputs. This could be changed
         # with the groups flag
+        if isinstance(kernel_size, list):
+            kernel_size = kernel_size[0]
+
         self.conv = nn.Sequential(
             nn.Conv1d(input_size[0], hidden_size, kernel_size=kernel_size),
             nn.LeakyReLU(),
@@ -57,7 +60,7 @@ class Conv(NN):
         )
 
     def get_layer_weights(self):
-        return [layer.weight for layer in self.conv]
+        return [self.conv[0].weight, self.conv[2].weight]
 
     def forward(self, inputs, *kwargs):
         # One feature vector per sample in. Rearrange accordingly

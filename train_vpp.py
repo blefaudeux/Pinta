@@ -22,11 +22,10 @@ def run(args):
     params = settings.get_default_params()
     logging.basicConfig(level=logging.INFO)
     log = logging.getLogger(params["log"])
+    model_path = "trained/" + settings.get_name() + ".pt"
 
-    #  ConvNN
     EPOCH = params["epoch"]
-
-    dnn = model_factory(params)
+    dnn = model_factory(params, model_path=model_path)
 
     # Load the dataset
     data_list = load_sets(load_folder(Path("data")), params)

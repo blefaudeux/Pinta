@@ -106,7 +106,7 @@ class TemporalModel(TemporalModelBase):
 
     def __init__(
         self,
-        log_dir,
+        logdir,
         num_input_channels,
         num_output_channels,
         filter_widths,
@@ -129,7 +129,7 @@ class TemporalModel(TemporalModelBase):
         channels -- number of convolution channels
         """
         super().__init__(
-            log_dir,
+            logdir,
             num_input_channels,
             num_output_channels,
             filter_widths,
