@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from typing import List, Tuple
 
+import torch
 import torch.nn as nn
 
 from model.model_base import NN
@@ -53,5 +54,5 @@ class Mlp(NN):
         return map(lambda x: x[1].weight, filter(is_linear, self.mlp.named_modules()))
 
     def forward(self, x):
-        # Do not use time, for now at least, only use the latest sample
-        return self.mlp(x[:, :, -1]), None
+        x_avg = torch.mean(x, dim=2)
+        return self.mlp(x_avg), None
