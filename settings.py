@@ -18,21 +18,23 @@ else:
 class ModelType(str, Enum):
     Conv = "conv"
     DilatedConv = "dilated_conv"
+    MultiLayerPerceptron = "mlp"
 
 
 _DEFAULTS = {
     "inputs": ["wind_speed", "wind_angle_x", "wind_angle_y", "rudder_angle"],
     "outputs": ["boat_speed"],
-    "model_type": ModelType.DilatedConv,
+    "model_type": ModelType.MultiLayerPerceptron,
     "hidden_size": 128,
     "seq_length": 243,
     "conv_width": [3, 3, 3, 3, 3],
     "training_ratio": 0.9,
-    "train_batch_size": 500,
-    "val_batch_size": 100,
+    "train_batch_size": 8000,
+    "val_batch_size": 500,
     "epoch": 100,
     "learning_rate": 1e-2,
     "batch_norm_momentum": 0.1,
+    "mlp_inner_layers": 2,
     "log": "pinta",
 }
 
