@@ -25,13 +25,14 @@ _DEFAULTS = {
     "outputs": ["boat_speed"],
     "model_type": ModelType.DilatedConv,
     "hidden_size": 128,
-    "seq_length": 81,
-    "conv_width": [3, 3, 3, 3],
+    "seq_length": 243,
+    "conv_width": [3, 3, 3, 3, 3],
     "training_ratio": 0.9,
-    "train_batch_size": 8000,
-    "val_batch_size": 1000,
+    "train_batch_size": 500,
+    "val_batch_size": 100,
     "epoch": 100,
     "learning_rate": 1e-2,
+    "batch_norm_momentum": 0.1,
     "log": "pinta",
 }
 
@@ -51,6 +52,10 @@ def get_name(params: Dict[str, Any] = _DEFAULTS):
         + str(params["train_batch_size"])
         + "_lr_"
         + str(params["learning_rate"])
+        + "_ep_ "
+        + str(params["epoch"])
+        + "_bnm_"
+        + str(params["batch_norm_momentum"])
     )
 
 

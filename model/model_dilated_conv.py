@@ -35,6 +35,7 @@ class TemporalModelBase(NN):
         filter_widths: List[int],
         dropout: float,
         channels: int,
+        bn_momentum: float = 0.1,
     ):
         super().__init__(log_dir, "TemporalDilatedConv")
 
@@ -50,7 +51,7 @@ class TemporalModelBase(NN):
         self.relu = nn.ReLU(inplace=True)
 
         self.pad = [filter_widths[0] // 2]
-        self.expand_bn = nn.BatchNorm1d(channels, momentum=0.1)
+        self.expand_bn = nn.BatchNorm1d(channels, momentum=bn_momentum)
         self.shrink = nn.Conv1d(channels, num_output_channels, 1)
 
     def set_bn_momentum(self, momentum):
@@ -110,8 +111,9 @@ class TemporalModel(TemporalModelBase):
         num_input_channels,
         num_output_channels,
         filter_widths,
-        dropout=0.25,
-        channels=1024,
+        dropout: float = 0.25,
+        channels: int = 1024,
+        bn_momentum: float = 0.1,
         filename="",
     ):
         """
@@ -135,6 +137,7 @@ class TemporalModel(TemporalModelBase):
             filter_widths,
             dropout,
             channels,
+            bn_momentum,
         )
 
         self.expand_conv = nn.Conv1d(
@@ -159,9 +162,9 @@ class TemporalModel(TemporalModelBase):
                     bias=False,
                 )
             )
-            layers_bn.append(nn.BatchNorm1d(channels, momentum=0.1))
+            layers_bn.append(nn.BatchNorm1d(channels, momentum=bn_momentum))
             layers_conv.append(nn.Conv1d(channels, channels, 1, dilation=1, bias=False))
-            layers_bn.append(nn.BatchNorm1d(channels, momentum=0.1))
+            layers_bn.append(nn.BatchNorm1d(channels, momentum=bn_momentum))
 
             next_dilation *= filter_widths[i]
 
