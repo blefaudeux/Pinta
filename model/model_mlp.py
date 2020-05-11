@@ -46,8 +46,11 @@ class Mlp(NN):
             pass
 
     def get_layer_weights(self):
-        # TODO: ben, only return the linear weights
-        return None
+        def is_linear(module):
+            return "layer" in module[0]
+
+        # Select the linear layers, return the weights
+        return map(lambda x: x[1].weight, filter(is_linear, self.mlp.named_modules()))
 
     def forward(self, x):
         # Do not use time, for now at least, only use the latest sample
