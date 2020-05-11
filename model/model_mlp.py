@@ -37,6 +37,14 @@ class Mlp(NN):
 
         self.mlp = nn.Sequential(OrderedDict(module_list))
 
+        # Load from trained NN if required
+        try:
+            if filename is not None and self.load(filename):
+                self._valid = True
+                return
+        except RuntimeError:
+            pass
+
     def get_layer_weights(self):
         # TODO: ben, only return the linear weights
         return None
