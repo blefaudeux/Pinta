@@ -1,3 +1,5 @@
+from typing import List
+
 import torch.nn as nn
 
 from model.model_base import NN
@@ -10,13 +12,22 @@ class ConvRNN(NN):
 
     """
 
-    def __init__(self, logdir, input_size, hidden_size, filename=None, n_gru_layers=1):
-        super(ConvRNN, self).__init__(logdir)
+    def __init__(
+        self,
+        logdir: str,
+        input_size: int,
+        hidden_size: int,
+        kernel_sizes: List[int],
+        n_gru_layers: int,
+        output_size: int,
+        filename=None,
+    ):
+        super().__init__(logdir)
 
         # Load from trained NN if required
         if filename is not None:
-            self.valid = self.load(filename)
-            if self.valid:
+            self._valid = self.load(filename)
+            if self._valid:
                 return
 
             print("Could not load the specified net, computing it from scratch")
@@ -25,16 +36,22 @@ class ConvRNN(NN):
         # Define the model
         self.input_size = input_size
         self.hidden_size = hidden_size
-        self.output_size = 1
+        self.output_size = output_size
         self.gru_layers = n_gru_layers
 
         # Conv front end
         # First conv is a depthwise convolution
         self.conv1 = nn.Conv1d(
-            input_size, hidden_size, kernel_size=10, padding=3, groups=input_size
+            input_size,
+            hidden_size,
+            kernel_size=kernel_sizes[0],
+            padding=3,
+            groups=input_size,
         )
 
-        self.conv2 = nn.Conv1d(hidden_size, hidden_size, kernel_size=6, padding=4)
+        self.conv2 = nn.Conv1d(
+            hidden_size, hidden_size, kernel_size=kernel_sizes[1], padding=4
+        )
 
         self.relu = nn.ReLU()
 

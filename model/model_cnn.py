@@ -1,6 +1,9 @@
+from typing import List
+
 import numpy as np
 import torch
 import torch.nn as nn
+
 from model.model_base import NN
 
 
@@ -11,10 +14,10 @@ class Conv(NN):
 
     def __init__(
         self,
-        logdir,
-        input_size,
-        hidden_size,
-        kernel_size,
+        logdir: str,
+        input_shape: List[int],
+        hidden_size: int,
+        kernel_sizes: List[int],
         output_size: int = 1,
         filename=None,
     ):
@@ -22,25 +25,22 @@ class Conv(NN):
 
         # ----
         # Define the model
-        self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = output_size
 
         # Conv front end
-        # First conv is a depthfwise convolution
+        # First conv is a depthwise convolution
         # Remark: All inputs convolved to all outputs. This could be changed
         # with the groups flag
-        if isinstance(kernel_size, list):
-            kernel_size = kernel_size[0]
 
         self.conv = nn.Sequential(
-            nn.Conv1d(input_size[0], hidden_size, kernel_size=kernel_size),
+            nn.Conv1d(input_shape[0], hidden_size, kernel_size=kernel_sizes[0]),
             nn.LeakyReLU(),
-            nn.Conv1d(hidden_size, hidden_size, kernel_size=kernel_size),
+            nn.Conv1d(hidden_size, hidden_size, kernel_size=kernel_sizes[1]),
             nn.LeakyReLU(),
         )
 
-        out_conv_size = self._get_conv_out(input_size)
+        out_conv_size = self._get_conv_out(input_shape)
         self.log.info(
             "Feature vector size out of the convolution is {}".format(out_conv_size)
         )

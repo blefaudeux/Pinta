@@ -5,6 +5,7 @@ import settings
 from model.model_cnn import Conv
 from model.model_dilated_conv import TemporalModel
 from model.model_mlp import Mlp
+from model.model_rnn import ConvRNN
 from settings import ModelType
 
 
@@ -41,6 +42,17 @@ def model_factory(params: Dict[str, Any], model_path: str):
             input_size=len(params["inputs"]),
             hidden_size=params["hidden_size"],
             number_hidden_layers=params["mlp_inner_layers"],
+            output_size=len(params["outputs"]),
+            filename=model_path,
+        )
+
+    if params["model_type"] == ModelType.RNN:
+        dnn = ConvRNN(
+            logdir=log_directory,
+            input_size=len(params["inputs"]),
+            hidden_size=params["hidden_size"],
+            kernel_sizes=params["conv_width"],
+            n_gru_layers=params["rnn_gru_layers"],
             output_size=len(params["outputs"]),
             filename=model_path,
         )
