@@ -1,8 +1,13 @@
+import logging
 from typing import List
 
+import numpy as np
+import torch
 import torch.nn as nn
 
 from model.model_base import NN
+
+LOG = logging.getLogger("ConvRNN")
 
 
 class ConvRNN(NN):
@@ -30,7 +35,7 @@ class ConvRNN(NN):
             if self._valid:
                 return
 
-            print("Could not load the specified net, computing it from scratch")
+            LOG.warning("Could not load the specified net, computing it from scratch")
 
         # ----
         # Define the model
@@ -40,19 +45,8 @@ class ConvRNN(NN):
         self.gru_layers = n_gru_layers
 
         # Conv front end
-        # First conv is a depthwise convolution
-        self.conv1 = nn.Conv1d(
-            input_size,
-            hidden_size,
-            kernel_size=kernel_sizes[0],
-            padding=3,
-            groups=input_size,
-        )
-
-        self.conv2 = nn.Conv1d(
-            hidden_size, hidden_size, kernel_size=kernel_sizes[1], padding=4
-        )
-
+        self.conv1 = nn.Conv1d(input_size, hidden_size, kernel_size=kernel_sizes[0])
+        self.conv2 = nn.Conv1d(hidden_size, hidden_size, kernel_size=kernel_sizes[1])
         self.relu = nn.ReLU()
 
         # GRU / LSTM layers
@@ -62,12 +56,6 @@ class ConvRNN(NN):
         self.out = nn.Linear(hidden_size, self.output_size)
 
     def forward(self, inputs, hidden=None):
-        batch_size = inputs.size(0)
-
-        # Turn (batch_size x batch_number x input_size)
-        # into (batch_size x input_size x batch_number) for CNN
-        inputs = inputs.transpose(1, 2)
-
         # Run through Conv1d and Pool1d layers
         r1 = self.relu(self.conv1(inputs))
         r2 = self.relu(self.conv2(r1))
@@ -76,15 +64,16 @@ class ConvRNN(NN):
         # back into (batch_size x batch_number x input_size)
         # for GRU/LSTM layer
         r2 = r2.transpose(1, 2)
-
         output, hidden = self.gru(r2, hidden)
-        conv_seq_len = output.size(2)
 
-        # Treating (conv_seq_len x batch_size) as batch_size for linear layer
-        output = output.view(batch_size // self.hidden_size, -1, self.hidden_size)
         output = self.out(output)
-        output = output.view(conv_seq_len, -1, self.output_size)
         return output, hidden
 
     def get_layer_weights(self):
         return self.conv1.weight
+
+    def _get_conv_out(self, shape):
+        # Useful to compute the shape out of the conv blocks
+        # (including eventual padding..)
+        o = self.conv(torch.zeros(1, *shape))
+        return int(np.prod(o.size()))

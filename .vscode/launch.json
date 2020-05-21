@@ -6,7 +6,7 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
-            "pythonPath": "${config:python.pythonPath}",
+            "pythonPath": "${config:python.interpreterPath}",
             "program": "${file}",
             "cwd": "${workspaceRoot}",
         },
@@ -15,7 +15,7 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
-            "pythonPath": "${config:python.pythonPath}",
+            "pythonPath": "${config:python.interpreterPath}",
             "program": "${workspaceRoot}/train_vpp.py",
             "cwd": "${workspaceRoot}",
             "args": [
@@ -27,7 +27,7 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
-            "pythonPath": "${config:python.pythonPath}",
+            "pythonPath": "${config:python.interpreterPath}",
             "program": "${workspaceRoot}/test_synthetics.py",
             "cwd": "${workspaceRoot}",
         }

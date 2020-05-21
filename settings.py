@@ -18,7 +18,7 @@ else:
 class ModelType(str, Enum):
     Conv = "conv"
     DilatedConv = "dilated_conv"
-    MultiLayerPerceptron = "mlp"
+    MLP = "mlp"
     RNN = "rnn"
 
 

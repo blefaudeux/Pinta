@@ -36,7 +36,7 @@ def model_factory(params: Dict[str, Any], model_path: str):
             filename=model_path,
         )
 
-    if params["model_type"] == ModelType.MultiLayerPerceptron:
+    if params["model_type"] == ModelType.MLP:
         dnn = Mlp(
             logdir=log_directory,
             input_size=len(params["inputs"]),
