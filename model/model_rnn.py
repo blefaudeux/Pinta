@@ -50,7 +50,10 @@ class ConvRNN(NN):
         self.relu = nn.ReLU()
 
         # GRU / LSTM layers
-        self.gru = nn.GRU(hidden_size, hidden_size, n_gru_layers, dropout=0.01)
+        # Requires [batch, seq, inputs]
+        self.gru = nn.GRU(
+            hidden_size, hidden_size, n_gru_layers, dropout=0.01, batch_first=True
+        )
 
         # Ends with a fully connected layer
         self.out = nn.Linear(hidden_size, self.output_size)
@@ -60,14 +63,12 @@ class ConvRNN(NN):
         r1 = self.relu(self.conv1(inputs))
         r2 = self.relu(self.conv2(r1))
 
-        # Turn  (batch_size x input_size x batch_number)
-        # back into (batch_size x batch_number x input_size)
-        # for GRU/LSTM layer
+        # GRU/LSTM layer expects [batch, seq, inputs]
         r2 = r2.transpose(1, 2)
-        output, hidden = self.gru(r2, hidden)
+        output_rnn, hidden_out = self.gru(r2, hidden)
 
-        output = self.out(output)
-        return output, hidden
+        output = self.out(output_rnn[:, -1, :].squeeze())
+        return output, hidden_out
 
     def get_layer_weights(self):
         return self.conv1.weight

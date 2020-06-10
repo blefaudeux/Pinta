@@ -16,8 +16,8 @@ else:
 
 
 class ModelType(str, Enum):
-    Conv = "conv"
-    DilatedConv = "dilated_conv"
+    CONV = "conv"
+    DILATED_CONV = "dilated_conv"
     MLP = "mlp"
     RNN = "rnn"
 
@@ -41,8 +41,11 @@ _DEFAULTS = {
     "batch_norm_momentum": 0.1,
     "mlp_inner_layers": 2,  # MLP Specific
     "rnn_gru_layers": 2,  # RNN Specific
+    "conv_dilated_dropout": 0.25,  # Dilated conv specific
     "log": "pinta",
 }
+
+assert isinstance(_DEFAULTS["model_type"], ModelType), "Unkonwn model type"
 
 
 def get_default_params():

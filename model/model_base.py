@@ -83,7 +83,7 @@ class NN(nn.Module):
         criterion = nn.MSELoss()
 
         if len(tester) < len(trainer):
-            tester = cycle(tester)
+            tester = cycle(tester)  # type: ignore
 
         self.log.info("Training the network...\n")
         i_log = 0
@@ -138,7 +138,7 @@ class NN(nn.Module):
                 ) / elapsed
 
                 self.summary_writer.add_scalar(
-                    f"Samples_per_sec", samples_per_sec, i_log
+                    "Samples_per_sec", samples_per_sec, i_log
                 )
                 self.log.info(
                     " {}/{},{} {:.1f} samples/sec \n".format(

@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Any, Dict
 
 import settings
+from model.model_base import NN
 from model.model_cnn import Conv
 from model.model_dilated_conv import TemporalModel
 from model.model_mlp import Mlp
@@ -9,11 +10,23 @@ from model.model_rnn import ConvRNN
 from settings import ModelType
 
 
-def model_factory(params: Dict[str, Any], model_path: str):
+def model_factory(params: Dict[str, Any], model_path: str) -> NN:
+    """ Given pipeline params, generate the appropriate model.
+
+
+    Args:
+        params (Dict[str, Any]):  General pipeline parameters
+        model_path (str): Optional, path of a saved model
+
+    Returns:
+        NN : inference model
+    """
 
     log_directory = "logs/" + settings.get_name() + "_" + str(datetime.now())
 
-    if params["model_type"] == ModelType.Conv:
+    assert isinstance(params["model_type"], ModelType), "Unkonwn model type"
+
+    if params["model_type"] == ModelType.CONV:
         INPUT_SIZE = [len(params["inputs"]), params["seq_length"]]
 
         dnn = Conv(
@@ -25,13 +38,13 @@ def model_factory(params: Dict[str, Any], model_path: str):
             filename=model_path,
         )
 
-    if params["model_type"] == ModelType.DilatedConv:
+    if params["model_type"] == ModelType.DILATED_CONV:
         dnn = TemporalModel(
             logdir=log_directory,
             num_input_channels=len(params["inputs"]),
             num_output_channels=len(params["outputs"]),
             filter_widths=params["conv_width"],
-            dropout=0.25,
+            dropout=params["conv_dilated_dropout"],
             channels=params["hidden_size"],
             filename=model_path,
         )
