@@ -29,14 +29,6 @@ class ConvRNN(NN):
     ):
         super().__init__(logdir)
 
-        # Load from trained NN if required
-        if filename is not None:
-            self._valid = self.load(filename)
-            if self._valid:
-                return
-
-            LOG.warning("Could not load the specified net, computing it from scratch")
-
         # ----
         # Define the model
         self.input_size = input_size
@@ -57,6 +49,14 @@ class ConvRNN(NN):
 
         # Ends with a fully connected layer
         self.out = nn.Linear(hidden_size, self.output_size)
+
+        # Load from trained NN if required
+        if filename is not None:
+            self._valid = self.load(filename)
+            if self._valid:
+                return
+
+            LOG.warning("Could not load the specified net, computing it from scratch")
 
     def forward(self, inputs, hidden=None):
         # Run through Conv1d and Pool1d layers
