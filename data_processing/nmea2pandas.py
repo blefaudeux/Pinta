@@ -1,4 +1,3 @@
-import json
 import logging
 import time
 from pathlib import Path
@@ -41,7 +40,7 @@ def parse_nmea(filepath: Path, wind_bias=0):
         filepath = Path(filepath)
 
     with filepath.open("r") as fileIO:
-        data: Dict[str, Any] = {key: {} for key in nmea_fields}
+        data: Dict[str, Any] = {v: {} for _, v in nmea_fields.items()}
 
         # Parse everything & dispatch in the appropriate categories
         skipped_fields: Dict[str, int] = {}
@@ -49,6 +48,9 @@ def parse_nmea(filepath: Path, wind_bias=0):
         LOG.info("Parsing the NMEA file {}".format(filepath))
         LOG.info("Wind direction bias: {}".format(wind_bias))
         for line in fileIO:
+            if line == "\n":
+                continue
+
             try:
                 sample = nmea.parse(line)
                 key = sample.identifier()[:-1]
@@ -113,22 +115,3 @@ def parse_nmea(filepath: Path, wind_bias=0):
     }
 
     return pd.DataFrame(dataframe)
-
-
-def save_json(dataframe: pd.DataFrame, filepath: Path):
-    if not isinstance(filepath, Path):
-        filepath = Path(filepath)
-
-    with filepath.open("w") as outfile:
-        json.dump(dataframe.to_json(), outfile)
-
-
-def load_json(filepath: Path, skip_zeros=True) -> pd.DataFrame:
-    if not isinstance(filepath, Path):
-        filepath = Path(filepath)
-
-    with filepath.open("r") as infile:
-        data = json.load(infile)
-
-    dataframe = pd.read_json(data)
-    return dataframe if not skip_zeros else dataframe[dataframe.boat_speed > 0].dropna()

@@ -30,6 +30,32 @@
             "pythonPath": "${config:python.interpreterPath}",
             "program": "${workspaceRoot}/test_synthetics.py",
             "cwd": "${workspaceRoot}",
-        }
+        },
+        {
+            "name": "ConvertCSV",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "pythonPath": "${config:python.interpreterPath}",
+            "program": "${workspaceRoot}/convert_data.py",
+            "cwd": "${workspaceRoot}",
+            "args": [
+                "--data_ingestion_path",
+                "~/Downloads/test_data/"
+            ]
+        },
+        {
+            "name": "ConvertNMEA",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "pythonPath": "${config:python.interpreterPath}",
+            "program": "${workspaceRoot}/convert_data.py",
+            "cwd": "${workspaceRoot}",
+            "args": [
+                "--data_ingestion_path",
+                "data"
+            ]
+        },
     ]
 }

@@ -5,8 +5,8 @@ from typing import List
 
 import numpy as np
 
-from data_processing.nmea2pandas import load_json
 from data_processing.training_set import TrainingSet
+from data_processing.utils import load_json
 
 LOG = logging.getLogger("DataLoad")
 
@@ -26,9 +26,6 @@ def load_folder(folder_path: Path, clean_data=True):
         for f in os.listdir(folder_path)
         if valid(os.path.join(folder_path, f))
     ]
-
-    # DEBUG
-    filelist = [filelist[0]]
 
     return [load(Path(f), clean_data) for f in filelist]
 
