@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import Any, Dict
 
 import pandas as pd
 
@@ -12,7 +11,7 @@ import pandas as pd
 LOG = logging.getLogger("CSV2Pandas")
 
 
-def parse_csv(filepath: Path, wind_bias=0):
+def parse_csv(filepath: Path, *args):
     raw_load = pd.read_csv(filepath)
 
     # TODO: @lefaudeux / match original and common downstream fields

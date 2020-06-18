@@ -4,9 +4,11 @@
 
 import argparse
 import logging
+import multiprocessing
 from pathlib import Path
 
 from data_processing.csv2pandas import parse_csv
+from data_processing.json2pandas import parse_raw_json
 from data_processing.nmea2pandas import parse_nmea
 from data_processing.utils import save_json
 
@@ -15,41 +17,31 @@ WIND_BIAS = 5.0
 LOG = logging.getLogger("DataConversion")
 
 
-def handle_directory(args: argparse.Namespace):
-    # List the NMEA logs to process
-    raw_files = {}
-    filetype = ""
+def process_file(filepath: Path):
+    df = {".nmea": parse_nmea, ".csv": parse_csv, ".json": parse_raw_json}[
+        filepath.suffix
+    ](filepath, WIND_BIAS)
 
+    save_json(df, Path(args.data_export_path) / Path(filepath.stem + ".json"))
+
+
+def handle_directory(args: argparse.Namespace):
     # List all the raw files to be processed
-    filelist = list(Path(args.data_ingestion_path).glob("**/*.nmea")) + list(
-        Path(args.data_ingestion_path).glob("**/*.csv")
-    )
+    def get_file_list(ext: str):
+        return list(Path(args.data_ingestion_path).glob("**/*" + ext))
+
+    filelist = get_file_list(".nmea") + get_file_list(".csv") + get_file_list(".json")
 
     LOG.info(f"Found {len(filelist)} candidate files")
 
-    for filepath in filelist:
-        if filepath.suffix != ".json":
-            # Grep the file type, error out if there's a mix
-            assert (
-                not filetype or filetype == filepath.suffix
-            ), "This only handles all CSVs or all NMEA"
-            filetype = filepath.suffix
+    # Make the export directory
+    Path(args.data_export_path).mkdir(parents=True, exist_ok=True)
 
-            raw_files[filepath.stem] = filepath.resolve()
-
-    # List all the files already processed, skip processing in that case
-    processed_files = [p.stem for p in Path(args.data_export_path).glob("**/*.json")]
-
-    # Convert the logs which are not already present as internal JSONs
-    for file_key, file_path in raw_files.items():
-        if file_key not in processed_files:
-            print(f"Converting {file_key}")
-
-            df = {".nmea": parse_nmea, ".csv": parse_csv}[filetype](
-                Path(file_path), WIND_BIAS
-            )
-
-            save_json(df, Path(args.data_export_path) / Path(file_key + ".json"))
+    # Batch process all the files
+    pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
+    pool.map(process_file, filelist)
+    pool.close()
+    pool.join()
 
 
 if __name__ == "__main__":
@@ -69,12 +61,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Gracefully close if no arguments
-    if not args.data_ingestion_path:
+    if not args.data_ingestion_path or not args.data_export_path:
         parser.print_help()
         exit(-1)
 
     # Default to saving data where the inputs where
-    if not args.data_export_path:
-        args.data_export_path = args.data_ingestion_path
+    if args.data_ingestion_path == args.data_export_path:
+        logging.error("Input and destination folders cannot be the same")
+        exit(-1)
 
+    logging.basicConfig(level=logging.INFO)
     handle_directory(args)
