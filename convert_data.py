@@ -5,6 +5,7 @@
 import argparse
 import logging
 import multiprocessing
+from itertools import repeat
 from pathlib import Path
 
 from data_processing.csv2pandas import parse_csv
@@ -17,21 +18,23 @@ WIND_BIAS = 5.0
 LOG = logging.getLogger("DataConversion")
 
 
-def process_file(filepath: Path):
+def process_file(filepath: Path, args: argparse.Namespace) -> None:
     df = {".nmea": parse_nmea, ".csv": parse_csv, ".json": parse_raw_json}[
         filepath.suffix
     ](filepath, WIND_BIAS)
 
     save_json(df, Path(args.data_export_path) / Path(filepath.stem + ".json"))
+    LOG.info(f"File {filepath.stem } processed")
 
 
 def handle_directory(args: argparse.Namespace):
+    LOG.info(f"Processing {args.data_ingestion_path}")
+
     # List all the raw files to be processed
     def get_file_list(ext: str):
         return list(Path(args.data_ingestion_path).glob("**/*" + ext))
 
     filelist = get_file_list(".nmea") + get_file_list(".csv") + get_file_list(".json")
-
     LOG.info(f"Found {len(filelist)} candidate files")
 
     # Make the export directory
@@ -39,7 +42,7 @@ def handle_directory(args: argparse.Namespace):
 
     # Batch process all the files
     pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
-    pool.map(process_file, filelist)
+    pool.starmap_async(process_file, zip(filelist, repeat(args)))
     pool.close()
     pool.join()
 
