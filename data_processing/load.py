@@ -46,10 +46,10 @@ def load_folder(folder_path: Path, clean_data=True) -> List[DataFrame]:
     pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
     results: List[DataFrame] = []
     barrier = pool.starmap_async(
-        load, zip(filelist, repeat(clean_data)), callback=results.append
+        load, zip(filelist, repeat(clean_data)), callback=lambda x: results.append(x)
     )
     barrier.wait()
-    return results
+    return results[0]
 
 
 def to_training_set(raw_data, settings):
