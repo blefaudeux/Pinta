@@ -1,9 +1,12 @@
 import logging
+import multiprocessing
 import os
+from itertools import repeat
 from pathlib import Path
 from typing import List
 
 import numpy as np
+from pandas import DataFrame
 
 from data_processing.training_set import TrainingSet
 from data_processing.utils import load_json
@@ -17,20 +20,7 @@ def _angle_split(data):
     return data
 
 
-def load_folder(folder_path: Path, clean_data=True):
-    def valid(filepath):
-        return os.path.isfile(filepath) and os.path.splitext(filepath)[1] == ".json"
-
-    filelist = [
-        os.path.join(folder_path, f)
-        for f in os.listdir(folder_path)
-        if valid(os.path.join(folder_path, f))
-    ]
-
-    return [load(Path(f), clean_data) for f in filelist]
-
-
-def load(filepath: Path, clean_data=True):
+def load(filepath: Path, clean_data=True) -> DataFrame:
     LOG.info("Loading %s" % filepath)
     data_frame = load_json(filepath, skip_zeros=True)
 
@@ -39,6 +29,27 @@ def load(filepath: Path, clean_data=True):
         data_frame["rudder_angle"] -= data_frame["rudder_angle"].mean()
 
     return data_frame
+
+
+def load_folder(folder_path: Path, clean_data=True) -> List[DataFrame]:
+    # Get the matching files
+    def valid(filepath):
+        return os.path.isfile(filepath) and os.path.splitext(filepath)[1] == ".json"
+
+    filelist = [
+        Path(os.path.join(folder_path, f))
+        for f in os.listdir(folder_path)
+        if valid(os.path.join(folder_path, f))
+    ]
+
+    # Batch load all the files, saturate IO
+    pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
+    results: List[DataFrame] = []
+    barrier = pool.starmap_async(
+        load, zip(filelist, repeat(clean_data)), callback=results.append
+    )
+    barrier.wait()
+    return results
 
 
 def to_training_set(raw_data, settings):

@@ -19,7 +19,8 @@
             "program": "${workspaceRoot}/train_vpp.py",
             "cwd": "${workspaceRoot}",
             "args": [
-                "--plot",
+                "--data_path",
+                "~/test_data_normalized/"
             ]
         },
         {

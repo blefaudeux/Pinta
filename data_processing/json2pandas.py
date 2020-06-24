@@ -17,7 +17,7 @@ _FIELDS = {
     "Block.Boat.Trim": "trim",
     "Block.Boat.Heel": "heel",
     "Block.Boat.TWA": "wind_angle",
-    "Block.Boat.Helm": "helm",
+    "Block.Boat.Helm": "rudder_angle",
     "Block.Boat.Center.HullDisplPercent": "center_hull_disp",
     "Block.Boat.Center.BoardDisplPercent": "center_board_disp",
     "Block.Boat.Center.RudDisplPercent": "center_rudder_disp",

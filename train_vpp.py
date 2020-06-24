@@ -21,13 +21,12 @@ def run(args):
     params = settings.get_default_params()
     logging.basicConfig(level=logging.INFO)
     log = logging.getLogger(params["log"])
-    model_path = "trained/" + settings.get_name() + ".pt"
 
     EPOCH = params["epoch"]
-    dnn = model_factory(params, model_path=model_path)
+    dnn = model_factory(params, model_path=args.model_path)
 
     # Load the dataset
-    data_list = load_sets(load_folder(Path("data")), params)
+    data_list = load_sets(load_folder(Path(args.data_path)), params)
     training_bundle = TrainingSetBundle(data_list)
     mean, std = training_bundle.get_norm()
 
@@ -135,6 +134,10 @@ def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Generate VPP")
+
+    parser.add_argument(
+        "--data_path", action="store", help="path to the training data", default="data",
+    )
 
     parser.add_argument(
         "--model_path",
