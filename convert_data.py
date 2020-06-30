@@ -52,7 +52,7 @@ def handle_directory(args: argparse.Namespace):
 
     # Batch process all the files
     pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
-    pool.starmap(process_file, zip(filelist, repeat(args), repeat(extra_data)))
+    pool.starmap_async(process_file, zip(filelist, repeat(args), repeat(extra_data)))
     pool.close()
     pool.join()
 

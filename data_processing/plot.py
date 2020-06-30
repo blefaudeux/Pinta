@@ -11,6 +11,8 @@ from synthetic.polar import SpeedPolarPoint
 
 """ Several helper functions to produce plots, pretty self-explanatory """
 
+MAX_SPEED = 30
+
 
 def handle_save(filename):
     if not os.path.isdir("plots/"):
@@ -19,7 +21,7 @@ def handle_save(filename):
     return "plots/" + filename + ".html"
 
 
-def polar_plot(data: List[SpeedPolarPoint], filename: str = 'speed_polar'):
+def polar_plot(data: List[SpeedPolarPoint], filename: str = "speed_polar"):
     #  Gather polar lines
     speed_lines = {}  # type: Dict[float, List[int]]
 
@@ -32,38 +34,45 @@ def polar_plot(data: List[SpeedPolarPoint], filename: str = 'speed_polar'):
     # Plot one line per wind speed
     traces = []
     for wind_speed in speed_lines.keys():
-        twa_rad = np.array([data[k].wind_angle for k in speed_lines[wind_speed]]).flatten()
-        boat_speeds = np.array([data[k].boat_speed for k in speed_lines[wind_speed]]).flatten()
+        twa_rad = np.array(
+            [data[k].wind_angle for k in speed_lines[wind_speed]]
+        ).flatten()
+        boat_speeds = np.array(
+            [data[k].boat_speed for k in speed_lines[wind_speed]]
+        ).flatten()
 
-        labels = ["Wind: {}deg - {}kt ** Boat: {}kt".format(angle, wind_speed, boat_speed)
-                  for angle, boat_speed in zip(twa_rad, boat_speeds)]
+        labels = [
+            "Wind: {}deg - {}kt ** Boat: {}kt".format(angle, wind_speed, boat_speed)
+            for angle, boat_speed in zip(twa_rad, boat_speeds)
+        ]
 
-        traces.append(go.Scatterpolar(
-            r=boat_speeds,
-            theta=np.degrees(-twa_rad),
-            mode='lines',
-            marker=dict(
-                size=6,
-                color=boat_speeds,
-                colorscale='Portland',
-                showscale=True,
-                opacity=0.5
-            ),
-            text=labels,
-            name="Wind {}kt".format(wind_speed)
-        ))
+        traces.append(
+            go.Scatterpolar(
+                r=boat_speeds,
+                theta=np.degrees(-twa_rad),
+                mode="lines",
+                marker=dict(
+                    size=6,
+                    color=boat_speeds,
+                    colorscale="Portland",
+                    showscale=True,
+                    opacity=0.5,
+                ),
+                text=labels,
+                name="Wind {}kt".format(wind_speed),
+            )
+        )
 
     # Some styling, get something reasonable
     layout = go.Layout(
-        title='Speed vs True Wind',
+        title="Speed vs True Wind",
         orientation=90,
         autosize=False,
         width=800,
         height=800,
-        hovermode='closest',
-        plot_bgcolor='rgb(245, 245, 245)',
-        polar={
-            "angularaxis": {"rotation": 90}}
+        hovermode="closest",
+        plot_bgcolor="rgb(245, 245, 245)",
+        polar={"angularaxis": {"rotation": 90}},
     )
 
     fig = go.Figure(data=traces, layout=layout)
@@ -72,65 +81,73 @@ def polar_plot(data: List[SpeedPolarPoint], filename: str = 'speed_polar'):
     return
 
 
-def speed_plot(df, decimation=2, filename='speed_polar_raw'):
+def speed_plot(df, decimation=2, filename="speed_polar_raw"):
     print("\nPlotting data")
 
     # - raw polar plot
-    twa_rad = np.radians(df['wind_angle'][::decimation])
-    labels = ['Wind: {}deg - {}kt ** Boat: {}kt ** Rudder: {}deg'.format(wa, ws, b, r)
-              for wa, ws, b, r
-              in zip(df['wind_angle'][::decimation],
-                     df['wind_speed'][::decimation],
-                     df['boat_speed'][::decimation],
-                     df['rudder_angle'][::decimation])]
+    twa_rad = np.radians(df["wind_angle"][::decimation])
+    labels = [
+        "Wind: {}deg - {}kt ** Boat: {}kt ** Rudder: {}deg".format(wa, ws, b, r)
+        for wa, ws, b, r in zip(
+            df["wind_angle"][::decimation],
+            df["wind_speed"][::decimation],
+            df["boat_speed"][::decimation],
+            df["rudder_angle"][::decimation],
+        )
+    ]
 
     speed = go.Scattergl(
-        x=df['boat_speed'][::decimation] * np.sin(twa_rad),
-        y=df['boat_speed'][::decimation] * np.cos(twa_rad),
-        mode='markers',
+        x=df["boat_speed"][::decimation] * np.sin(twa_rad),
+        y=df["boat_speed"][::decimation] * np.cos(twa_rad),
+        mode="markers",
         marker=dict(
             size=6,
-            color=df['wind_speed'][::decimation],
-            colorscale='Portland',
+            color=df["wind_speed"][::decimation],
+            colorscale="Portland",
             showscale=True,
-            opacity=0.5
+            opacity=0.5,
         ),
-        text=labels
+        text=labels,
     )
 
-    r_x = [rr * np.cos(i / 180. * np.pi) for rr in range(0, 20, 2) for i in range(0, 361)]
-    r_y = [rr * np.sin(i / 180. * np.pi) for rr in range(0, 20, 2) for i in range(0, 361)]
-    circle_labels = [str(i) + ' knots' for i in range(0, 20, 2) for ii in range(0, 361)]
+    MAX_SPEED_R2 = int(MAX_SPEED * 1.5)
+
+    r_x = [
+        rr * np.cos(i / 180.0 * np.pi)
+        for rr in range(0, MAX_SPEED_R2, 2)
+        for i in range(0, 361)
+    ]
+    r_y = [
+        rr * np.sin(i / 180.0 * np.pi)
+        for rr in range(0, MAX_SPEED_R2, 2)
+        for i in range(0, 361)
+    ]
+    circle_labels = [
+        str(i) + " knots" for i in range(0, MAX_SPEED_R2, 2) for ii in range(0, 361)
+    ]
 
     # Create a trace
     iso_speed = go.Scattergl(
-        x=r_x,
-        y=r_y,
-        mode='lines',
-        text=circle_labels,
-        line=dict(
-            width=1,
-            color='grey')
-
+        x=r_x, y=r_y, mode="lines", text=circle_labels, line=dict(width=1, color="grey")
     )
 
     traces = [speed, iso_speed]
 
     layout = go.Layout(
-        title='Speed vs True Wind',
+        title="Speed vs True Wind",
         orientation=90,
         autosize=False,
         width=800,
         height=800,
-        hovermode='closest',
-        plot_bgcolor='rgb(245, 245, 245)'
+        hovermode="closest",
+        plot_bgcolor="rgb(245, 245, 245)",
     )
     layout.xaxis.showticklabels = False
     layout.yaxis.showticklabels = False
     layout.xaxis.showgrid = False
     layout.yaxis.showgrid = False
-    layout.xaxis.range = [-13, 13]
-    layout.yaxis.range = [-13, 13]
+    layout.xaxis.range = [-MAX_SPEED, MAX_SPEED]
+    layout.yaxis.range = [-MAX_SPEED, MAX_SPEED]
 
     fig = go.Figure(data=traces, layout=layout)
     py.plot(fig, filename=handle_save(filename), auto_open=True)
@@ -144,33 +161,22 @@ def parallel_plot(data_list: List[Any], legend_list: List[str], title=None):
         if len(data.shape) > 1:
             data = data.flatten()
 
-        traces.append(
-            go.Scatter(
-                y=data,
-                name=name
-            )
-        )
+        traces.append(go.Scatter(y=data, name=name))
 
     layout = go.Layout(
-        title=title if title is not None else "parallel_plot",
-        hovermode='closest'
+        title=title if title is not None else "parallel_plot", hovermode="closest"
     )
 
     fig = go.Figure(data=traces, layout=layout)
     py.plot(fig, filename=handle_save(title), auto_open=False)
 
 
-def multi_plot(df, fields_to_plot, title, filename='multi_plot', auto_open=False):
+def multi_plot(df, fields_to_plot, title, filename="multi_plot", auto_open=False):
     traces = []
     plot_titles = []
 
     for field in fields_to_plot:
-        traces.append(
-            go.Scatter(
-                y=df[field],
-                name=field
-            )
-        )
+        traces.append(go.Scatter(y=df[field], name=field))
 
         plot_titles.append(field)
 
@@ -184,24 +190,20 @@ def multi_plot(df, fields_to_plot, title, filename='multi_plot', auto_open=False
         fig.append_trace(trace, i // plot_per_row + 1, i % plot_per_row + 1)
         i += 1
 
-    fig['layout'].update(height=1000, width=1000,
-                         title=title if title is not None else "Placeholder",
-                         hovermode='closest')
+    fig["layout"].update(
+        height=1000,
+        width=1000,
+        title=title if title is not None else "Placeholder",
+        hovermode="closest",
+    )
 
     py.plot(fig, filename=handle_save(filename), auto_open=auto_open)
 
 
-def rudder_plot(df, filename='rudder_histogram'):
-    traces = [
-        go.Histogram(
-            x=df['rudder_angle']
-        )
-    ]
+def rudder_plot(df, filename="rudder_histogram"):
+    traces = [go.Histogram(x=df["rudder_angle"])]
 
-    layout = go.Layout(
-        title='Rudder angle distribution',
-        hovermode='closest'
-    )
+    layout = go.Layout(title="Rudder angle distribution", hovermode="closest")
 
     fig = go.Figure(data=traces, layout=layout)
 
@@ -209,23 +211,17 @@ def rudder_plot(df, filename='rudder_histogram'):
 
 
 def scatter_plot(data, axes, title=None):
-    trace = go.Scattergl(
-        x=data[0],
-        y=data[1],
-        mode='markers'
-    )
+    trace = go.Scattergl(x=data[0], y=data[1], mode="markers")
 
     layout = go.Layout(
         title=title,
-        hovermode='closest',
-        xaxis=dict(
-            title=axes[0]
-        ),
-        yaxis=dict(
-            title=axes[1]
-        )
+        hovermode="closest",
+        xaxis=dict(title=axes[0]),
+        yaxis=dict(title=axes[1]),
     )
 
-    py.plot(go.Figure(data=[trace], layout=layout),
-            filename=handle_save(title),
-            auto_open=False)
+    py.plot(
+        go.Figure(data=[trace], layout=layout),
+        filename=handle_save(title),
+        auto_open=False,
+    )
