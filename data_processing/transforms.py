@@ -10,6 +10,8 @@ from .training_set import TrainingSample
 
 LOG = logging.getLogger("Transforms")
 
+EPSILON = 1e-3
+
 
 class Denormalize:
     def __init__(self, mean: TrainingSample, std: TrainingSample):
@@ -32,8 +34,14 @@ class Denormalize:
             )
         )
 
-    def __call__(self, sample: TrainingSample):
+        # Catch noise-free data
+        if torch.min(self.std.inputs).item() < EPSILON:
+            self.std = TrainingSample(
+                torch.ones_like(self.std.inputs), torch.ones_like(self.std.outputs)
+            )
+            LOG.warning("Noise-free data detected, skip noise normalization")
 
+    def __call__(self, sample: TrainingSample):
         return TrainingSample(
             inputs=torch.mul(
                 torch.add(sample.inputs, self.mean.inputs.reshape(1, -1, 1)),
@@ -63,6 +71,13 @@ class Normalize:
         LOG.info(
             "Initializing Normalize transform with mean {} and std {}".format(mean, std)
         )
+
+        # Catch noise-free data
+        if torch.min(self.std.inputs).item() < EPSILON:
+            self.std = TrainingSample(
+                torch.ones_like(self.std.inputs), torch.ones_like(self.std.outputs)
+            )
+            LOG.warning("Noise-free data detected, skip noise normalization")
 
     def __call__(self, sample: TrainingSample):
         # Non batched data
