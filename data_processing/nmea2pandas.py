@@ -35,7 +35,10 @@ nmea_fields = {
 }
 
 
-def parse_nmea(filepath: Path, wind_bias=0):
+WIND_BIAS = 5.0
+
+
+def parse_nmea(filepath: Path, wind_bias=WIND_BIAS, *args):
     if not isinstance(filepath, Path):
         filepath = Path(filepath)
 

@@ -7,21 +7,26 @@ import logging
 import multiprocessing
 from itertools import repeat
 from pathlib import Path
+from typing import Any, Dict, Optional
+
+import pandas as pd
 
 from data_processing.csv2pandas import parse_csv
 from data_processing.json2pandas import parse_raw_json
 from data_processing.nmea2pandas import parse_nmea
 from data_processing.utils import save_json
 
-WIND_BIAS = 5.0
-
 LOG = logging.getLogger("DataConversion")
 
 
-def process_file(filepath: Path, args: argparse.Namespace) -> None:
+def process_file(
+    filepath: Path, args: argparse.Namespace, extra_data: Optional[Dict[str, Any]]
+) -> None:
     df = {".nmea": parse_nmea, ".csv": parse_csv, ".json": parse_raw_json}[
         filepath.suffix
-    ](filepath, WIND_BIAS)
+    ](
+        filepath, extra_data
+    )  # type: ignore
 
     save_json(df, Path(args.data_export_path) / Path(filepath.stem + ".json"))
     LOG.info(f"File {filepath.stem } processed")
@@ -35,14 +40,19 @@ def handle_directory(args: argparse.Namespace):
         return list(Path(args.data_ingestion_path).glob("**/*" + ext))
 
     filelist = get_file_list(".nmea") + get_file_list(".csv") + get_file_list(".json")
-    LOG.info(f"Found {len(filelist)} candidate files")
+    LOG.info(f"Found {len(filelist)} candidate files.")
 
     # Make the export directory
     Path(args.data_export_path).mkdir(parents=True, exist_ok=True)
 
+    # Get the optional lookup table
+    extra_data = None
+    if args.data_lookup_table != "":
+        extra_data = pd.read_json(Path(args.data_lookup_table).absolute())
+
     # Batch process all the files
     pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
-    pool.starmap_async(process_file, zip(filelist, repeat(args)))
+    pool.starmap(process_file, zip(filelist, repeat(args), repeat(extra_data)))
     pool.close()
     pool.join()
 
@@ -59,6 +69,13 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--data_export_path", action="store", help="Where to save the normalized data"
+    )
+
+    parser.add_argument(
+        "--data_lookup_table",
+        action="store",
+        help="Path to an optional extra file which adds some context to all the files.",
+        default="",
     )
 
     args = parser.parse_args()

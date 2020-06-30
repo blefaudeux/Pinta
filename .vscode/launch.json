@@ -57,7 +57,9 @@
                 "--data_ingestion_path",
                 "~/Downloads/test_data/",
                 "--data_export_path",
-                "/dev/null"
+                "~/test_data_normalized/",
+                "--data_lookup_table",
+                "~/Downloads/runsDict_ARGO_FoilStudy.json"
             ]
         },
         {
