@@ -12,9 +12,9 @@ LOG = logging.getLogger("Json2Pandas")
 
 # Normalize fields post-parsing, align with other inputs
 _PRESETS = {
-    "Upwind": {"wind_angle": 55.0, "wind_speed": 21},
-    "Reaching": {"wind_angle": 110.0, "wind_speed": 23},
-    "Downwind": {"wind_angle": 135.0, "wind_speed": 20},
+    "Upwind": {"wind_speed": 21},  # "wind_angle": 55.0,
+    "Reaching": {"wind_speed": 23},  # "wind_angle": 110.0,
+    "Downwind": {"wind_speed": 20},  # "wind_angle": 135.0,
 }
 
 
