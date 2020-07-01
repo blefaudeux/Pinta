@@ -10,8 +10,6 @@ import torch
 import torchvision
 from torch.utils.data import DataLoader, Dataset, random_split
 
-import settings
-
 TrainingSample_base = namedtuple("TrainingSample", ["inputs", "outputs"])
 
 
@@ -246,6 +244,8 @@ class TrainingSetBundle:
             )
 
         return (
-            DataLoader(training_set, collate_fn=collate, batch_size=8000,),
+            DataLoader(
+                training_set, collate_fn=collate, batch_size=8000, num_workers=2,
+            ),
             split_indices,
         )
