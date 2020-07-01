@@ -38,10 +38,7 @@ def run(args):
 
     # Data augmentation / preparation
     transforms: List[Callable] = [
-        Normalize(
-            mean.to(settings.device, settings.dtype),
-            std.to(settings.device, settings.dtype),
-        ),
+        Normalize(mean, std,),
         RandomFlip(dimension=params["inputs"].index("wind_angle_y"), odds=0.5),
         RandomFlip(dimension=params["inputs"].index("rudder_angle"), odds=0.5),
     ]
@@ -57,8 +54,6 @@ def run(args):
             params["val_batch_size"],
             shuffle=True,
             transforms=transforms,
-            dtype=settings.dtype,
-            device=settings.device,
         )
 
         dnn.fit(trainer, valider, settings=params, epochs=EPOCH)
@@ -66,15 +61,7 @@ def run(args):
 
     if args.evaluate or args.plot:
         tester, split_indices = training_bundle.get_sequential_dataloader(
-            params["seq_length"],
-            transforms=[
-                Normalize(
-                    mean.to(settings.device, settings.dtype),
-                    std.to(settings.device, settings.dtype),
-                )
-            ],
-            dtype=settings.dtype,
-            device=settings.device,
+            params["seq_length"], transforms=[Normalize(mean, std,)],
         )
 
     # Check the training

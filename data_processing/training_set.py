@@ -68,12 +68,8 @@ class TrainingSet(Dataset):
         """
         assert inputs.shape[0] == outputs.shape[0], "Dimensions mismatch"
 
-        self.inputs = torch.cat((self.inputs, inputs), 0).to(
-            device=settings.device, dtype=settings.dtype
-        )
-        self.outputs = torch.cat((self.inputs, inputs), 0).to(
-            device=settings.device, dtype=settings.dtype
-        )
+        self.inputs = torch.cat((self.inputs, inputs), 0)
+        self.outputs = torch.cat((self.inputs, inputs), 0)
 
     def __getitem__(self, index):
         return self.transform(
@@ -160,9 +156,7 @@ class TrainingSetBundle:
 
         return mean, std
 
-    def get_training_set(
-        self, seq_len: int, type: torch.dtype = torch.float32
-    ) -> Tuple[TrainingSet, List[int]]:
+    def get_training_set(self, seq_len: int) -> Tuple[TrainingSet, List[int]]:
         """
         Generate a single TrainingSet from a bundle
         """
@@ -177,8 +171,8 @@ class TrainingSetBundle:
             inputs.append(a)
             outputs.append(b)
 
-        tensor_input = torch.cat(inputs).to(device=settings.device, dtype=type)
-        tensor_output = torch.cat(outputs).to(device=settings.device, dtype=type)
+        tensor_input = torch.cat(inputs)
+        tensor_output = torch.cat(outputs)
 
         return (
             TrainingSet(tensor_input, tensor_output),
@@ -193,8 +187,6 @@ class TrainingSetBundle:
         val_batch_size: int,
         shuffle: bool,
         transforms: List[Callable],
-        device: torch.device = torch.device("cpu"),
-        dtype: torch.dtype = torch.float32,
     ) -> Tuple[DataLoader, DataLoader]:
         """
         Create two PyTorch DataLoaders out of this dataset, randomly splitting
@@ -202,7 +194,7 @@ class TrainingSetBundle:
         """
         # Create a consolidated dataset on the fly,
         # with the appropriate sequence cuts
-        training_set, _ = self.get_training_set(seq_len, type=dtype)
+        training_set, _ = self.get_training_set(seq_len)
         training_set.set_transforms(transforms)
 
         # Split the dataset in train/test instances
@@ -210,15 +202,10 @@ class TrainingSetBundle:
         test_len = len(training_set) - train_len
         trainer, tester = random_split(training_set, [train_len, test_len])
 
-        # Collate needs to enforce device and type somehow
         def collate(samples: List[TrainingSample]):
             return TrainingSample(
-                inputs=torch.stack([t.inputs for t in samples])
-                .squeeze()
-                .to(device, dtype),
-                outputs=torch.stack([t.outputs for t in samples])
-                .squeeze()
-                .to(device, dtype),
+                inputs=torch.stack([t.inputs for t in samples]).squeeze(),
+                outputs=torch.stack([t.outputs for t in samples]).squeeze(),
             )
 
         return (
@@ -228,6 +215,7 @@ class TrainingSetBundle:
                 batch_size=train_batch_size,
                 shuffle=shuffle,
                 drop_last=True,
+                num_workers=2,
             ),
             DataLoader(
                 tester,
@@ -235,15 +223,12 @@ class TrainingSetBundle:
                 batch_size=val_batch_size,
                 shuffle=shuffle,
                 drop_last=True,
+                num_workers=2,
             ),
         )
 
     def get_sequential_dataloader(
-        self,
-        seq_len: int,
-        transforms: List[Callable],
-        device: torch.device = torch.device("cpu"),
-        dtype: torch.dtype = torch.float32,
+        self, seq_len: int, transforms: List[Callable]
     ) -> Tuple[DataLoader, List[int]]:
         """
         Create two PyTorch DataLoaders out of this dataset, randomly splitting
@@ -251,18 +236,13 @@ class TrainingSetBundle:
         """
         # Create a consolidated dataset on the fly,
         # with the appropriate sequence cuts
-        training_set, split_indices = self.get_training_set(seq_len, type=dtype)
+        training_set, split_indices = self.get_training_set(seq_len)
         training_set.set_transforms(transforms)
 
-        # Collate needs to enforce device and type somehow
         def collate(samples: List[TrainingSample]):
             return TrainingSample(
-                inputs=torch.stack([t.inputs for t in samples])
-                .squeeze()
-                .to(device, dtype),
-                outputs=torch.stack([t.outputs for t in samples])
-                .squeeze()
-                .to(device, dtype),
+                inputs=torch.stack([t.inputs for t in samples]).squeeze(),
+                outputs=torch.stack([t.outputs for t in samples]).squeeze(),
             )
 
         return (

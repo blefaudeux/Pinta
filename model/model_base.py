@@ -14,6 +14,9 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
+from settings import device as _device
+from settings import dtype as _dtype
+
 
 class NN(nn.Module):
     """
@@ -47,6 +50,8 @@ class NN(nn.Module):
         losses = []
 
         for seq in dataloader:
+            seq = seq.to(_device, _dtype)
+
             out, _ = self(seq.inputs)
             loss = criterion(out, seq.outputs.view(out.size()[0], -1))
             losses.append(loss.item())
@@ -60,7 +65,9 @@ class NN(nn.Module):
         std: torch.Tensor = None,
     ):
         # Move the predictions to cpu() on the fly to save on GPU memory
-        predictions = [self(seq.inputs)[0].detach().cpu() for seq in dataloader]
+        predictions = [
+            self(seq.inputs.to(_device, _dtype))[0].detach().cpu() for seq in dataloader
+        ]
         predictions_tensor = torch.cat(predictions).squeeze()
 
         # De-normalize the output
@@ -101,6 +108,8 @@ class NN(nn.Module):
                 # Eval computation on the training data
                 def closure_train(data=train_batch):
                     optimizer.zero_grad()
+                    data = data.to(_device, _dtype)
+
                     out, _ = self(data.inputs)
                     loss = criterion(out.squeeze(), data.outputs.squeeze())
 
@@ -116,8 +125,10 @@ class NN(nn.Module):
 
                 # Loss on the validation data
                 def closure_validation(data=validation_batch):
+                    data = data.to(_device, _dtype)
                     pred, _ = self(data.inputs)
                     loss = criterion(pred.squeeze(), data.outputs.squeeze()).detach()
+
                     self.summary_writer.add_scalar("validation", loss.item(), i_log)
                     self.log.info(
                         " {}/{},{} Validation loss: {:.4f}".format(
