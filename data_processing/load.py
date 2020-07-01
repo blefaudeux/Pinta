@@ -20,7 +20,7 @@ def _angle_split(data):
     return data
 
 
-def load(filepath: Path, clean_data=True) -> DataFrame:
+def load(filepath: Path, clean_data: bool = False) -> DataFrame:
     LOG.info("Loading %s" % filepath)
     data_frame = load_json(filepath, skip_zeros=True)
 
@@ -31,7 +31,7 @@ def load(filepath: Path, clean_data=True) -> DataFrame:
     return data_frame
 
 
-def load_folder(folder_path: Path, clean_data=True) -> List[DataFrame]:
+def load_folder(folder_path: Path, clean_data: bool) -> List[DataFrame]:
     # Get the matching files
     def valid(filepath):
         return os.path.isfile(filepath) and os.path.splitext(filepath)[1] == ".json"

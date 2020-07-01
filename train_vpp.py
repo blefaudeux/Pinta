@@ -26,7 +26,7 @@ def run(args):
     dnn = model_factory(params, model_path=args.model_path)
 
     # Load the dataset
-    data_list = load_sets(load_folder(Path(args.data_path)), params)
+    data_list = load_sets(load_folder(Path(args.data_path), clean_data=False), params)
     training_bundle = TrainingSetBundle(data_list)
     mean, std = training_bundle.get_norm()
 

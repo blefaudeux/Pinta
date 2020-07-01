@@ -74,7 +74,7 @@ class NN(nn.Module):
         trainer: DataLoader,
         tester: DataLoader,
         settings: Dict[str, Any],
-        epochs=50,
+        epochs: int = 50,
     ):
         optimizer = optim.Adam(
             self.parameters(), lr=settings["learning_rate"], amsgrad=True
@@ -117,7 +117,7 @@ class NN(nn.Module):
                 # Loss on the validation data
                 def closure_validation(data=validation_batch):
                     pred, _ = self(data.inputs)
-                    loss = criterion(pred.squeeze(), data.outputs.squeeze())
+                    loss = criterion(pred.squeeze(), data.outputs.squeeze()).detach()
                     self.summary_writer.add_scalar("validation", loss.item(), i_log)
                     self.log.info(
                         " {}/{},{} Validation loss: {:.4f}".format(
