@@ -180,7 +180,7 @@ class NN(nn.Module):
     def load(self, filename):
         try:
             with open(filename, "rb") as f:
-                self.load_state_dict(torch.load(f))
+                self.load_state_dict(torch.load(f, map_location=_device))
                 self.log.info("---\nNetwork {} loaded".format(filename))
                 self.log.info(self)
                 return True

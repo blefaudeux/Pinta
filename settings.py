@@ -29,7 +29,7 @@ class ModelType(str, Enum):
 _DEFAULTS = {
     "inputs": ["wind_speed", "wind_angle_x", "wind_angle_y", "rudder_angle"],
     "outputs": ["boat_speed"],
-    "model_type": ModelType.DILATED_CONV,
+    "model_type": ModelType.RNN,
     "hidden_size": 128,
     "seq_length": 27,
     "conv_width": [3, 3, 3],
@@ -37,7 +37,7 @@ _DEFAULTS = {
     "train_batch_size": 22000,
     "val_batch_size": 1000,
     "epoch": 2,
-    "learning_rate": 1e-2,
+    "learning_rate": 1e-1,
     "batch_norm_momentum": 0.1,
     "mlp_inner_layers": 2,  # MLP Specific
     "rnn_gru_layers": 2,  # RNN Specific

@@ -77,18 +77,11 @@ def run(args):
 
         # - de-whiten the data
         def denormalize(data: torch.Tensor):
-            return torch.add(
-                torch.mul(data, std.to(settings.device, settings.dtype).outputs),
-                mean.to(settings.device, settings.dtype).outputs,
-            )
+            return torch.add(torch.mul(data, std.outputs), mean.outputs,)
 
         # - prediction: go through the net, split the output sequence to re-align,
         prediction = (
-            dnn.predict(
-                tester,
-                mean=mean.to(settings.device, settings.dtype).outputs,
-                std=std.to(settings.device, settings.dtype).outputs,
-            )
+            dnn.predict(tester, mean=mean.outputs, std=std.outputs,)
             .detach()
             .cpu()
             .numpy()
