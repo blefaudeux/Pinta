@@ -26,6 +26,9 @@ class TrainingSample(TrainingSample_base):
             inputs=self.inputs.to(device, dtype), outputs=self.outputs.to(device, dtype)
         )
 
+    def __str__(self):
+        return f"inputs: {self.inputs.cpu().tolist()}\noutputs: {self.outputs.cpu().tolist()}"
+
 
 class TrainingSet(Dataset):
     """

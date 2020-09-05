@@ -29,14 +29,14 @@ class ModelType(str, Enum):
 _DEFAULTS = {
     "inputs": ["wind_speed", "wind_angle_x", "wind_angle_y", "rudder_angle"],
     "outputs": ["boat_speed"],
-    "model_type": ModelType.RNN,
+    "model_type": ModelType.MLP,
     "hidden_size": 128,
     "seq_length": 27,
     "conv_width": [3, 3, 3],
     "training_ratio": 0.9,
-    "train_batch_size": 22000,
+    "train_batch_size": 5000,
     "val_batch_size": 1000,
-    "epoch": 2,
+    "epoch": 30,
     "learning_rate": 1e-1,
     "batch_norm_momentum": 0.1,
     "mlp_inner_layers": 2,  # MLP Specific

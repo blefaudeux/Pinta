@@ -29,7 +29,7 @@ class Denormalize:
         self.std = std
 
         LOG.info(
-            "Initializing De-Normalize transform with mean {} and std {}".format(
+            "Initializing De-Normalize transform with mean: {}\nand std {}".format(
                 mean, std
             )
         )
