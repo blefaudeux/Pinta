@@ -91,7 +91,9 @@ class NN(nn.Module):
         scheduler: Union[
             torch.optim.lr_scheduler.ReduceLROnPlateau,
             torch.optim.lr_scheduler.CosineAnnealingLR,
-        ] = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer=optimizer) if settings[
+        ] = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer=optimizer, patience=2
+        ) if settings[
             "scheduler"
         ] == Scheduler.REDUCE_PLATEAU else torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer=optimizer, T_max=epochs, eta_min=1e-6, last_epoch=-1
@@ -166,6 +168,10 @@ class NN(nn.Module):
                 self.summary_writer.add_scalar(
                     "Samples_per_sec", samples_per_sec, i_log
                 )
+                self.summary_writer.add_scalar(
+                    "LR", optimizer.param_groups[0]["lr"], i_log
+                )
+
                 self.log.info(
                     " {}/{},{} {:.1f} samples/sec \n".format(
                         i_epoch, epochs, i_batch, samples_per_sec
@@ -175,7 +181,7 @@ class NN(nn.Module):
                 i_log += 1
 
             # Adjust learning rate if needed
-            scheduler.step(validation_loss)
+            scheduler.step(metrics=validation_loss, epoch=i_epoch)
 
             # Display the layer weights
             weights = self.get_layer_weights()

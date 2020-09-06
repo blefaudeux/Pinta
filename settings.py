@@ -41,14 +41,14 @@ _DEFAULTS = {
     "training_ratio": 0.9,
     "train_batch_size": 10000,
     "val_batch_size": 1000,
-    "epoch": 30,
-    "learning_rate": 1e-3,
+    "epoch": 100,
+    "learning_rate": 1e-2,
     "batch_norm_momentum": 0.1,
     "mlp_inner_layers": 2,  # MLP Specific
     "rnn_gru_layers": 2,  # RNN Specific
     "conv_dilated_dropout": 0.25,  # Dilated conv specific
     "log": "pinta",
-    "scheduler": Scheduler.COSINE,
+    "scheduler": Scheduler.REDUCE_PLATEAU,
 }
 
 assert isinstance(_DEFAULTS["model_type"], ModelType), "Unkonwn model type"
@@ -69,7 +69,7 @@ def get_name(params: Dict[str, Any] = _DEFAULTS):
         + str(params["train_batch_size"])
         + "_lr_"
         + str(params["learning_rate"])
-        + "_ep_ "
+        + "_ep_"
         + str(params["epoch"])
         + "_bnm_"
         + str(params["batch_norm_momentum"])
