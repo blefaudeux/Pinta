@@ -22,6 +22,11 @@ class ModelType(str, Enum):
     RNN = "rnn"
 
 
+class Scheduler(str, Enum):
+    COSINE = "cos"
+    REDUCE_PLATEAU = "reduce_plateau"
+
+
 # dilated conv:
 # sequences: 27,81,243
 # filters [3, x3/4/5]
@@ -34,15 +39,16 @@ _DEFAULTS = {
     "seq_length": 27,
     "conv_width": [3, 3, 3],
     "training_ratio": 0.9,
-    "train_batch_size": 5000,
+    "train_batch_size": 10000,
     "val_batch_size": 1000,
     "epoch": 30,
-    "learning_rate": 1e-1,
+    "learning_rate": 1e-3,
     "batch_norm_momentum": 0.1,
     "mlp_inner_layers": 2,  # MLP Specific
     "rnn_gru_layers": 2,  # RNN Specific
     "conv_dilated_dropout": 0.25,  # Dilated conv specific
     "log": "pinta",
+    "scheduler": Scheduler.COSINE,
 }
 
 assert isinstance(_DEFAULTS["model_type"], ModelType), "Unkonwn model type"
