@@ -74,7 +74,7 @@ def model_factory(params: Dict[str, Any], model_path: str) -> NN:
         )
 
     if dnn is None:
-        logging.error(f"Model setting {params["model_type"]} is not supported")
+        logging.error("Model setting {} is not supported".format(params["model_type"]))
         raise NotImplementedError
 
     dnn.to(settings.device)
