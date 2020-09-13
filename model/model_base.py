@@ -6,7 +6,7 @@ Implement different NNs which best describe the behaviour of the system
 import logging
 import time
 from itertools import cycle
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Union
 
 import torch
 import torch.nn as nn
@@ -16,6 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from settings import device as _device
 from settings import dtype as _dtype
+from settings import Scheduler
 
 
 class NN(nn.Module):
@@ -86,7 +87,18 @@ class NN(nn.Module):
         optimizer = optim.Adam(
             self.parameters(), lr=settings["learning_rate"], amsgrad=True
         )
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
+
+        scheduler: Union[
+            torch.optim.lr_scheduler.ReduceLROnPlateau,
+            torch.optim.lr_scheduler.CosineAnnealingLR,
+        ] = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer=optimizer, patience=2
+        ) if settings[
+            "scheduler"
+        ] == Scheduler.REDUCE_PLATEAU else torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer=optimizer, T_max=epochs, eta_min=1e-6, last_epoch=-1
+        )
+
         criterion = nn.MSELoss()
 
         if len(tester) < len(trainer):
@@ -97,6 +109,11 @@ class NN(nn.Module):
         for i_epoch in range(epochs):
 
             self.log.info("***** Epoch %d", i_epoch)
+            self.log.info(
+                " {}/{} LR: {:.4f}".format(
+                    i_epoch, epochs, optimizer.param_groups[0]["lr"]
+                )
+            )
 
             validation_loss = torch.zeros(1)
 
@@ -151,6 +168,10 @@ class NN(nn.Module):
                 self.summary_writer.add_scalar(
                     "Samples_per_sec", samples_per_sec, i_log
                 )
+                self.summary_writer.add_scalar(
+                    "LR", optimizer.param_groups[0]["lr"], i_log
+                )
+
                 self.log.info(
                     " {}/{},{} {:.1f} samples/sec \n".format(
                         i_epoch, epochs, i_batch, samples_per_sec
@@ -160,7 +181,7 @@ class NN(nn.Module):
                 i_log += 1
 
             # Adjust learning rate if needed
-            scheduler.step(validation_loss)
+            scheduler.step(metrics=validation_loss, epoch=i_epoch)
 
             # Display the layer weights
             weights = self.get_layer_weights()
