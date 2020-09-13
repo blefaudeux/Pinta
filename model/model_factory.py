@@ -8,6 +8,7 @@ from model.model_dilated_conv import TemporalModel
 from model.model_mlp import Mlp
 from model.model_rnn import ConvRNN
 from settings import ModelType
+import logging
 
 
 def model_factory(params: Dict[str, Any], model_path: str) -> NN:
@@ -25,6 +26,8 @@ def model_factory(params: Dict[str, Any], model_path: str) -> NN:
     log_directory = "logs/" + settings.get_name() + "_" + str(datetime.now())
 
     assert isinstance(params["model_type"], ModelType), "Unkonwn model type"
+
+    dnn = None
 
     if params["model_type"] == ModelType.CONV:
         INPUT_SIZE = [len(params["inputs"]), params["seq_length"]]
@@ -69,6 +72,10 @@ def model_factory(params: Dict[str, Any], model_path: str) -> NN:
             output_size=len(params["outputs"]),
             filename=model_path,
         )
+
+    if dnn is None:
+        logging.error(f"Model setting {params["model_type"]} is not supported")
+        raise NotImplementedError
 
     dnn.to(settings.device)
     return dnn
