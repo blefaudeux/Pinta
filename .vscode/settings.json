@@ -6,7 +6,6 @@
     "python.testing.nosetestsEnabled": false,
     "python.formatting.provider": "black",
     "editor.formatOnSave": true,
-    "python.pythonPath": "/usr/bin/python3",
     "workbench.settings.useSplitJSON": true,
     "editor.multiCursorModifier": "ctrlCmd",
     "python.linting.pylintEnabled": true,
