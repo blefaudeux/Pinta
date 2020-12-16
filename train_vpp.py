@@ -24,6 +24,9 @@ def run(args):
     log = logging.getLogger(params["log"])
 
     EPOCH = params["epoch"]
+    if not args.model_path:
+        # Generate a default name which describes the settings
+        args.model_path = "trained/" + settings.get_name(params) + ".pt"
     dnn = model_factory(params, model_path=args.model_path)
 
     # Load the dataset
@@ -35,7 +38,10 @@ def run(args):
 
     # Data augmentation / preparation
     transforms: List[Callable] = [
-        Normalize(mean, std,),
+        Normalize(
+            mean,
+            std,
+        ),
         RandomFlip(dimension=params["inputs"].index("wind_angle_y"), odds=0.5),
         RandomFlip(dimension=params["inputs"].index("rudder_angle"), odds=0.5),
     ]
@@ -58,7 +64,13 @@ def run(args):
 
     if args.evaluate or args.plot:
         tester, split_indices = training_bundle.get_sequential_dataloader(
-            params["seq_length"], transforms=[Normalize(mean, std,)],
+            params["seq_length"],
+            transforms=[
+                Normalize(
+                    mean,
+                    std,
+                )
+            ],
         )
 
     # Check the training
@@ -74,10 +86,22 @@ def run(args):
 
         # - de-whiten the data
         def denormalize(data: torch.Tensor):
-            return torch.add(torch.mul(data, std.outputs), mean.outputs,)
+            return torch.add(
+                torch.mul(data, std.outputs),
+                mean.outputs,
+            )
 
         # - prediction: go through the net, split the output sequence to re-align,
-        prediction = dnn.predict(tester, mean=mean.outputs, std=std.outputs,).detach().cpu().numpy()
+        prediction = (
+            dnn.predict(
+                tester,
+                mean=mean.outputs,
+                std=std.outputs,
+            )
+            .detach()
+            .cpu()
+            .numpy()
+        )
 
         reference = torch.cat([denormalize(batch.outputs) for batch in tester]).detach().cpu().numpy()
 
@@ -102,23 +126,35 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("Generate VPP")
 
     parser.add_argument(
-        "--data_path", action="store", help="path to the training data", default="data",
+        "--data_path",
+        action="store",
+        help="path to the training data",
+        default="data",
     )
 
     parser.add_argument(
-        "--model_path", action="store", help="path to a saved model", default="trained/" + settings.get_name() + ".pt",
+        "--model_path",
+        action="store",
+        help="path to a saved model",
+        default=None,
     )
 
     parser.add_argument(
-        "--evaluate", action="store_true", help="evaluate an existing model, compute error metrics",
+        "--evaluate",
+        action="store_true",
+        help="evaluate an existing model, compute error metrics",
     )
 
     parser.add_argument(
-        "--plot", action="store_true", help="generate a plot to visually compare the ground truth and predictions",
+        "--plot",
+        action="store_true",
+        help="generate a plot to visually compare the ground truth and predictions",
     )
 
     parser.add_argument(
-        "--amp", action="store_true", help="enable Pytorch Automatic Mixed Precision",
+        "--amp",
+        action="store_true",
+        help="enable Pytorch Automatic Mixed Precision",
     )
 
     args = parser.parse_args()

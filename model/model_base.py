@@ -12,19 +12,15 @@ from typing import Any, Dict, Union
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from settings import Scheduler
+from settings import Scheduler, _amp_available
 from settings import device as _device
 from settings import dtype as _dtype
 from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-try:
+if _amp_available:
     from torch.cuda.amp import GradScaler, autocast
-
-    _amp_available = True
-except ImportError:
-    _amp_available = False
 
 
 class NN(nn.Module):
