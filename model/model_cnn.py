@@ -15,7 +15,7 @@ class Conv(NN):
     def __init__(
         self,
         logdir: str,
-        input_shape: List[int],
+        input_size: List[int],
         hidden_size: int,
         kernel_sizes: List[int],
         output_size: int = 1,
@@ -34,16 +34,14 @@ class Conv(NN):
         # with the groups flag
 
         self.conv = nn.Sequential(
-            nn.Conv1d(input_shape[0], hidden_size, kernel_size=kernel_sizes[0]),
+            nn.Conv1d(input_size[0], hidden_size, kernel_size=kernel_sizes[0]),
             nn.LeakyReLU(),
             nn.Conv1d(hidden_size, hidden_size, kernel_size=kernel_sizes[1]),
             nn.LeakyReLU(),
         )
 
-        out_conv_size = self._get_conv_out(input_shape)
-        self.log.info(
-            "Feature vector size out of the convolution is {}".format(out_conv_size)
-        )
+        out_conv_size = self._get_conv_out(input_size)
+        self.log.info("Feature vector size out of the convolution is {}".format(out_conv_size))
 
         # Ends with two fully connected layers
         self.fc = nn.Sequential(
@@ -62,9 +60,7 @@ class Conv(NN):
         except RuntimeError:
             pass
 
-        self.log.warning(
-            "Could not load the specified net," " needs to be computed from scratch"
-        )
+        self.log.warning("Could not load the specified net," " needs to be computed from scratch")
 
     def get_layer_weights(self):
         return [self.conv[0].weight, self.conv[2].weight]

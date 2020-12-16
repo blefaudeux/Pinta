@@ -110,7 +110,7 @@ class NN(nn.Module):
         scaler = GradScaler() if use_amp else None
 
         # Now to the actual training
-        self.log.info("Training the network...\n")
+        self.log.info("\nTraining the model... AMP: %s\n" % "enabled" if use_amp else "disabled")
         i_log = 0
         for i_epoch in range(epochs):
 
