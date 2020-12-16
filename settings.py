@@ -41,17 +41,17 @@ class Scheduler(str, Enum):
 _DEFAULTS = {
     "inputs": ["wind_speed", "wind_angle_x", "wind_angle_y", "rudder_angle"],
     "outputs": ["boat_speed"],
-    "model_type": ModelType.RNN,
-    "hidden_size": 128,
-    "seq_length": 27,
-    "conv_width": [3, 3, 3],
+    "model_type": ModelType.MLP,
+    "hidden_size": 256,
+    "seq_length": 81,
+    "conv_width": [3, 3, 3, 3],
     "training_ratio": 0.9,
     "train_batch_size": 10000,
     "val_batch_size": 1000,
     "epoch": 30,
     "learning_rate": 1e-2,
     "batch_norm_momentum": 0.1,
-    "mlp_inner_layers": 2,  # MLP Specific
+    "mlp_inner_layers": 3,  # MLP Specific
     "rnn_gru_layers": 2,  # RNN Specific
     "conv_dilated_dropout": 0.25,  # Dilated conv specific
     "log": "pinta",
