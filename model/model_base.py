@@ -12,16 +12,15 @@ from typing import Any, Dict, Union
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from settings import Scheduler
+from settings import device as _device
+from settings import dtype as _dtype
 from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from settings import Scheduler
-from settings import device as _device
-from settings import dtype as _dtype
-
 try:
-    from torch.cuda.amp import autocast, GradScaler
+    from torch.cuda.amp import GradScaler, autocast
 
     _amp_available = True
 except ImportError:
@@ -69,7 +68,10 @@ class NN(nn.Module):
         return losses
 
     def predict(
-        self, dataloader: DataLoader, mean: torch.Tensor = None, std: torch.Tensor = None,
+        self,
+        dataloader: DataLoader,
+        mean: torch.Tensor = None,
+        std: torch.Tensor = None,
     ):
         # Move the predictions to cpu() on the fly to save on GPU memory
         predictions = [self(seq.inputs.to(_device, _dtype))[0].detach().cpu() for seq in dataloader]
@@ -82,15 +84,19 @@ class NN(nn.Module):
         return predictions_tensor
 
     def fit(
-        self, trainer: DataLoader, tester: DataLoader, settings: Dict[str, Any], epochs: int = 50,
+        self,
+        trainer: DataLoader,
+        tester: DataLoader,
+        settings: Dict[str, Any],
+        epochs: int = 50,
     ):
         # Setup the training loop
         optimizer = optim.Adam(self.parameters(), lr=settings["learning_rate"], amsgrad=True)
 
-        scheduler: Union[ReduceLROnPlateau, CosineAnnealingLR] = ReduceLROnPlateau(
-            optimizer=optimizer, patience=2
-        ) if settings["scheduler"] == Scheduler.REDUCE_PLATEAU else CosineAnnealingLR(
-            optimizer=optimizer, T_max=epochs, eta_min=1e-6, last_epoch=-1
+        scheduler: Union[ReduceLROnPlateau, CosineAnnealingLR] = (
+            ReduceLROnPlateau(optimizer=optimizer, patience=2)
+            if settings["scheduler"] == Scheduler.REDUCE_PLATEAU
+            else CosineAnnealingLR(optimizer=optimizer, T_max=epochs, eta_min=1e-6, last_epoch=-1)
         )
 
         criterion = nn.MSELoss()
@@ -111,7 +117,7 @@ class NN(nn.Module):
             self.log.info("***** Epoch %d", i_epoch)
             self.log.info(" {}/{} LR: {:.4f}".format(i_epoch, epochs, optimizer.param_groups[0]["lr"]))
 
-            validation_loss = torch.zeros(1)
+            validation_loss = torch.zeros(1).to(_device)
 
             for i_batch, (train_batch, validation_batch) in enumerate(zip(trainer, tester)):
                 batch_start = time.time()
@@ -166,7 +172,7 @@ class NN(nn.Module):
 
             # Adjust learning rate if needed
             if isinstance(scheduler, ReduceLROnPlateau):
-                scheduler.step(metrics=validation_loss, epoch=i_epoch)
+                scheduler.step(metrics=validation_loss)
 
             # Display the layer weights
             weights = self.get_layer_weights()
