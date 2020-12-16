@@ -34,7 +34,7 @@ class Scheduler(str, Enum):
 _DEFAULTS = {
     "inputs": ["wind_speed", "wind_angle_x", "wind_angle_y", "rudder_angle"],
     "outputs": ["boat_speed"],
-    "model_type": ModelType.RNN,
+    "model_type": ModelType.DILATED_CONV,
     "hidden_size": 128,
     "seq_length": 27,
     "conv_width": [3, 3, 3],
