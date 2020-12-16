@@ -19,6 +19,7 @@ from model.model_factory import model_factory
 def run(args):
     # Basic setup: get config and logger
     params = settings.get_default_params()
+    params["amp"] = args.amp
     logging.basicConfig(level=logging.INFO)
     log = logging.getLogger(params["log"])
 
@@ -30,11 +31,7 @@ def run(args):
     training_bundle = TrainingSetBundle(data_list)
     mean, std = training_bundle.get_norm()
 
-    log.info(
-        "Loaded {} samples. Batch is {}".format(
-            len(training_bundle), params["train_batch_size"]
-        )
-    )
+    log.info("Loaded {} samples. Batch is {}".format(len(training_bundle), params["train_batch_size"]))
 
     # Data augmentation / preparation
     transforms: List[Callable] = [
@@ -80,19 +77,9 @@ def run(args):
             return torch.add(torch.mul(data, std.outputs), mean.outputs,)
 
         # - prediction: go through the net, split the output sequence to re-align,
-        prediction = (
-            dnn.predict(tester, mean=mean.outputs, std=std.outputs,)
-            .detach()
-            .cpu()
-            .numpy()
-        )
+        prediction = dnn.predict(tester, mean=mean.outputs, std=std.outputs,).detach().cpu().numpy()
 
-        reference = (
-            torch.cat([denormalize(batch.outputs) for batch in tester])
-            .detach()
-            .cpu()
-            .numpy()
-        )
+        reference = torch.cat([denormalize(batch.outputs) for batch in tester]).detach().cpu().numpy()
 
         # - split back to restore the individual datasets
         if len(split_indices) > 1:
@@ -104,8 +91,7 @@ def run(args):
 
         plt.parallel_plot(
             reference + prediction,
-            [f"Ground truth {i}" for i in range(len(reference))]
-            + [f"Conv {i}" for i in range(len(prediction))],
+            [f"Ground truth {i}" for i in range(len(reference))] + [f"Conv {i}" for i in range(len(prediction))],
             "Network predictions vs ground truth",
         )
 
@@ -120,22 +106,19 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--model_path",
-        action="store",
-        help="path to a saved model",
-        default="trained/" + settings.get_name() + ".pt",
+        "--model_path", action="store", help="path to a saved model", default="trained/" + settings.get_name() + ".pt",
     )
 
     parser.add_argument(
-        "--evaluate",
-        action="store_true",
-        help="evaluate an existing model, compute error metrics",
+        "--evaluate", action="store_true", help="evaluate an existing model, compute error metrics",
     )
 
     parser.add_argument(
-        "--plot",
-        action="store_true",
-        help="generate a plot to visually compare the ground truth and predictions",
+        "--plot", action="store_true", help="generate a plot to visually compare the ground truth and predictions",
+    )
+
+    parser.add_argument(
+        "--amp", action="store_true", help="enable Pytorch Automatic Mixed Precision",
     )
 
     args = parser.parse_args()
