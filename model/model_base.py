@@ -5,18 +5,27 @@ Implement different NNs which best describe the behaviour of the system
 
 import logging
 import time
+from contextlib import suppress
 from itertools import cycle
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Union
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
+from settings import Scheduler
 from settings import device as _device
 from settings import dtype as _dtype
-from settings import Scheduler
+
+try:
+    from torch.cuda.amp import autocast, GradScaler
+
+    _amp_available = True
+except ImportError:
+    _amp_available = False
 
 
 class NN(nn.Module):
@@ -60,15 +69,10 @@ class NN(nn.Module):
         return losses
 
     def predict(
-        self,
-        dataloader: DataLoader,
-        mean: torch.Tensor = None,
-        std: torch.Tensor = None,
+        self, dataloader: DataLoader, mean: torch.Tensor = None, std: torch.Tensor = None,
     ):
         # Move the predictions to cpu() on the fly to save on GPU memory
-        predictions = [
-            self(seq.inputs.to(_device, _dtype))[0].detach().cpu() for seq in dataloader
-        ]
+        predictions = [self(seq.inputs.to(_device, _dtype))[0].detach().cpu() for seq in dataloader]
         predictions_tensor = torch.cat(predictions).squeeze()
 
         # De-normalize the output
@@ -78,24 +82,14 @@ class NN(nn.Module):
         return predictions_tensor
 
     def fit(
-        self,
-        trainer: DataLoader,
-        tester: DataLoader,
-        settings: Dict[str, Any],
-        epochs: int = 50,
+        self, trainer: DataLoader, tester: DataLoader, settings: Dict[str, Any], epochs: int = 50,
     ):
-        optimizer = optim.Adam(
-            self.parameters(), lr=settings["learning_rate"], amsgrad=True
-        )
+        # Setup the training loop
+        optimizer = optim.Adam(self.parameters(), lr=settings["learning_rate"], amsgrad=True)
 
-        scheduler: Union[
-            torch.optim.lr_scheduler.ReduceLROnPlateau,
-            torch.optim.lr_scheduler.CosineAnnealingLR,
-        ] = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        scheduler: Union[ReduceLROnPlateau, CosineAnnealingLR] = ReduceLROnPlateau(
             optimizer=optimizer, patience=2
-        ) if settings[
-            "scheduler"
-        ] == Scheduler.REDUCE_PLATEAU else torch.optim.lr_scheduler.CosineAnnealingLR(
+        ) if settings["scheduler"] == Scheduler.REDUCE_PLATEAU else CosineAnnealingLR(
             optimizer=optimizer, T_max=epochs, eta_min=1e-6, last_epoch=-1
         )
 
@@ -104,41 +98,46 @@ class NN(nn.Module):
         if len(tester) < len(trainer):
             tester = cycle(tester)  # type: ignore
 
+        # If AMP is enabled, create an autocast context. Noop if normal full precision training
+        use_amp = settings["amp"] and _device.type == torch.device("cuda").type and _amp_available
+        context = autocast() if use_amp else suppress()
+        scaler = GradScaler() if use_amp else None
+
+        # Now to the actual training
         self.log.info("Training the network...\n")
         i_log = 0
         for i_epoch in range(epochs):
 
             self.log.info("***** Epoch %d", i_epoch)
-            self.log.info(
-                " {}/{} LR: {:.4f}".format(
-                    i_epoch, epochs, optimizer.param_groups[0]["lr"]
-                )
-            )
+            self.log.info(" {}/{} LR: {:.4f}".format(i_epoch, epochs, optimizer.param_groups[0]["lr"]))
 
             validation_loss = torch.zeros(1)
 
-            for i_batch, (train_batch, validation_batch) in enumerate(
-                zip(trainer, tester)
-            ):
+            for i_batch, (train_batch, validation_batch) in enumerate(zip(trainer, tester)):
                 batch_start = time.time()
 
                 # Eval computation on the training data
-                def closure_train(data=train_batch):
-                    optimizer.zero_grad()
-                    data = data.to(_device, _dtype)
+                optimizer.zero_grad()
+                train_batch = train_batch.to(_device, _dtype)
 
-                    out, _ = self(data.inputs)
-                    loss = criterion(out.squeeze(), data.outputs.squeeze())
+                # FW pass, optionally with mixed precision
+                with context:
+                    out, _ = self(train_batch.inputs)
+                    loss = criterion(out.squeeze(), train_batch.outputs.squeeze())
 
-                    self.log.info(
-                        " {}/{},{} Train loss: {:.4f}".format(
-                            i_epoch, epochs, i_batch, loss.item()
-                        )
-                    )
-                    self.summary_writer.add_scalar("train", loss.item(), i_log)
-                    # Add to the gradient
+                if scaler is not None:
+                    # AMP training path
+                    # The scaler will make sure that the fp16 grads don't underflow
+                    scaler.scale(loss).backward()
+                    scaler.step(optimizer)
+                    scaler.update()
+                else:
+                    # Vanilla, backward will populate the gradients and we just step()
                     loss.backward()
-                    return loss
+                    optimizer.step()
+
+                self.log.info(" {}/{},{} Train loss: {:.4f}".format(i_epoch, epochs, i_batch, loss.item()))
+                self.summary_writer.add_scalar("train", loss.item(), i_log)
 
                 # Loss on the validation data
                 def closure_validation(data=validation_batch):
@@ -147,41 +146,27 @@ class NN(nn.Module):
                     loss = criterion(pred.squeeze(), data.outputs.squeeze()).detach()
 
                     self.summary_writer.add_scalar("validation", loss.item(), i_log)
-                    self.log.info(
-                        " {}/{},{} Validation loss: {:.4f}".format(
-                            i_epoch, epochs, i_batch, loss.item()
-                        )
-                    )
+                    self.log.info(" {}/{},{} Validation loss: {:.4f}".format(i_epoch, epochs, i_batch, loss.item()))
                     return loss
 
-                optimizer.step(closure_train)
                 validation_loss += closure_validation()
 
                 # Time some operations
                 batch_stop = time.time()
                 elapsed = batch_stop - batch_start
 
-                samples_per_sec = (
-                    train_batch.inputs.shape[0] + validation_batch.inputs.shape[0]
-                ) / elapsed
+                samples_per_sec = (train_batch.inputs.shape[0] + validation_batch.inputs.shape[0]) / elapsed
 
-                self.summary_writer.add_scalar(
-                    "Samples_per_sec", samples_per_sec, i_log
-                )
-                self.summary_writer.add_scalar(
-                    "LR", optimizer.param_groups[0]["lr"], i_log
-                )
+                self.summary_writer.add_scalar("Samples_per_sec", samples_per_sec, i_log)
+                self.summary_writer.add_scalar("LR", optimizer.param_groups[0]["lr"], i_log)
 
-                self.log.info(
-                    " {}/{},{} {:.1f} samples/sec \n".format(
-                        i_epoch, epochs, i_batch, samples_per_sec
-                    )
-                )
+                self.log.info(" {}/{},{} {:.1f} samples/sec \n".format(i_epoch, epochs, i_batch, samples_per_sec))
 
                 i_log += 1
 
             # Adjust learning rate if needed
-            scheduler.step(metrics=validation_loss, epoch=i_epoch)
+            if isinstance(scheduler, ReduceLROnPlateau):
+                scheduler.step(metrics=validation_loss, epoch=i_epoch)
 
             # Display the layer weights
             weights = self.get_layer_weights()
