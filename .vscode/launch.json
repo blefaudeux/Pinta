@@ -6,7 +6,7 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
-            "pythonPath": "${command:python.interpreterPath}",
+            "python": "${command:python.interpreterPath}",
             "program": "${file}",
             "cwd": "${workspaceRoot}",
         },
@@ -15,7 +15,7 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
-            "pythonPath": "${command:python.interpreterPath}",
+            "python": "${command:python.interpreterPath}",
             "program": "${workspaceRoot}/train_vpp.py",
             "cwd": "${workspaceRoot}",
             "args": [
@@ -28,7 +28,7 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
-            "pythonPath": "${command:python.interpreterPath}",
+            "python": "${command:python.interpreterPath}",
             "program": "${workspaceRoot}/test_synthetics.py",
             "cwd": "${workspaceRoot}",
         },
@@ -37,7 +37,7 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
-            "pythonPath": "${command:python.interpreterPath}",
+            "python": "${command:python.interpreterPath}",
             "program": "${workspaceRoot}/convert_data.py",
             "cwd": "${workspaceRoot}",
             "args": [
@@ -50,7 +50,7 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
-            "pythonPath": "${command:python.interpreterPath}",
+            "python": "${command:python.interpreterPath}",
             "program": "${workspaceRoot}/convert_data.py",
             "cwd": "${workspaceRoot}",
             "args": [
@@ -67,7 +67,7 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
-            "pythonPath": "${command:python.interpreterPath}",
+            "python": "${command:python.interpreterPath}",
             "program": "${workspaceRoot}/convert_data.py",
             "cwd": "${workspaceRoot}",
             "args": [
