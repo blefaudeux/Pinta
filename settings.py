@@ -4,6 +4,13 @@ from typing import Any, Dict
 
 import torch
 
+try:
+    from torch.cuda.amp import autocast
+
+    _amp_available = True
+except ImportError:
+    _amp_available = False
+
 # Select our target at runtime
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 dtype = torch.float32
@@ -34,21 +41,22 @@ class Scheduler(str, Enum):
 _DEFAULTS = {
     "inputs": ["wind_speed", "wind_angle_x", "wind_angle_y", "rudder_angle"],
     "outputs": ["boat_speed"],
-    "model_type": ModelType.DILATED_CONV,
-    "hidden_size": 128,
-    "seq_length": 27,
-    "conv_width": [3, 3, 3],
+    "model_type": ModelType.MLP,
+    "hidden_size": 256,
+    "seq_length": 81,
+    "conv_width": [3, 3, 3, 3],
     "training_ratio": 0.9,
     "train_batch_size": 10000,
     "val_batch_size": 1000,
-    "epoch": 100,
+    "epoch": 30,
     "learning_rate": 1e-2,
     "batch_norm_momentum": 0.1,
-    "mlp_inner_layers": 2,  # MLP Specific
+    "mlp_inner_layers": 3,  # MLP Specific
     "rnn_gru_layers": 2,  # RNN Specific
     "conv_dilated_dropout": 0.25,  # Dilated conv specific
     "log": "pinta",
     "scheduler": Scheduler.REDUCE_PLATEAU,
+    "amp": False,
 }
 
 assert isinstance(_DEFAULTS["model_type"], ModelType), "Unkonwn model type"
@@ -59,6 +67,8 @@ def get_default_params():
 
 
 def get_name(params: Dict[str, Any] = _DEFAULTS):
+    _amp = _amp_available and device.type == torch.device("cuda").type and params["amp"]
+
     return (
         params["model_type"]
         + "_seq_"
@@ -73,6 +83,8 @@ def get_name(params: Dict[str, Any] = _DEFAULTS):
         + str(params["epoch"])
         + "_bnm_"
         + str(params["batch_norm_momentum"])
+        + "_amp_"
+        + str(_amp)
     )
 
 

@@ -24,6 +24,9 @@ def run(args):
     log = logging.getLogger(params["log"])
 
     EPOCH = params["epoch"]
+    if not args.model_path:
+        # Generate a default name which describes the settings
+        args.model_path = "trained/" + settings.get_name(params) + ".pt"
     dnn = model_factory(params, model_path=args.model_path)
 
     # Load the dataset
@@ -106,15 +109,15 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--model_path", action="store", help="path to a saved model", default="trained/" + settings.get_name() + ".pt",
-    )
-
-    parser.add_argument(
-        "--evaluate", action="store_true", help="evaluate an existing model, compute error metrics",
+        "--model_path", action="store", help="path to a saved model", default=None,
     )
 
     parser.add_argument(
         "--plot", action="store_true", help="generate a plot to visually compare the ground truth and predictions",
+    )
+
+    parser.add_argument(
+        "--amp", action="store_true", help="enable Pytorch Automatic Mixed Precision",
     )
 
     parser.add_argument(

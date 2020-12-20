@@ -6,17 +6,11 @@
     "python.testing.nosetestsEnabled": false,
     "python.formatting.provider": "black",
     "editor.formatOnSave": true,
-    "workbench.settings.useSplitJSON": true,
     "editor.multiCursorModifier": "ctrlCmd",
     "python.linting.pylintEnabled": true,
     "editor.codeActionsOnSave": {
         "source.organizeImports.python": true
     },
-    "python.sortImports.args": [
-        "-m",
-        "3",
-        "-tc"
-    ],
     "python.linting.pylintArgs": [
         "--generate-members"
     ],
@@ -31,5 +25,5 @@
     "editor.trimAutoWhitespace": true,
     "files.trimFinalNewlines": true,
     "files.trimTrailingWhitespace": true,
-    "python.pythonPath": "venv/bin/python"
+    "python.pythonPath": "venv/bin/python3.8"
 }
