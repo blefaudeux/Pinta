@@ -17,14 +17,12 @@ from data_processing.nmea2pandas import parse_nmea
 from data_processing.utils import save_json
 
 LOG = logging.getLogger("DataConversion")
+SUPPORTED_FILES = [".json", ".csv", ".nmea"]
+MULTIPROCESS = False
 
 
-def process_file(
-    filepath: Path, args: argparse.Namespace, extra_data: Optional[Dict[str, Any]]
-) -> None:
-    df = {".nmea": parse_nmea, ".csv": parse_csv, ".json": parse_raw_json}[
-        filepath.suffix
-    ](
+def process_file(filepath: Path, args: argparse.Namespace, extra_data: Optional[Dict[str, Any]]) -> None:
+    df = {".nmea": parse_nmea, ".csv": parse_csv, ".json": parse_raw_json}[filepath.suffix](
         filepath, extra_data
     )  # type: ignore
 
@@ -39,7 +37,7 @@ def handle_directory(args: argparse.Namespace):
     def get_file_list(ext: str):
         return list(Path(args.data_ingestion_path).glob("**/*" + ext))
 
-    filelist = get_file_list(".nmea") + get_file_list(".csv") + get_file_list(".json")
+    filelist = [f for ext in SUPPORTED_FILES for f in get_file_list(ext)]
     LOG.info(f"Found {len(filelist)} candidate files.")
 
     # Make the export directory
@@ -51,26 +49,22 @@ def handle_directory(args: argparse.Namespace):
         extra_data = pd.read_json(Path(args.data_lookup_table).absolute())
 
     # Batch process all the files
-    pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
-    barrier = pool.starmap_async(
-        process_file, zip(filelist, repeat(args), repeat(extra_data))
-    )
-    barrier.wait()
+    if MULTIPROCESS:
+        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
+        barrier = pool.starmap_async(process_file, zip(filelist, repeat(args), repeat(extra_data)))
+        barrier.wait()
+    else:
+        for f in filelist:
+            process_file(f, args, extra_data)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        "Convert in between data formats. Handles NMEA and some CSVs"
-    )
+    parser = argparse.ArgumentParser("Convert in between data formats. Handles NMEA and some CSVs")
     parser.add_argument(
-        "--data_ingestion_path",
-        action="store",
-        help="Full path of the root folder where the original data is",
+        "--data_ingestion_path", action="store", help="Full path of the root folder where the original data is",
     )
 
-    parser.add_argument(
-        "--data_export_path", action="store", help="Where to save the normalized data"
-    )
+    parser.add_argument("--data_export_path", action="store", help="Where to save the normalized data")
 
     parser.add_argument(
         "--data_lookup_table",

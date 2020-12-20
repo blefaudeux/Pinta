@@ -120,9 +120,5 @@ if __name__ == "__main__":
         "--amp", action="store_true", help="enable Pytorch Automatic Mixed Precision",
     )
 
-    parser.add_argument(
-        "--amp", action="store_true", help="enable Pytorch Automatic Mixed Precision",
-    )
-
     args = parser.parse_args()
     run(args)
