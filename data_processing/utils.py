@@ -1,4 +1,3 @@
-
 import json
 from pathlib import Path
 
@@ -21,4 +20,4 @@ def load_json(filepath: Path, skip_zeros=True) -> pd.DataFrame:
         data = json.load(file_in)
 
     dataframe = pd.read_json(data)
-    return dataframe if not skip_zeros else dataframe[dataframe.boat_speed > 0].dropna()
+    return dataframe if not skip_zeros else dataframe[dataframe.sog > 0].dropna()

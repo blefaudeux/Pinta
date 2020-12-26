@@ -20,7 +20,7 @@ _PRESETS = {
 
 _FIELDS = {
     "Block.Time": "time",
-    "Block.Boat.Speed_kts": "boat_speed",
+    "Block.Boat.Speed_kts": "sog",
     "Block.Boat.Leeway": "leeway",
     "Block.Boat.Trim": "trim",
     "Block.Boat.Heel": "heel",

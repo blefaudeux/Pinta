@@ -20,7 +20,7 @@
             "cwd": "${workspaceRoot}",
             "args": [
                 "--data_path",
-                "~/test_data_normalized/"
+                "~/Dropbox/Pinta/convert"
             ]
         },
         {
@@ -55,11 +55,9 @@
             "cwd": "${workspaceRoot}",
             "args": [
                 "--data_ingestion_path",
-                "~/Downloads/test_data/",
+                "~/Dropbox/Pinta/O60_2020/",
                 "--data_export_path",
-                "~/test_data_normalized/",
-                "--data_lookup_table",
-                "~/Downloads/runsDict_ARGO_FoilStudy.json"
+                "~/Dropbox/Pinta/convert",
             ]
         },
         {

@@ -2,6 +2,7 @@
 
 
 import logging
+from typing import List
 
 import torch
 from numpy.random import random_sample
@@ -28,28 +29,19 @@ class Denormalize:
         self.mean = mean
         self.std = std
 
-        LOG.info(
-            "Initializing De-Normalize transform with mean: {}\nand std {}".format(
-                mean, std
-            )
-        )
+        LOG.info("Initializing De-Normalize transform with mean: {}\nand std {}".format(mean, std))
 
         # Catch noise-free data
         if torch.min(self.std.inputs).item() < EPSILON:
-            self.std = TrainingSample(
-                torch.ones_like(self.std.inputs), torch.ones_like(self.std.outputs)
-            )
+            self.std = TrainingSample(torch.ones_like(self.std.inputs), torch.ones_like(self.std.outputs))
             LOG.warning("Noise-free data detected, skip noise normalization")
 
     def __call__(self, sample: TrainingSample):
         return TrainingSample(
             inputs=torch.mul(
-                torch.add(sample.inputs, self.mean.inputs.reshape(1, -1, 1)),
-                self.std.inputs.reshape(1, -1, 1),
+                torch.add(sample.inputs, self.mean.inputs.reshape(1, -1, 1)), self.std.inputs.reshape(1, -1, 1),
             ),
-            outputs=torch.mul(
-                torch.add(sample.outputs, self.mean.outputs), self.std.outputs
-            ),
+            outputs=torch.mul(torch.add(sample.outputs, self.mean.outputs), self.std.outputs),
         )
 
 
@@ -68,15 +60,11 @@ class Normalize:
         self.mean = mean
         self.std = std
 
-        LOG.info(
-            "Initializing Normalize transform with mean {} and std {}".format(mean, std)
-        )
+        LOG.info("Initializing Normalize transform with mean {} and std {}".format(mean, std))
 
         # Catch noise-free data
         if torch.min(self.std.inputs).item() < EPSILON:
-            self.std = TrainingSample(
-                torch.ones_like(self.std.inputs), torch.ones_like(self.std.outputs)
-            )
+            self.std = TrainingSample(torch.ones_like(self.std.inputs), torch.ones_like(self.std.outputs))
             LOG.warning("Noise-free data detected, skip noise normalization")
 
     def __call__(self, sample: TrainingSample):
@@ -84,46 +72,36 @@ class Normalize:
         if sample.inputs.shape[0] == 1:
             return TrainingSample(
                 inputs=torch.div(
-                    torch.add(sample.inputs, -self.mean.inputs.reshape(1, -1)),
-                    self.std.inputs.reshape(1, -1),
+                    torch.add(sample.inputs, -self.mean.inputs.reshape(1, -1)), self.std.inputs.reshape(1, -1),
                 ),
-                outputs=torch.div(
-                    torch.add(sample.outputs, -self.mean.outputs), self.std.outputs
-                ),
+                outputs=torch.div(torch.add(sample.outputs, -self.mean.outputs), self.std.outputs),
             )
 
         # Batch data coming in. Could also be handled through broadcasting
         return TrainingSample(
             inputs=torch.div(
-                torch.add(sample.inputs, -self.mean.inputs.reshape(1, -1, 1)),
-                self.std.inputs.reshape(1, -1, 1),
+                torch.add(sample.inputs, -self.mean.inputs.reshape(1, -1, 1)), self.std.inputs.reshape(1, -1, 1),
             ),
-            outputs=torch.div(
-                torch.add(sample.outputs, -self.mean.outputs), self.std.outputs
-            ),
+            outputs=torch.div(torch.add(sample.outputs, -self.mean.outputs), self.std.outputs),
         )
 
 
 class RandomFlip:
     def __init__(
-        self, dimension: int, odds: float,
+        self, dimensions: List[int], odds: float,
     ):
         """
-        Randomly flip the given dimension.
+        Randomly flip the given dimensions.
 
         Arguments:
             odds {float}
                 -- odds [0,1] of the flip happening
-            dimension {int}
-                -- which dimension should be flipped
+            dimension {List[int]}
+                -- which dimensions should be flipped
         """
         self.odds = odds
-        self.dim = dimension
-        LOG.info(
-            "Initializing Random flip transform on dimension {} with odds {}".format(
-                dimension, odds
-            )
-        )
+        self.dim = dimensions
+        LOG.info("Initializing Random flip transform on dimension {} with odds {}".format(dimension, odds))
 
     def __call__(self, sample: TrainingSample):
         if random_sample() < self.odds:

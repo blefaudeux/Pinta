@@ -30,7 +30,8 @@ def run(args):
     dnn = model_factory(params, model_path=args.model_path)
 
     # Load the dataset
-    data_list = load_sets(load_folder(Path(args.data_path), clean_data=False), params)
+    dataframes = load_folder(Path(args.data_path), zero_mean_helm=False, parallel_load=args.parallel)
+    data_list = load_sets(dataframes, params)
     training_bundle = TrainingSetBundle(data_list)
     mean, std = training_bundle.get_norm()
 
@@ -39,8 +40,7 @@ def run(args):
     # Data augmentation / preparation
     transforms: List[Callable] = [
         Normalize(mean, std,),
-        RandomFlip(dimension=params["inputs"].index("twa_y"), odds=0.5),
-        RandomFlip(dimension=params["inputs"].index("helm"), odds=0.5),
+        # RandomFlip(dimension=[params["inputs"].index("helm"), params["inputs"].index("twa_y")], odds=0.5),
     ]
 
     # Train a new model from scratch if need be
@@ -118,6 +118,13 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--amp", action="store_true", help="enable Pytorch Automatic Mixed Precision",
+    )
+
+    parser.add_argument(
+        "--parallel",
+        action="store_true",
+        help="Load muliple files in parallel. Errors may not be properly visible",
+        default=False,
     )
 
     args = parser.parse_args()

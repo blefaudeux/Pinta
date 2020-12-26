@@ -18,7 +18,6 @@ from data_processing.utils import save_json
 
 LOG = logging.getLogger("DataConversion")
 SUPPORTED_FILES = [".json", ".csv", ".nmea"]
-MULTIPROCESS = False
 
 
 def process_file(filepath: Path, args: argparse.Namespace, extra_data: Optional[Dict[str, Any]]) -> None:
@@ -49,7 +48,7 @@ def handle_directory(args: argparse.Namespace):
         extra_data = pd.read_json(Path(args.data_lookup_table).absolute())
 
     # Batch process all the files
-    if MULTIPROCESS:
+    if args.parallel:
         pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
         barrier = pool.starmap_async(process_file, zip(filelist, repeat(args), repeat(extra_data)))
         barrier.wait()
@@ -71,6 +70,13 @@ if __name__ == "__main__":
         action="store",
         help="Path to an optional extra file which adds some context to all the files.",
         default="",
+    )
+
+    parser.add_argument(
+        "--parallel",
+        action="store_true",
+        help="Convert muliple files in parallel. Errors may not be properly visible",
+        default=False,
     )
 
     args = parser.parse_args()

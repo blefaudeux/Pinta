@@ -35,19 +35,16 @@ def polar_plot(data: List[SpeedPolarPoint], filename: str = "speed_polar"):
     traces = []
     for tws in speed_lines.keys():
         twa_rad = np.array([data[k].twa for k in speed_lines[tws]]).flatten()
-        boat_speeds = np.array([data[k].boat_speed for k in speed_lines[tws]]).flatten()
+        sogs = np.array([data[k].sog for k in speed_lines[tws]]).flatten()
 
-        labels = [
-            "Wind: {}deg - {}kt ** Boat: {}kt".format(angle, tws, boat_speed)
-            for angle, boat_speed in zip(twa_rad, boat_speeds)
-        ]
+        labels = ["Wind: {}deg - {}kt ** Boat: {}kt".format(angle, tws, sog) for angle, sog in zip(twa_rad, sogs)]
 
         traces.append(
             go.Scatterpolar(
-                r=boat_speeds,
+                r=sogs,
                 theta=np.degrees(-twa_rad),
                 mode="lines",
-                marker=dict(size=6, color=boat_speeds, colorscale="Portland", showscale=True, opacity=0.5,),
+                marker=dict(size=6, color=sogs, colorscale="Portland", showscale=True, opacity=0.5,),
                 text=labels,
                 name="Wind {}kt".format(tws),
             )
@@ -79,13 +76,13 @@ def speed_plot(df, decimation=2, filename="speed_polar_raw"):
     labels = [
         "Wind: {}deg - {}kt ** Boat: {}kt ** Rudder: {}deg".format(wa, ws, b, r)
         for wa, ws, b, r in zip(
-            df["twa"][::decimation], df["tws"][::decimation], df["boat_speed"][::decimation], df["helm"][::decimation],
+            df["twa"][::decimation], df["tws"][::decimation], df["sog"][::decimation], df["helm"][::decimation],
         )
     ]
 
     speed = go.Scattergl(
-        x=df["boat_speed"][::decimation] * np.sin(twa_rad),
-        y=df["boat_speed"][::decimation] * np.cos(twa_rad),
+        x=df["sog"][::decimation] * np.sin(twa_rad),
+        y=df["sog"][::decimation] * np.cos(twa_rad),
         mode="markers",
         marker=dict(size=6, color=df["tws"][::decimation], colorscale="Portland", showscale=True, opacity=0.5,),
         text=labels,

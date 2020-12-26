@@ -94,9 +94,7 @@ def parse_nmea(filepath: Path, wind_bias=WIND_BIAS, *args):
 
     dataframe = {
         "twa": pd.Series(wa, index=wa_index),
-        "boat_speed": pd.Series(
-            [float(data["Speed"][ts][4]) for ts in data["Speed"].keys()], index=data["Speed"].keys(),
-        ),
+        "sog": pd.Series([float(data["Speed"][ts][4]) for ts in data["Speed"].keys()], index=data["Speed"].keys(),),
         "tws": pd.Series(
             [float(data["WindTrue"][ts][4]) for ts in data["WindTrue"].keys()], index=data["WindTrue"].keys(),
         ),

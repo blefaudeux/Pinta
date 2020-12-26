@@ -13,7 +13,7 @@ def run(args):
 
     # Purely sequential plot
     multi_plot(
-        df, ["helm", "tws", "twa", "boat_speed"], "test multi plot", "multi_plot", True,
+        df, ["helm", "tws", "twa", "sog"], "test multi plot", "multi_plot", True,
     )
 
     # Polar plot

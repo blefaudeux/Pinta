@@ -13,7 +13,7 @@ from data_processing.training_set import (
 from data_processing.transforms import Normalize
 from settings import device
 
-SpeedPolarPoint = namedtuple("SpeedPolarPoint", ["twa", "tws", "helm", "boat_speed"])
+SpeedPolarPoint = namedtuple("SpeedPolarPoint", ["twa", "tws", "helm", "sog"])
 
 
 def generate(
@@ -62,7 +62,7 @@ def generate(
     speeds = []
     for w in range(wind_range[0], wind_range[1], wind_step):
         for a in np.arange(0.0, np.pi, angular_step):
-            speeds.append(SpeedPolarPoint(twa=a, tws=w, helm=0.0, boat_speed=pred[i_pred],))
+            speeds.append(SpeedPolarPoint(twa=a, tws=w, helm=0.0, sog=pred[i_pred],))
             i_pred += 1
 
     return speeds

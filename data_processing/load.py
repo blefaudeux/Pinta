@@ -20,18 +20,18 @@ def _angle_split(data):
     return data
 
 
-def load(filepath: Path, clean_data: bool = False) -> DataFrame:
+def load(filepath: Path, zero_mean_helm: bool = False) -> DataFrame:
     LOG.info("Loading %s" % filepath)
     data_frame = load_json(filepath, skip_zeros=True)
 
     # Fix a possible offset in the rudder angle sensor
-    if clean_data:
+    if zero_mean_helm:
         data_frame["helm"] -= data_frame["helm"].mean()
 
     return data_frame
 
 
-def load_folder(folder_path: Path, clean_data: bool) -> List[DataFrame]:
+def load_folder(folder_path: Path, zero_mean_helm: bool, parallel_load: bool = True) -> List[DataFrame]:
     # Get the matching files
     def valid(filepath):
         return os.path.isfile(filepath) and os.path.splitext(filepath)[1] == ".json"
@@ -41,11 +41,14 @@ def load_folder(folder_path: Path, clean_data: bool) -> List[DataFrame]:
     ]
 
     # Batch load all the files, saturate IO
-    pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
-    results: List[DataFrame] = []
-    barrier = pool.starmap_async(load, zip(filelist, repeat(clean_data)), callback=lambda x: results.append(x))
-    barrier.wait()
-    return results[0]
+    if parallel_load:
+        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
+        results: List[DataFrame] = []
+        barrier = pool.starmap_async(load, zip(filelist, repeat(zero_mean_helm)), callback=lambda x: results.append(x))
+        barrier.wait()
+        return results[0]
+    else:
+        return [load(f, zero_mean_helm=zero_mean_helm) for f in filelist]
 
 
 def to_training_set(raw_data, settings):

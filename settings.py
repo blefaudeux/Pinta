@@ -43,7 +43,7 @@ _EXPAND_KEYS = {
     "cog": "course over ground",
     "twd": "true wind direction",
     "heel": "boat heel angle",
-    "trim": "",
+    "trim": "trim angle",
     "az": "azimuth",
     "foil_port_fo_load": "",
     "foil_stbd_fo_load": "",
@@ -66,8 +66,8 @@ _EXPAND_KEYS = {
 # filters [3, x3/4/5]
 
 _DEFAULTS = {
-    "inputs": ["tws", "twa_x", "twa_y", "helm"],
-    "outputs": ["boat_speed"],
+    "inputs": ["tws", "twa_x", "twa_y", "heel"],
+    "outputs": ["sog"],
     "model_type": ModelType.MLP,
     "hidden_size": 256,
     "seq_length": 81,
