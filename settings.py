@@ -34,12 +34,39 @@ class Scheduler(str, Enum):
     REDUCE_PLATEAU = "reduce_plateau"
 
 
+# Reference keys handled by the conversion and data processing utils
+_EXPAND_KEYS = {
+    "tws": "true wind speed",
+    "twa": "true wind angle",
+    "awa": "apparent wind angle",
+    "sog": "speed over ground",
+    "cog": "course over ground",
+    "twd": "true wind direction",
+    "heel": "boat heel angle",
+    "trim": "",
+    "az": "azimuth",
+    "foil_port_fo_load": "",
+    "foil_stbd_fo_load": "",
+    "foil_port_rake": "",
+    "foil_stbd_rake": "",
+    "foil_port_ext": "",
+    "foil_stbd_ext": "",
+    "bobstay_load": "",
+    "j2_load": "",
+    "outrigger_port_load": "outrigger_port_load",
+    "outrigger_stbd_load": "outrigger_stbd_load",
+    "runner_port_load": "runner_port_load",
+    "runner_stbd_load": "runner_stbd_load",
+    "lat": "latitude",
+    "lon": "longitude",
+}
+
 # dilated conv:
 # sequences: 27,81,243
 # filters [3, x3/4/5]
 
 _DEFAULTS = {
-    "inputs": ["wind_speed", "wind_angle_x", "wind_angle_y", "rudder_angle"],
+    "inputs": ["tws", "twa_x", "twa_y", "helm"],
     "outputs": ["boat_speed"],
     "model_type": ModelType.MLP,
     "hidden_size": 256,

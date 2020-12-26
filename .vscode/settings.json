@@ -24,6 +24,5 @@
     ],
     "editor.trimAutoWhitespace": true,
     "files.trimFinalNewlines": true,
-    "files.trimTrailingWhitespace": true,
-    "python.pythonPath": "venv/bin/python3.8"
+    "files.trimTrailingWhitespace": true
 }

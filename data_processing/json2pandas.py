@@ -12,9 +12,9 @@ LOG = logging.getLogger("Json2Pandas")
 
 # Normalize fields post-parsing, align with other inputs
 _PRESETS = {
-    "Upwind": {"wind_speed": 21},  # "wind_angle": 55.0,
-    "Reaching": {"wind_speed": 23},  # "wind_angle": 110.0,
-    "Downwind": {"wind_speed": 20},  # "wind_angle": 135.0,
+    "Upwind": {"tws": 21},  # "twa": 55.0,
+    "Reaching": {"tws": 23},  # "twa": 110.0,
+    "Downwind": {"tws": 20},  # "twa": 135.0,
 }
 
 
@@ -24,8 +24,8 @@ _FIELDS = {
     "Block.Boat.Leeway": "leeway",
     "Block.Boat.Trim": "trim",
     "Block.Boat.Heel": "heel",
-    "Block.Boat.TWA": "wind_angle",
-    "Block.Boat.Helm": "rudder_angle",
+    "Block.Boat.TWA": "twa",
+    "Block.Boat.Helm": "helm",
     "Block.Boat.Center.HullDisplPercent": "center_hull_disp",
     "Block.Boat.Center.BoardDisplPercent": "center_board_disp",
     "Block.Boat.Center.RudDisplPercent": "center_rudder_disp",
@@ -44,21 +44,26 @@ _FIELDS = {
 
 
 def parse_raw_json(
-    filepath: Path, reference_lookup: Optional[pd.DataFrame] = None, *args
+    filepath: Path, reference_lookup: Optional[Dict] = None, *args
 ) -> Tuple[pd.DataFrame, Optional[Dict[str, Any]]]:
 
     # Load raw values
     raw_load = pd.read_json(filepath)
 
-    # Match the column names with the normalized ones
-    normalized_fields = [_FIELDS[f] for f in list(raw_load.columns)]
-    raw_load.columns = normalized_fields
-
-    # If we have a reference lookup, check whether we have some extra data for this file
+    # If we have a reference lookup
     if reference_lookup is not None:
+        # Match the column names with the normalized ones
+        try:
+            normalized_fields = [reference_lookup[f] for f in list(raw_load.columns)]
+        except KeyError as e:
+            LOG.error(f"KeyError {e}\n *** Please use a conversion table. Keys: {list(raw_load.columns)}\n")
+
+        raw_load.columns = normalized_fields
+
+        #  check whether we have some extra data for this file
         try:
             match = reference_lookup[reference_lookup["run"] == filepath.stem]
-            for k, v in zip(reference_lookup.columns, match.values[0]):
+            for k, v in zip(reference_lookup.keys(), match.values[0]):
                 try:
                     raw_load[_FIELDS[k]] = v
                 except KeyError:
@@ -70,8 +75,6 @@ def parse_raw_json(
                 raw_load[k] = v
 
         except IndexError:
-            LOG.info(
-                f"No extra data found in the reference lookup for the file {filepath.stem}"
-            )
+            LOG.info(f"No extra data found in the reference lookup for the file {filepath.stem}")
 
     return raw_load

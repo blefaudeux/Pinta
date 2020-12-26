@@ -15,8 +15,8 @@ LOG = logging.getLogger("DataLoad")
 
 
 def _angle_split(data):
-    data["wind_angle_x"] = np.cos(np.radians(data["wind_angle"]))
-    data["wind_angle_y"] = np.sin(np.radians(data["wind_angle"]))
+    data["twa_x"] = np.cos(np.radians(data["twa"]))
+    data["twa_y"] = np.sin(np.radians(data["twa"]))
     return data
 
 
@@ -26,7 +26,7 @@ def load(filepath: Path, clean_data: bool = False) -> DataFrame:
 
     # Fix a possible offset in the rudder angle sensor
     if clean_data:
-        data_frame["rudder_angle"] -= data_frame["rudder_angle"].mean()
+        data_frame["helm"] -= data_frame["helm"].mean()
 
     return data_frame
 
@@ -37,17 +37,13 @@ def load_folder(folder_path: Path, clean_data: bool) -> List[DataFrame]:
         return os.path.isfile(filepath) and os.path.splitext(filepath)[1] == ".json"
 
     filelist = [
-        Path(os.path.join(folder_path, f))
-        for f in os.listdir(folder_path)
-        if valid(os.path.join(folder_path, f))
+        Path(os.path.join(folder_path, f)) for f in os.listdir(folder_path) if valid(os.path.join(folder_path, f))
     ]
 
     # Batch load all the files, saturate IO
     pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
     results: List[DataFrame] = []
-    barrier = pool.starmap_async(
-        load, zip(filelist, repeat(clean_data)), callback=lambda x: results.append(x)
-    )
+    barrier = pool.starmap_async(load, zip(filelist, repeat(clean_data)), callback=lambda x: results.append(x))
     barrier.wait()
     return results[0]
 

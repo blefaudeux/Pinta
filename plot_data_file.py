@@ -13,11 +13,7 @@ def run(args):
 
     # Purely sequential plot
     multi_plot(
-        df,
-        ["rudder_angle", "wind_speed", "wind_angle", "boat_speed"],
-        "test multi plot",
-        "multi_plot",
-        True,
+        df, ["helm", "tws", "twa", "boat_speed"], "test multi plot", "multi_plot", True,
     )
 
     # Polar plot
@@ -28,15 +24,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("Visualize the contents of a data file")
 
     parser.add_argument(
-        "filepath",
-        action="store",
-        help="Filepath of the .json file you want to visualize",
+        "filepath", action="store", help="Filepath of the .json file you want to visualize",
     )
 
     parser.add_argument(
-        "--clean_data",
-        action="store_true",
-        help="Filepath of the .json file you want to visualize",
+        "--clean_data", action="store_true", help="Filepath of the .json file you want to visualize",
     )
 
     args = parser.parse_args()

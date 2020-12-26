@@ -39,8 +39,8 @@ def run(args):
     # Data augmentation / preparation
     transforms: List[Callable] = [
         Normalize(mean, std,),
-        RandomFlip(dimension=params["inputs"].index("wind_angle_y"), odds=0.5),
-        RandomFlip(dimension=params["inputs"].index("rudder_angle"), odds=0.5),
+        RandomFlip(dimension=params["inputs"].index("twa_y"), odds=0.5),
+        RandomFlip(dimension=params["inputs"].index("helm"), odds=0.5),
     ]
 
     # Train a new model from scratch if need be
