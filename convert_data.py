@@ -25,6 +25,9 @@ def process_file(filepath: Path, args: argparse.Namespace, extra_data: Optional[
         filepath, extra_data
     )  # type: ignore
 
+    # Fill in the gaps in data
+    # Drop the collumns which are completely empty
+    df = df.ffill().bfill().dropna(axis=1)
     save_json(df, Path(args.data_export_path) / Path(filepath.stem + ".json"))
     LOG.info(f"File {filepath.stem } processed")
 

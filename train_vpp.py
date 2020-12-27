@@ -12,7 +12,7 @@ import settings
 from data_processing import plot as plt
 from data_processing.load import load_folder, load_sets
 from data_processing.training_set import TrainingSetBundle
-from data_processing.transforms import Normalize, RandomFlip
+from data_processing.transforms import Normalize
 from model.model_factory import model_factory
 
 
@@ -39,7 +39,10 @@ def run(args):
 
     # Data augmentation / preparation
     transforms: List[Callable] = [
-        Normalize(mean, std,),
+        Normalize(
+            mean,
+            std,
+        ),
         # RandomFlip(dimension=[params["inputs"].index("helm"), params["inputs"].index("twa_y")], odds=0.5),
     ]
 
@@ -61,7 +64,13 @@ def run(args):
 
     if args.evaluate or args.plot:
         tester, split_indices = training_bundle.get_sequential_dataloader(
-            params["seq_length"], transforms=[Normalize(mean, std,)],
+            params["seq_length"],
+            transforms=[
+                Normalize(
+                    mean,
+                    std,
+                )
+            ],
         )
 
     # Check the training
@@ -77,10 +86,22 @@ def run(args):
 
         # - de-whiten the data
         def denormalize(data: torch.Tensor):
-            return torch.add(torch.mul(data, std.outputs), mean.outputs,)
+            return torch.add(
+                torch.mul(data, std.outputs),
+                mean.outputs,
+            )
 
         # - prediction: go through the net, split the output sequence to re-align,
-        prediction = dnn.predict(tester, mean=mean.outputs, std=std.outputs,).detach().cpu().numpy()
+        prediction = (
+            dnn.predict(
+                tester,
+                mean=mean.outputs,
+                std=std.outputs,
+            )
+            .detach()
+            .cpu()
+            .numpy()
+        )
 
         reference = torch.cat([denormalize(batch.outputs) for batch in tester]).detach().cpu().numpy()
 
@@ -105,19 +126,29 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("Generate VPP")
 
     parser.add_argument(
-        "--data_path", action="store", help="path to the training data", default="data",
+        "--data_path",
+        action="store",
+        help="path to the training data",
+        default="data",
     )
 
     parser.add_argument(
-        "--model_path", action="store", help="path to a saved model", default=None,
+        "--model_path",
+        action="store",
+        help="path to a saved model",
+        default=None,
     )
 
     parser.add_argument(
-        "--plot", action="store_true", help="generate a plot to visually compare the ground truth and predictions",
+        "--plot",
+        action="store_true",
+        help="generate a plot to visually compare the ground truth and predictions",
     )
 
     parser.add_argument(
-        "--amp", action="store_true", help="enable Pytorch Automatic Mixed Precision",
+        "--amp",
+        action="store_true",
+        help="enable Pytorch Automatic Mixed Precision",
     )
 
     parser.add_argument(
