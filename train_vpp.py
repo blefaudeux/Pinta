@@ -71,6 +71,7 @@ def run(args):
                     std,
                 )
             ],
+            batch_size=params["train_batch_size"],
         )
 
     # Check the training

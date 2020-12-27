@@ -214,7 +214,9 @@ class TrainingSetBundle:
             ),
         )
 
-    def get_sequential_dataloader(self, seq_len: int, transforms: List[Callable]) -> Tuple[DataLoader, List[int]]:
+    def get_sequential_dataloader(
+        self, seq_len: int, transforms: List[Callable], batch_size: int = 8000
+    ) -> Tuple[DataLoader, List[int]]:
         """
         Create two PyTorch DataLoaders out of this dataset, randomly splitting
         the data in between training and testing
@@ -230,12 +232,15 @@ class TrainingSetBundle:
                 outputs=torch.stack([t.outputs for t in samples]).squeeze(),
             )
 
+        pin_memory = True if device.type == torch.device("cuda").type else False
+
         return (
             DataLoader(
                 training_set,
                 collate_fn=collate,
-                batch_size=8000,
+                batch_size=batch_size,
                 num_workers=2,
+                pin_memory=pin_memory,
             ),
             split_indices,
         )

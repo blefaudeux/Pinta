@@ -12,13 +12,12 @@ from typing import Any, Dict, Union
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau
-from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
-
 from settings import Scheduler, _amp_available
 from settings import device as _device
 from settings import dtype as _dtype
+from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau
+from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
 if _amp_available:
     from torch.cuda.amp import GradScaler, autocast
@@ -65,10 +64,17 @@ class NN(nn.Module):
         return losses
 
     def predict(
-        self, dataloader: DataLoader, mean: torch.Tensor = None, std: torch.Tensor = None,
+        self,
+        dataloader: DataLoader,
+        mean: torch.Tensor = None,
+        std: torch.Tensor = None,
     ):
+
         # Move the predictions to cpu() on the fly to save on GPU memory
-        predictions = [self(seq.inputs.to(_device, _dtype))[0].detach().cpu() for seq in dataloader]
+        predictions = []
+        for seq in dataloader:
+            predictions.append(self(seq.inputs.to(_device, _dtype))[0].detach().cpu())
+            del seq
         predictions_tensor = torch.cat(predictions).squeeze()
 
         # De-normalize the output
@@ -78,7 +84,11 @@ class NN(nn.Module):
         return predictions_tensor
 
     def fit(
-        self, trainer: DataLoader, tester: DataLoader, settings: Dict[str, Any], epochs: int = 50,
+        self,
+        trainer: DataLoader,
+        tester: DataLoader,
+        settings: Dict[str, Any],
+        epochs: int = 50,
     ):
         # Setup the training loop
         optimizer = optim.Adam(self.parameters(), lr=settings["learning_rate"], amsgrad=True)
