@@ -18,7 +18,7 @@ def run(args):
     # Load the saved pytorch nn
     training_settings = settings.get_default_params()
     # a bit hacky: get the normalization factors on the fly
-    data = load_folder(Path("data"), clean_data=True)
+    data = load_folder(Path("data"), zero_mean_helm=False)
     datasplits = load_sets(data, training_settings)
     mean, std = TrainingSetBundle(datasplits).get_norm()
 

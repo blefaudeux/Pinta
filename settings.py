@@ -66,15 +66,15 @@ _EXPAND_KEYS = {
 # filters [3, x3/4/5]
 
 _DEFAULTS = {
-    "inputs": ["tws", "twa_x", "twa_y", "heel"],
+    "inputs": ["tws", "twa_x", "twa_y", "helm"],
     "outputs": ["sog"],
-    "model_type": ModelType.MLP,
+    "model_type": ModelType.DILATED_CONV,
     "hidden_size": 256,
     "seq_length": 81,
     "conv_width": [3, 3, 3, 3],
     "training_ratio": 0.9,
-    "train_batch_size": 10 ** 5,
-    "val_batch_size": 10 ** 4,
+    "train_batch_size": 10 ** 3,
+    "val_batch_size": 10 ** 2,
     "epoch": 30,
     "learning_rate": 5 * 1e-2,
     "batch_norm_momentum": 0.1,

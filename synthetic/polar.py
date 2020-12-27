@@ -3,15 +3,10 @@ from typing import List
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader
-
-from data_processing.training_set import (
-    TrainingSample,
-    TrainingSet,
-    TrainingSetBundle,
-)
+from data_processing.training_set import TrainingSample, TrainingSet, TrainingSetBundle
 from data_processing.transforms import Normalize
 from settings import device
+from torch.utils.data import DataLoader
 
 SpeedPolarPoint = namedtuple("SpeedPolarPoint", ["twa", "tws", "helm", "sog"])
 
@@ -30,7 +25,10 @@ def generate(
     # (repeat the same inputs for the whole sequence)
     datasets = []
 
-    normalizer = Normalize(mean.to(device, torch.float), std.to(device, torch.float),)
+    normalizer = Normalize(
+        mean.to(device, torch.float),
+        std.to(device, torch.float),
+    )
 
     for w in range(wind_range[0], wind_range[1], wind_step):
         for a in np.arange(0.0, np.pi, angular_step):
@@ -38,7 +36,7 @@ def generate(
             # Expected size for transform is [Time x Channels],
             # so we unsqueeze front
             sample = TrainingSample(
-                inputs=torch.tensor([w, np.cos(a), np.sin(a), 0.0], device=device).unsqueeze(0),
+                inputs=torch.tensor([w, np.cos(a), np.sin(a), mean.inputs[3]], device=device).unsqueeze(0),
                 outputs=torch.zeros(1, 1).to(device=device),
             )
 
@@ -62,7 +60,14 @@ def generate(
     speeds = []
     for w in range(wind_range[0], wind_range[1], wind_step):
         for a in np.arange(0.0, np.pi, angular_step):
-            speeds.append(SpeedPolarPoint(twa=a, tws=w, helm=0.0, sog=pred[i_pred],))
+            speeds.append(
+                SpeedPolarPoint(
+                    twa=a,
+                    tws=w,
+                    helm=0.0,
+                    sog=pred[i_pred],
+                )
+            )
             i_pred += 1
 
     return speeds
