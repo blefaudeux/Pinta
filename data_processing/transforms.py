@@ -29,7 +29,7 @@ class Denormalize:
         self.mean = mean
         self.std = std
 
-        LOG.info("Initializing De-Normalize transform with mean: {}\nand std {}".format(mean, std))
+        LOG.info("Initializing De-Normalize transform with mean:\n{}\nand std\n{}".format(mean, std))
 
         # Catch noise-free data
         if torch.min(self.std.inputs).item() < EPSILON:
@@ -39,7 +39,8 @@ class Denormalize:
     def __call__(self, sample: TrainingSample):
         return TrainingSample(
             inputs=torch.mul(
-                torch.add(sample.inputs, self.mean.inputs.reshape(1, -1, 1)), self.std.inputs.reshape(1, -1, 1),
+                torch.add(sample.inputs, self.mean.inputs.reshape(1, -1, 1)),
+                self.std.inputs.reshape(1, -1, 1),
             ),
             outputs=torch.mul(torch.add(sample.outputs, self.mean.outputs), self.std.outputs),
         )
@@ -60,7 +61,7 @@ class Normalize:
         self.mean = mean
         self.std = std
 
-        LOG.info("Initializing Normalize transform with mean {} and std {}".format(mean, std))
+        LOG.info("Initializing Normalize transform with mean\n{} and std\n{}".format(mean, std))
 
         # Catch noise-free data
         if torch.min(self.std.inputs).item() < EPSILON:
@@ -72,7 +73,8 @@ class Normalize:
         if sample.inputs.shape[0] == 1:
             return TrainingSample(
                 inputs=torch.div(
-                    torch.add(sample.inputs, -self.mean.inputs.reshape(1, -1)), self.std.inputs.reshape(1, -1),
+                    torch.add(sample.inputs, -self.mean.inputs.reshape(1, -1)),
+                    self.std.inputs.reshape(1, -1),
                 ),
                 outputs=torch.div(torch.add(sample.outputs, -self.mean.outputs), self.std.outputs),
             )
@@ -80,7 +82,8 @@ class Normalize:
         # Batch data coming in. Could also be handled through broadcasting
         return TrainingSample(
             inputs=torch.div(
-                torch.add(sample.inputs, -self.mean.inputs.reshape(1, -1, 1)), self.std.inputs.reshape(1, -1, 1),
+                torch.add(sample.inputs, -self.mean.inputs.reshape(1, -1, 1)),
+                self.std.inputs.reshape(1, -1, 1),
             ),
             outputs=torch.div(torch.add(sample.outputs, -self.mean.outputs), self.std.outputs),
         )
@@ -88,7 +91,9 @@ class Normalize:
 
 class RandomFlip:
     def __init__(
-        self, dimensions: List[int], odds: float,
+        self,
+        dimensions: List[int],
+        odds: float,
     ):
         """
         Randomly flip the given dimensions.
@@ -100,13 +105,16 @@ class RandomFlip:
                 -- which dimensions should be flipped
         """
         self.odds = odds
-        self.dim = dimensions
-        LOG.info("Initializing Random flip transform on dimension {} with odds {}".format(dimension, odds))
+        self.dims = dimensions
+        LOG.info("Initializing Random flip transform on dimensions {} with odds {}".format(dimensions, odds))
 
     def __call__(self, sample: TrainingSample):
         if random_sample() < self.odds:
+            # Flip all the dimensions at the same time
             inputs = sample.inputs
-            inputs[0, self.dim, :] *= -1
+            for d in self.dims:
+                inputs[0, d, :] *= -1
+
             return TrainingSample(inputs=inputs, outputs=sample.outputs)
 
         return sample

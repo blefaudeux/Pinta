@@ -158,5 +158,12 @@ if __name__ == "__main__":
         default=False,
     )
 
+    parser.add_argument(
+        "--evaluate",
+        action="store_true",
+        help="Test a model against a new dataset",
+        default=False,
+    )
+
     args = parser.parse_args()
     run(args)

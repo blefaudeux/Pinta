@@ -73,10 +73,10 @@ _DEFAULTS = {
     "seq_length": 81,
     "conv_width": [3, 3, 3, 3],
     "training_ratio": 0.9,
-    "train_batch_size": 10000,
-    "val_batch_size": 1000,
+    "train_batch_size": 10 ** 5,
+    "val_batch_size": 10 ** 4,
     "epoch": 30,
-    "learning_rate": 1e-2,
+    "learning_rate": 5 * 1e-2,
     "batch_norm_momentum": 0.1,
     "mlp_inner_layers": 3,  # MLP Specific
     "rnn_gru_layers": 2,  # RNN Specific

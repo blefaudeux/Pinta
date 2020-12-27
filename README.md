@@ -30,7 +30,7 @@ An example of training is done through the *train_vpp.py* script, feel free to i
 
 - Train a new model, given the settings in *settings.py*: `./train_vpp.py --plot`
 
-This saves the resulting model, and produces a predicted curve against the ground truth, similar to
+This saves the resulting model, and produces a predicted curve against the ground truth, similar to. Noteworthy extra arguments are `--parallel` to load data files on multiple cores (useful if dataset spread over multiple files), and `--amp` to use automatic mixed precision (way faster training on somewhat recent GPUs).
 
 ![Prediction vs. Ground truth example](../master/ressources/evaluation.jpg?raw=true "Prediction vs. Ground truth example")
 

@@ -8,6 +8,7 @@ from typing import Callable, List, Tuple
 import numpy as np
 import torch
 import torchvision
+from settings import device
 from torch.utils.data import DataLoader, Dataset, random_split
 
 TrainingSample_base = namedtuple("TrainingSample", ["inputs", "outputs"])
@@ -19,12 +20,8 @@ class TrainingSample(TrainingSample_base):
     and matching in between inputs and outputs are always respected
     """
 
-    def to(
-        self, device: torch.device = None, dtype: torch.dtype = None
-    ) -> TrainingSample:
-        return TrainingSample(
-            inputs=self.inputs.to(device, dtype), outputs=self.outputs.to(device, dtype)
-        )
+    def to(self, device: torch.device = None, dtype: torch.dtype = None) -> TrainingSample:
+        return TrainingSample(inputs=self.inputs.to(device, dtype), outputs=self.outputs.to(device, dtype))
 
     def __str__(self):
         return f"inputs: {self.inputs.cpu().tolist()}\noutputs: {self.outputs.cpu().tolist()}"
@@ -73,11 +70,7 @@ class TrainingSet(Dataset):
         self.outputs = torch.cat((self.inputs, inputs), 0)
 
     def __getitem__(self, index):
-        return self.transform(
-            TrainingSample(
-                inputs=self.inputs[index, :, :], outputs=self.outputs[index, :]
-            )
-        )
+        return self.transform(TrainingSample(inputs=self.inputs[index, :, :], outputs=self.outputs[index, :]))
 
     def __len__(self):
         return self.inputs.shape[0]
@@ -105,9 +98,7 @@ class TrainingSetBundle:
         return sum(map(lambda x: len(x), self.sets))
 
     @staticmethod
-    def generate_temporal_seq(
-        tensor_input: torch.Tensor, tensor_output: torch.Tensor, seq_len: int
-    ):
+    def generate_temporal_seq(tensor_input: torch.Tensor, tensor_output: torch.Tensor, seq_len: int):
         """
         Generate all the subsequences over time,
         Useful for instance for training a temporal conv net
@@ -117,10 +108,7 @@ class TrainingSetBundle:
 
         input_seq = torch.transpose(
             torch.stack(
-                [
-                    tensor_input[start : start + seq_len, :]
-                    for start in range(n_sequences)
-                ],
+                [tensor_input[start : start + seq_len, :] for start in range(n_sequences)],
                 dim=0,
             ),
             1,
@@ -147,13 +135,9 @@ class TrainingSetBundle:
             std_outputs.append(training_set.outputs.std(dim=0))
 
         # To Torch tensor and mean
-        mean = TrainingSample(
-            torch.stack(mean_inputs).mean(dim=0), torch.stack(mean_outputs).mean(dim=0)
-        )
+        mean = TrainingSample(torch.stack(mean_inputs).mean(dim=0), torch.stack(mean_outputs).mean(dim=0))
 
-        std = TrainingSample(
-            torch.stack(std_inputs).mean(dim=0), torch.stack(std_outputs).mean(dim=0)
-        )
+        std = TrainingSample(torch.stack(std_inputs).mean(dim=0), torch.stack(std_outputs).mean(dim=0))
 
         return mean, std
 
@@ -166,9 +150,7 @@ class TrainingSetBundle:
         outputs = []
 
         for training_set in self.sets:
-            a, b = self.generate_temporal_seq(
-                training_set.inputs, training_set.outputs, seq_len
-            )
+            a, b = self.generate_temporal_seq(training_set.inputs, training_set.outputs, seq_len)
             inputs.append(a)
             outputs.append(b)
 
@@ -209,6 +191,8 @@ class TrainingSetBundle:
                 outputs=torch.stack([t.outputs for t in samples]).squeeze(),
             )
 
+        pin_memory = True if device.type == torch.device("cuda").type else False
+
         return (
             DataLoader(
                 trainer,
@@ -217,6 +201,7 @@ class TrainingSetBundle:
                 shuffle=shuffle,
                 drop_last=True,
                 num_workers=2,
+                pin_memory=pin_memory,
             ),
             DataLoader(
                 tester,
@@ -225,12 +210,11 @@ class TrainingSetBundle:
                 shuffle=shuffle,
                 drop_last=True,
                 num_workers=2,
+                pin_memory=pin_memory,
             ),
         )
 
-    def get_sequential_dataloader(
-        self, seq_len: int, transforms: List[Callable]
-    ) -> Tuple[DataLoader, List[int]]:
+    def get_sequential_dataloader(self, seq_len: int, transforms: List[Callable]) -> Tuple[DataLoader, List[int]]:
         """
         Create two PyTorch DataLoaders out of this dataset, randomly splitting
         the data in between training and testing
@@ -248,7 +232,10 @@ class TrainingSetBundle:
 
         return (
             DataLoader(
-                training_set, collate_fn=collate, batch_size=8000, num_workers=2,
+                training_set,
+                collate_fn=collate,
+                batch_size=8000,
+                num_workers=2,
             ),
             split_indices,
         )
