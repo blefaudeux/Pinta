@@ -18,7 +18,7 @@ from model.model_factory import model_factory
 
 def run(args):
     # Basic setup: get config and logger
-    params = settings.get_default_params()
+    params = settings.load(args.settings_path)
     params["amp"] = args.amp
     logging.basicConfig(level=logging.INFO)
     log = logging.getLogger(params["log"])
@@ -137,6 +137,13 @@ if __name__ == "__main__":
         "--model_path",
         action="store",
         help="path to a saved model",
+        default=None,
+    )
+
+    parser.add_argument(
+        "--settings_path",
+        action="store",
+        help="path to the json settings for the run",
         default=None,
     )
 

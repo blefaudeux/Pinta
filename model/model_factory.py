@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from typing import Any, Dict
 
@@ -8,11 +9,10 @@ from model.model_dilated_conv import TemporalModel
 from model.model_mlp import Mlp
 from model.model_rnn import ConvRNN
 from settings import ModelType
-import logging
 
 
 def model_factory(params: Dict[str, Any], model_path: str) -> NN:
-    """ Given pipeline params, generate the appropriate model.
+    """Given pipeline params, generate the appropriate model.
 
 
     Args:
@@ -24,15 +24,12 @@ def model_factory(params: Dict[str, Any], model_path: str) -> NN:
     """
 
     log_directory = "logs/" + settings.get_name() + "_" + str(datetime.now())
+    model_type = ModelType(params["model_type"])  # will assert if unknown type
 
-    assert isinstance(params["model_type"], ModelType), "Unkonwn model type"
-
-    dnn = None
-
-    if params["model_type"] == ModelType.CONV:
+    def get_conv_model():
         INPUT_SIZE = [len(params["inputs"]), params["seq_length"]]
 
-        dnn = Conv(
+        return Conv(
             logdir=log_directory,
             input_size=INPUT_SIZE,
             hidden_size=params["hidden_size"],
@@ -41,8 +38,8 @@ def model_factory(params: Dict[str, Any], model_path: str) -> NN:
             filename=model_path,
         )
 
-    if params["model_type"] == ModelType.DILATED_CONV:
-        dnn = TemporalModel(
+    def get_dilated_conv_model():
+        return TemporalModel(
             logdir=log_directory,
             num_input_channels=len(params["inputs"]),
             num_output_channels=len(params["outputs"]),
@@ -52,8 +49,8 @@ def model_factory(params: Dict[str, Any], model_path: str) -> NN:
             filename=model_path,
         )
 
-    if params["model_type"] == ModelType.MLP:
-        dnn = Mlp(
+    def get_mlp_model():
+        return Mlp(
             logdir=log_directory,
             input_size=len(params["inputs"]),
             hidden_size=params["hidden_size"],
@@ -62,8 +59,8 @@ def model_factory(params: Dict[str, Any], model_path: str) -> NN:
             filename=model_path,
         )
 
-    if params["model_type"] == ModelType.RNN:
-        dnn = ConvRNN(
+    def get_rnn_model():
+        return ConvRNN(
             logdir=log_directory,
             input_size=len(params["inputs"]),
             hidden_size=params["hidden_size"],
@@ -73,9 +70,12 @@ def model_factory(params: Dict[str, Any], model_path: str) -> NN:
             filename=model_path,
         )
 
-    if dnn is None:
-        logging.error("Model setting {} is not supported".format(params["model_type"]))
-        raise NotImplementedError
+    dnn = {
+        ModelType.DILATED_CONV: get_dilated_conv_model,
+        ModelType.CONV: get_conv_model,
+        ModelType.RNN: get_rnn_model,
+        ModelType.MLP: get_mlp_model,
+    }[model_type]()
 
     dnn.to(settings.device)
     return dnn
