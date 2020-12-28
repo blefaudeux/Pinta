@@ -16,9 +16,10 @@ def run(args):
     Load a given engine, generate a couple of synthetic plots from it
     """
     # Load the saved pytorch nn
-    training_settings = settings.get_default_params()
+    training_settings = settings.load(args.settings_path)
+
     # a bit hacky: get the normalization factors on the fly
-    data = load_folder(Path("data"), zero_mean_helm=False)
+    data = load_folder(Path(args.data_path), zero_mean_helm=False)
     datasplits = load_sets(data, training_settings)
     mean, std = TrainingSetBundle(datasplits).get_norm()
 
@@ -27,15 +28,24 @@ def run(args):
     else:
         model_path = "trained/" + settings.get_name() + ".pt"
 
-    engine = model_factory(training_settings, model_path=model_path)
-    engine = engine.to(device=settings.device)
+    model = model_factory(training_settings, model_path=model_path)
+    model = model.to(device=settings.device)
 
-    if not engine.valid:
+    if not model.valid:
         print("Failed loading the model, cannot continue")
         exit(-1)
 
     # Generate data all along the curve
-    polar_data = polar.generate(engine, [5, 25], 5, 0.1, training_settings["seq_length"], mean, std)
+    polar_data = polar.generate(
+        engine=model,
+        wind_range=[5, 25],
+        wind_step=5,
+        angular_step=0.1,
+        seq_len=training_settings["seq_length"],
+        mean=mean,
+        std=std,
+        inputs=training_settings["inputs"],
+    )
 
     # Plot all that stuff
     polar_plot(polar_data)
@@ -45,9 +55,23 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("Generate Polar plot from a trained model")
 
     parser.add_argument(
+        "--data_path",
+        action="store",
+        help="path to the reference data, to get reasonable input estimates",
+        default="data",
+    )
+
+    parser.add_argument(
         "--model_path",
         action="store",
         help="path to the .pt serialized model",
+    )
+
+    parser.add_argument(
+        "--settings_path",
+        action="store",
+        help="path to the json settings for the run",
+        default=None,
     )
 
     args = parser.parse_args()

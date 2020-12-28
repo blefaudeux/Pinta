@@ -3,10 +3,15 @@ from typing import List
 
 import numpy as np
 import torch
-from data_processing.training_set import TrainingSample, TrainingSet, TrainingSetBundle
+from torch.utils.data import DataLoader
+
+from data_processing.training_set import (
+    TrainingSample,
+    TrainingSet,
+    TrainingSetBundle,
+)
 from data_processing.transforms import Normalize
 from settings import device
-from torch.utils.data import DataLoader
 
 SpeedPolarPoint = namedtuple("SpeedPolarPoint", ["twa", "tws", "helm", "sog"])
 
@@ -19,6 +24,7 @@ def generate(
     seq_len: int,
     mean: TrainingSample,
     std: TrainingSample,
+    inputs: List[str],
 ):
     # Build an artificial TrainingSet
     # - one single measurement point per polar coord
@@ -30,13 +36,25 @@ def generate(
         std.to(device, torch.float),
     )
 
+    # Find wind speed and direction in the inputs, expected to be always here
+    i_wind_speed = inputs.index("tws")
+    i_wa_x = inputs.index("twa_x")
+    i_wa_y = inputs.index("twa_y")
+
     for w in range(wind_range[0], wind_range[1], wind_step):
         for a in np.arange(0.0, np.pi, angular_step):
             # Generate the sample we want for this point in the polar plot
             # Expected size for transform is [Time x Channels],
             # so we unsqueeze front
+
+            # Defaults are the mean values, then substitute wind speed and direction
+            sample_inputs = mean.inputs
+            sample_inputs[i_wind_speed] = w
+            sample_inputs[i_wa_x] = np.cos(a)
+            sample_inputs[i_wa_y] = np.sin(a)
+
             sample = TrainingSample(
-                inputs=torch.tensor([w, np.cos(a), np.sin(a), mean.inputs[3]], device=device).unsqueeze(0),
+                inputs=sample_inputs.unsqueeze(0),
                 outputs=torch.zeros(1, 1).to(device=device),
             )
 
