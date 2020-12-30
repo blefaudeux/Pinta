@@ -24,7 +24,7 @@
             ]
         ]
     ],
-    "model_type": "dilated_conv",
+    "model_type": "conv",
     "hidden_size": 256,
     "seq_length": 27,
     "training_ratio": 0.9,
@@ -32,11 +32,26 @@
     "val_batch_size": 1000,
     "epoch": 5,
     "learning_rate": 0.01,
-    "batch_norm_momentum": 0.1,
-    "mlp_inner_layers": 3,
-    "rnn_gru_layers": 2,
-    "conv_dilated_dropout": 0.25,
-    "log": "pinta_mini",
+    "dilated_conv": {
+        "dropout": 0.25
+    },
+    "mlp": {
+        "inner_layers": 3
+    },
+    "rnn": {
+        "gru_layers": 2,
+        "kernel_sizes": [
+            3,
+            3
+        ]
+    },
+    "conv": {
+        "kernel_sizes": [
+            3,
+            3
+        ]
+    },
+    "log": "pinta_imoca",
     "scheduler": "reduce_plateau",
     "amp": false
 }

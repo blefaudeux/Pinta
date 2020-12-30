@@ -61,9 +61,6 @@ _EXPAND_KEYS = {
     "lon": "longitude",
 }
 
-# dilated conv:
-# sequences: 27,81,243
-# filters [3, x3/4/5]
 
 _DEFAULTS = {
     "inputs": ["tws", "twa_x", "twa_y", "helm"],
@@ -77,10 +74,10 @@ _DEFAULTS = {
     "val_batch_size": 10 ** 2,
     "epoch": 30,
     "learning_rate": 5 * 1e-2,
-    "batch_norm_momentum": 0.1,
-    "mlp_inner_layers": 3,  # MLP Specific
-    "rnn_gru_layers": 2,  # RNN Specific
-    "conv_dilated_dropout": 0.25,  # Dilated conv specific
+    "dilated_conv": {"dropout": 0.25},
+    "mlp": {"inner_layers": 3},
+    "rnn": {"gru_layers": 2, "kernel_sizes": [3, 3]},
+    "conv": {"kernel_sizes": [3, 3]},
     "log": "pinta",
     "scheduler": Scheduler.REDUCE_PLATEAU,
     "amp": False,
