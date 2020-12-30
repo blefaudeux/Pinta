@@ -8,13 +8,29 @@
     "outputs": [
         "sog"
     ],
+    "transforms": [
+        [
+            "normalize",
+            []
+        ],
+        [
+            "random_flip",
+            [
+                [
+                    "helm",
+                    "twa_y"
+                ],
+                0.5
+            ]
+        ]
+    ],
     "model_type": "dilated_conv",
     "hidden_size": 128,
-    "seq_length": 27,
+    "seq_length": 81,
     "training_ratio": 0.9,
     "train_batch_size": 10000,
     "val_batch_size": 1000,
-    "epoch": 30,
+    "epoch": 10,
     "learning_rate": 0.001,
     "batch_norm_momentum": 0.1,
     "conv_dilated_dropout": 0.25,

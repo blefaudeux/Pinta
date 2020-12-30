@@ -2,7 +2,7 @@
 
 
 import logging
-from typing import List
+from typing import Any, Callable, Dict, List
 
 import torch
 from numpy.random import random_sample
@@ -12,6 +12,33 @@ from .training_set import TrainingSample
 LOG = logging.getLogger("Transforms")
 
 EPSILON = 1e-3
+
+
+def transform_factory(params: Dict[str, Any]) -> List[Callable]:
+    "Given the requested serialized transform settings, return the corresponding transform sequence"
+
+    transforms: List[Callable] = []
+
+    for transform_param in params["transforms"]:
+        transform_name = transform_param[0]
+        transform_args = transform_param[1]
+
+        def get_normalize():
+            return Normalize(*params["data_stats"])
+
+        def get_denormalize():
+            return Denormalize(*params["data_stats"])
+
+        def get_random_flip():
+            return RandomFlip(dimensions=[params["inputs"].index(p) for p in transform_args[0]], odds=transform_args[1])
+
+        transforms.append(
+            {"denormalize": get_denormalize, "normalize": get_normalize, "random_flip": get_random_flip}[
+                transform_name
+            ]()
+        )
+
+    return transforms
 
 
 class Denormalize:

@@ -3,7 +3,6 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import Callable, List
 
 import numpy as np
 import torch
@@ -12,7 +11,7 @@ import settings
 from data_processing import plot as plt
 from data_processing.load import load_folder, load_sets
 from data_processing.training_set import TrainingSetBundle
-from data_processing.transforms import Normalize, RandomFlip
+from data_processing.transforms import Normalize, transform_factory
 from model.model_factory import model_factory
 
 
@@ -33,18 +32,12 @@ def run(args):
     dataframes = load_folder(Path(args.data_path), zero_mean_helm=False, parallel_load=args.parallel)
     data_list = load_sets(dataframes, params)
     training_bundle = TrainingSetBundle(data_list)
-    mean, std = training_bundle.get_norm()
+    params["data_stats"] = training_bundle.get_norm()
 
     log.info("Loaded {} samples. Batch is {}".format(len(training_bundle), params["train_batch_size"]))
 
     # Data augmentation / preparation
-    transforms: List[Callable] = [
-        Normalize(
-            mean,
-            std,
-        ),
-        RandomFlip(dimensions=[params["inputs"].index("helm"), params["inputs"].index("twa_y")], odds=0.5),
-    ]
+    transforms = transform_factory(params)
 
     # Train a new model from scratch if need be
     if not dnn.valid:
@@ -65,12 +58,7 @@ def run(args):
     if args.evaluate or args.plot:
         tester, split_indices = training_bundle.get_sequential_dataloader(
             params["seq_length"],
-            transforms=[
-                Normalize(
-                    mean,
-                    std,
-                )
-            ],
+            transforms=[Normalize(*params["data_stats"])],
             batch_size=params["train_batch_size"],
         )
 
@@ -84,6 +72,7 @@ def run(args):
     # Compare visually the outputs
     if args.plot:
         log.info("---\nQuality evaluation:")
+        mean, std = params["data_stats"]
 
         # - de-whiten the data
         def denormalize(data: torch.Tensor):
