@@ -9,21 +9,16 @@
         "sog"
     ],
     "model_type": "dilated_conv",
-    "hidden_size": 256,
-    "seq_length": 81,
-    "conv_width": [
-        3,
-        3,
-        3,
-        3
-    ],
+    "hidden_size": 128,
+    "seq_length": 27,
     "training_ratio": 0.9,
-    "train_batch_size": 1000,
-    "val_batch_size": 100,
+    "train_batch_size": 10000,
+    "val_batch_size": 1000,
     "epoch": 30,
-    "learning_rate": 0.05,
+    "learning_rate": 0.001,
     "batch_norm_momentum": 0.1,
     "conv_dilated_dropout": 0.25,
+    "mlp_inner_layers": 3,
     "log": "pinta_mini",
     "scheduler": "reduce_plateau",
     "amp": false

@@ -12,7 +12,7 @@ import settings
 from data_processing import plot as plt
 from data_processing.load import load_folder, load_sets
 from data_processing.training_set import TrainingSetBundle
-from data_processing.transforms import Normalize
+from data_processing.transforms import Normalize, RandomFlip
 from model.model_factory import model_factory
 
 
@@ -43,7 +43,7 @@ def run(args):
             mean,
             std,
         ),
-        # RandomFlip(dimension=[params["inputs"].index("helm"), params["inputs"].index("twa_y")], odds=0.5),
+        RandomFlip(dimensions=[params["inputs"].index("helm"), params["inputs"].index("twa_y")], odds=0.5),
     ]
 
     # Train a new model from scratch if need be

@@ -1,14 +1,22 @@
-import logging
 from datetime import datetime
+from enum import Enum
 from typing import Any, Dict
 
 import settings
+from settings import ModelType
+
 from model.model_base import NN
 from model.model_cnn import Conv
 from model.model_dilated_conv import TemporalModel
 from model.model_mlp import Mlp
 from model.model_rnn import ConvRNN
-from settings import ModelType
+
+
+class SequenceLength(int, Enum):
+    "supported sequence lengths for the dilated convolutions architecture"
+    small = 27
+    medium = 81
+    large = 243
 
 
 def model_factory(params: Dict[str, Any], model_path: str) -> NN:
@@ -39,11 +47,17 @@ def model_factory(params: Dict[str, Any], model_path: str) -> NN:
         )
 
     def get_dilated_conv_model():
+        conv_widths = {
+            SequenceLength.small: [3, 3, 3],
+            SequenceLength.medium: [3, 3, 3, 3],
+            SequenceLength.large: [3, 3, 3, 3, 3],
+        }[SequenceLength(params["seq_length"])]
+
         return TemporalModel(
             logdir=log_directory,
             num_input_channels=len(params["inputs"]),
             num_output_channels=len(params["outputs"]),
-            filter_widths=params["conv_width"],
+            filter_widths=conv_widths,
             dropout=params["conv_dilated_dropout"],
             channels=params["hidden_size"],
             filename=model_path,

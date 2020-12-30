@@ -166,7 +166,7 @@ class NN(nn.Module):
                 self.summary_writer.add_scalar("Samples_per_sec", samples_per_sec, i_log)
                 self.summary_writer.add_scalar("LR", optimizer.param_groups[0]["lr"], i_log)
 
-                self.log.info(" {}/{},{} {:.1f} samples/sec \n".format(i_epoch, epochs, i_batch, samples_per_sec))
+                self.log.info(" {}/{},{} {:.1f}M samples/sec \n".format(i_epoch, epochs, i_batch, samples_per_sec/1e6))
 
                 i_log += 1
 
