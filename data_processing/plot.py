@@ -6,7 +6,6 @@ import numpy as np
 import plotly.graph_objs as go
 import plotly.offline as py
 from plotly import tools
-
 from synthetic.polar import SpeedPolarPoint
 
 """ Several helper functions to produce plots, pretty self-explanatory """
@@ -44,7 +43,13 @@ def polar_plot(data: List[SpeedPolarPoint], filename: str = "speed_polar"):
                 r=sogs,
                 theta=np.degrees(-twa_rad),
                 mode="lines",
-                marker=dict(size=6, color=sogs, colorscale="Portland", showscale=True, opacity=0.5,),
+                marker=dict(
+                    size=6,
+                    color=sogs,
+                    colorscale="Portland",
+                    showscale=True,
+                    opacity=0.5,
+                ),
                 text=labels,
                 name="Wind {}kt".format(tws),
             )
@@ -74,9 +79,12 @@ def speed_plot(df, decimation=2, filename="speed_polar_raw"):
     # - raw polar plot
     twa_rad = np.radians(df["twa"][::decimation])
     labels = [
-        "Wind: {}deg - {}kt ** Boat: {}kt ** Rudder: {}deg".format(wa, ws, b, r)
+        "Wind: {:.1f} deg - {:.1f}kt <br>Boat: {:.1f}kt <br>Heel: {:.1f}deg".format(wa, ws, b, r)
         for wa, ws, b, r in zip(
-            df["twa"][::decimation], df["tws"][::decimation], df["sog"][::decimation], df["helm"][::decimation],
+            df["twa"][::decimation],
+            df["tws"][::decimation],
+            df["sog"][::decimation],
+            df["heel"][::decimation],
         )
     ]
 
@@ -84,7 +92,13 @@ def speed_plot(df, decimation=2, filename="speed_polar_raw"):
         x=df["sog"][::decimation] * np.sin(twa_rad),
         y=df["sog"][::decimation] * np.cos(twa_rad),
         mode="markers",
-        marker=dict(size=6, color=df["tws"][::decimation], colorscale="Portland", showscale=True, opacity=0.5,),
+        marker=dict(
+            size=6,
+            color=df["tws"][::decimation],
+            colorscale="Portland",
+            showscale=True,
+            opacity=0.5,
+        ),
         text=labels,
     )
 
@@ -155,7 +169,10 @@ def multi_plot(df, fields_to_plot, title, filename="multi_plot", auto_open=False
         i += 1
 
     fig["layout"].update(
-        height=1000, width=1000, title=title if title is not None else "Placeholder", hovermode="closest",
+        height=1000,
+        width=1000,
+        title=title if title is not None else "Placeholder",
+        hovermode="closest",
     )
 
     py.plot(fig, filename=handle_save(filename), auto_open=auto_open)
@@ -174,8 +191,15 @@ def rudder_plot(df, filename="rudder_histogram"):
 def scatter_plot(data, axes, title=None):
     trace = go.Scattergl(x=data[0], y=data[1], mode="markers")
 
-    layout = go.Layout(title=title, hovermode="closest", xaxis=dict(title=axes[0]), yaxis=dict(title=axes[1]),)
+    layout = go.Layout(
+        title=title,
+        hovermode="closest",
+        xaxis=dict(title=axes[0]),
+        yaxis=dict(title=axes[1]),
+    )
 
     py.plot(
-        go.Figure(data=[trace], layout=layout), filename=handle_save(title), auto_open=False,
+        go.Figure(data=[trace], layout=layout),
+        filename=handle_save(title),
+        auto_open=False,
     )

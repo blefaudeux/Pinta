@@ -41,6 +41,13 @@ def transform_factory(params: Dict[str, Any]) -> List[Callable]:
     return transforms
 
 
+"""
+.. warning:
+    if you add a transform down below (aka data augmentation),
+    make sure that it's properly handled by the transform factory just above
+"""
+
+
 class Denormalize:
     def __init__(self, mean: TrainingSample, std: TrainingSample):
         """

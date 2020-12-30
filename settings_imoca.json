@@ -8,6 +8,22 @@
     "outputs": [
         "sog"
     ],
+    "transforms": [
+        [
+            "normalize",
+            []
+        ],
+        [
+            "random_flip",
+            [
+                [
+                    "heel",
+                    "twa_y"
+                ],
+                0.5
+            ]
+        ]
+    ],
     "model_type": "dilated_conv",
     "hidden_size": 256,
     "seq_length": 27,
@@ -15,7 +31,7 @@
     "train_batch_size": 10000,
     "val_batch_size": 1000,
     "epoch": 5,
-    "learning_rate": 0.05,
+    "learning_rate": 0.01,
     "batch_norm_momentum": 0.1,
     "mlp_inner_layers": 3,
     "rnn_gru_layers": 2,
