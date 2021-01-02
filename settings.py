@@ -105,8 +105,6 @@ def get_name(params: Dict[str, Any] = _DEFAULTS):
         + str(params["learning_rate"])
         + "_ep_"
         + str(params["epoch"])
-        + "_bnm_"
-        + str(params["batch_norm_momentum"])
         + "_amp_"
         + str(_amp)
     )

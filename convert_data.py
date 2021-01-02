@@ -27,7 +27,7 @@ def process_file(filepath: Path, args: argparse.Namespace, extra_data: Optional[
 
     # Fill in the gaps in data
     # Drop the collumns which are completely empty
-    df = df.ffill().bfill().dropna(axis=1)
+    df = df.bfill().ffill().dropna(axis=1)  # interpolate() ?
     save_json(df, Path(args.data_export_path) / Path(filepath.stem + ".json"))
     LOG.info(f"File {filepath.stem } processed")
 
@@ -63,7 +63,9 @@ def handle_directory(args: argparse.Namespace):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Convert in between data formats. Handles NMEA and some CSVs")
     parser.add_argument(
-        "--data_ingestion_path", action="store", help="Full path of the root folder where the original data is",
+        "--data_ingestion_path",
+        action="store",
+        help="Full path of the root folder where the original data is",
     )
 
     parser.add_argument("--data_export_path", action="store", help="Where to save the normalized data")
