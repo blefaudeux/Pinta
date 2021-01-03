@@ -23,12 +23,7 @@ def run(args):
     datasplits = load_sets(data, training_settings)
     mean, std = TrainingSetBundle(datasplits).get_norm()
 
-    if args.model_path:
-        model_path = args.model_path
-    else:
-        model_path = "trained/" + settings.get_name() + ".pt"
-
-    model = model_factory(training_settings, model_path=model_path)
+    model = model_factory(training_settings, model_path=args.model_path)
     model = model.to(device=settings.device)
 
     if not model.valid:
@@ -62,16 +57,11 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--model_path",
-        action="store",
-        help="path to the .pt serialized model",
+        "--model_path", action="store", help="path to the .pt serialized model", default=None, required=True
     )
 
     parser.add_argument(
-        "--settings_path",
-        action="store",
-        help="path to the json settings for the run",
-        default=None,
+        "--settings_path", action="store", help="path to the json settings for the run", default=None, required=True
     )
 
     args = parser.parse_args()

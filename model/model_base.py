@@ -78,7 +78,7 @@ class NN(nn.Module):
         predictions_tensor = torch.cat(predictions).squeeze()
 
         # De-normalize the output
-        if mean and std:
+        if mean is not None and std is not None:
             return torch.add(torch.mul(predictions_tensor, std.cpu()), mean.cpu())
 
         return predictions_tensor
@@ -166,7 +166,9 @@ class NN(nn.Module):
                 self.summary_writer.add_scalar("Samples_per_sec", samples_per_sec, i_log)
                 self.summary_writer.add_scalar("LR", optimizer.param_groups[0]["lr"], i_log)
 
-                self.log.info(" {}/{},{} {:.1f}k samples/sec \n".format(i_epoch, epochs, i_batch, samples_per_sec/1e3))
+                self.log.info(
+                    " {}/{},{} {:.1f}k samples/sec \n".format(i_epoch, epochs, i_batch, samples_per_sec / 1e3)
+                )
 
                 i_log += 1
 

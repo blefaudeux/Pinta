@@ -1,5 +1,6 @@
 import json
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict
 
 import torch
@@ -90,7 +91,7 @@ def get_default_params():
     return _DEFAULTS
 
 
-def get_name(params: Dict[str, Any] = _DEFAULTS):
+def get_name(params: Dict[str, Any]):
     _amp = _amp_available and device.type == torch.device("cuda").type and params["amp"]
 
     return (
@@ -111,10 +112,13 @@ def get_name(params: Dict[str, Any] = _DEFAULTS):
 
 
 def save(filename, settings):
-    with open(filename, "w") as file:
+    filepath = Path(filename).absolute()
+    with open(filepath, "w") as file:
         json.dump(settings, file)
 
 
 def load(filename):
-    with open(filename, "r") as file:
+    filepath = Path(filename).absolute()
+    print(f"opening {filepath}")
+    with open(filepath, "r") as file:
         return json.load(file)

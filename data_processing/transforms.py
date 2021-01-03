@@ -95,7 +95,7 @@ class Normalize:
         self.mean = mean
         self.std = std
 
-        LOG.info("Initializing Normalize transform with mean\n{} and std\n{}".format(mean, std))
+        LOG.info("Initializing Normalize transform with mean\n{}\nand std\n{}".format(mean, std))
 
         # Catch noise-free data
         if torch.min(self.std.inputs).item() < EPSILON:

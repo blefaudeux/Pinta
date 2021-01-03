@@ -59,9 +59,7 @@ def polar_plot(data: List[SpeedPolarPoint], filename: str = "speed_polar"):
     layout = go.Layout(
         title="Speed vs True Wind",
         orientation=90,
-        autosize=False,
-        width=800,
-        height=800,
+        autosize=True,
         hovermode="closest",
         plot_bgcolor="rgb(245, 245, 245)",
         polar={"angularaxis": {"rotation": 90}},
@@ -116,9 +114,7 @@ def speed_plot(df, decimation=2, filename="speed_polar_raw"):
     layout = go.Layout(
         title="Speed vs True Wind",
         orientation=90,
-        autosize=False,
-        width=800,
-        height=800,
+        autosize=True,
         hovermode="closest",
         plot_bgcolor="rgb(245, 245, 245)",
     )
@@ -134,7 +130,7 @@ def speed_plot(df, decimation=2, filename="speed_polar_raw"):
 
 
 # Plot any traces in parallel
-def parallel_plot(data_list: List[Any], legend_list: List[str], title=None):
+def parallel_plot(data_list: List[Any], legend_list: List[str], title=None, auto_open: bool = False):
     traces = []
 
     for data, name in zip(data_list, legend_list):
@@ -146,7 +142,7 @@ def parallel_plot(data_list: List[Any], legend_list: List[str], title=None):
     layout = go.Layout(title=title if title is not None else "parallel_plot", hovermode="closest")
 
     fig = go.Figure(data=traces, layout=layout)
-    py.plot(fig, filename=handle_save(title), auto_open=False)
+    py.plot(fig, filename=handle_save(title), auto_open=auto_open)
 
 
 def multi_plot(df, fields_to_plot, title, filename="multi_plot", auto_open=False):

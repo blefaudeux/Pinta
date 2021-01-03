@@ -62,52 +62,58 @@ def run(args):
             batch_size=params["train_batch_size"],
         )
 
-    # Check the training
-    if args.evaluate:
-        log.info("Evaluating the model")
+        # Check the training
+        if args.evaluate:
+            log.info("Evaluating the model")
 
-        losses = dnn.evaluate(tester, params)
-        log.info("Final test Score: %.2f RMSE" % np.sqrt(sum(losses) / len(losses)))
+            losses = dnn.evaluate(tester, params)
+            log.info("Final test Score: %.2f RMSE" % np.sqrt(sum(losses) / len(losses)))
 
-    # Compare visually the outputs
-    if args.plot:
-        log.info("---\nQuality evaluation:")
-        mean, std = params["data_stats"]
+        # Compare visually the outputs
+        if args.plot:
+            log.info("---\nQuality evaluation:")
+            mean, std = params["data_stats"]
 
-        # - de-whiten the data
-        def denormalize(data: torch.Tensor):
-            return torch.add(
-                torch.mul(data, std.outputs),
-                mean.outputs,
+            # - prediction: go through the net, split the output sequence to re-align,
+            prediction = (
+                dnn.predict(
+                    tester,
+                    mean=mean.outputs,
+                    std=std.outputs,
+                )
+                .detach()
+                .cpu()
+                .numpy()
             )
 
-        # - prediction: go through the net, split the output sequence to re-align,
-        prediction = (
-            dnn.predict(
-                tester,
-                mean=mean.outputs,
-                std=std.outputs,
+            # - de-whiten the data
+            def denormalize(data: torch.Tensor):
+                return torch.add(
+                    torch.mul(data, std.outputs),
+                    mean.outputs,
+                )
+
+            reference = torch.cat([denormalize(batch.outputs) for batch in tester]).detach().cpu().numpy()
+
+            # - limit the display to fewer samples
+            SAMPLES = 100
+            reference = reference[:SAMPLES]
+            prediction = prediction[:SAMPLES]
+
+            # - split back to restore the individual datasets
+            if len(split_indices) > 1:
+                prediction = np.split(prediction, split_indices)
+                reference = np.split(reference, split_indices)
+            else:
+                prediction = [prediction]
+                reference = [reference]
+
+            plt.parallel_plot(
+                reference + prediction,
+                [f"Ground truth {i}" for i in range(len(reference))] + [f"Conv {i}" for i in range(len(prediction))],
+                title="Network predictions vs ground truth",
+                auto_open=True,
             )
-            .detach()
-            .cpu()
-            .numpy()
-        )
-
-        reference = torch.cat([denormalize(batch.outputs) for batch in tester]).detach().cpu().numpy()
-
-        # - split back to restore the individual datasets
-        if len(split_indices) > 1:
-            prediction = np.split(prediction, split_indices)
-            reference = np.split(reference, split_indices)
-        else:
-            prediction = [prediction]
-            reference = [reference]
-
-        plt.parallel_plot(
-            reference + prediction,
-            [f"Ground truth {i}" for i in range(len(reference))] + [f"Conv {i}" for i in range(len(prediction))],
-            "Network predictions vs ground truth",
-        )
 
     log.info("--Done")
 

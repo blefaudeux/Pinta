@@ -32,7 +32,7 @@ def model_factory(params: Dict[str, Any], model_path: str) -> NN:
         NN : inference model
     """
 
-    log_directory = "logs/" + settings.get_name() + "_" + str(datetime.now())
+    log_directory = "logs/" + settings.get_name(params) + "_" + str(datetime.now())
     model_type = ModelType(params["model_type"])  # will assert if unknown type
 
     def get_conv_model():

@@ -218,11 +218,10 @@ class TrainingSetBundle:
         self, seq_len: int, transforms: List[Callable], batch_size: int = 8000
     ) -> Tuple[DataLoader, List[int]]:
         """
-        Create two PyTorch DataLoaders out of this dataset, randomly splitting
-        the data in between training and testing
+        Create a sequential PyTorch DataLoader out of this dataset,
+        along with the indices which make it possible to align the sequences
         """
-        # Create a consolidated dataset on the fly,
-        # with the appropriate sequence cuts
+
         training_set, split_indices = self.get_training_set(seq_len)
         training_set.set_transforms(transforms)
 
