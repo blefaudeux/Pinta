@@ -4,8 +4,7 @@ from typing import List
 import numpy as np
 import torch
 import torch.nn as nn
-
-from model.model_base import NN
+from pinta.model.model_base import NN
 
 LOG = logging.getLogger("ConvRNN")
 
@@ -43,9 +42,7 @@ class ConvRNN(NN):
 
         # GRU / LSTM layers
         # Requires [batch, seq, inputs]
-        self.gru = nn.GRU(
-            hidden_size, hidden_size, n_gru_layers, dropout=0.01, batch_first=True
-        )
+        self.gru = nn.GRU(hidden_size, hidden_size, n_gru_layers, dropout=0.01, batch_first=True)
 
         # Ends with a fully connected layer
         self.out = nn.Linear(hidden_size, self.output_size)

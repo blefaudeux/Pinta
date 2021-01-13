@@ -3,8 +3,7 @@ from typing import List, Tuple
 
 import torch
 import torch.nn as nn
-
-from model.model_base import NN
+from pinta.model.model_base import NN
 
 
 class Mlp(NN):
@@ -29,9 +28,7 @@ class Mlp(NN):
         module_list.append(("relu_0", nn.ReLU()))
 
         for i in range(number_hidden_layers):
-            module_list.append(
-                (f"inner_layer_{i}", nn.Linear(hidden_size, hidden_size))
-            )
+            module_list.append((f"inner_layer_{i}", nn.Linear(hidden_size, hidden_size)))
             module_list.append((f"relu_{i+1}", nn.ReLU()))
 
         module_list.append(("output_layer", nn.Linear(hidden_size, output_size)))

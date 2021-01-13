@@ -6,8 +6,7 @@ from typing import Any, Callable, Dict, List
 
 import torch
 from numpy.random import random_sample
-
-from .training_set import TrainingSample
+from pinta.data_processing.training_set import TrainingSample
 
 LOG = logging.getLogger("Transforms")
 

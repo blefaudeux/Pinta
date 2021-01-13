@@ -1,10 +1,10 @@
 # Pinta Pilot
 Pilot, machine learning, fitering and physics experiment
 
-## Requirements
+## Requirements & install
 Everything is in python3. You can use *pip* to install dependencies, or your favorite package manager. One option is simply (preferably from a virtual environment)
 
-`pip install -r requirements.txt`
+`pip install -e .`
 
 ## Data
 ### Format

@@ -8,7 +8,7 @@ from typing import Callable, List, Tuple
 import numpy as np
 import torch
 import torchvision
-from settings import device
+from pinta.settings import device
 from torch.utils.data import DataLoader, Dataset, random_split
 
 TrainingSample_base = namedtuple("TrainingSample", ["inputs", "outputs"])

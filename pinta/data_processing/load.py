@@ -7,9 +7,8 @@ from typing import List
 
 import numpy as np
 from pandas import DataFrame
-
-from data_processing.training_set import TrainingSet
-from data_processing.utils import load_json
+from pinta.data_processing.training_set import TrainingSet
+from pinta.data_processing.utils import load_json
 
 LOG = logging.getLogger("DataLoad")
 

@@ -3,14 +3,13 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict
 
-import settings
-from settings import ModelType
-
-from model.model_base import NN
-from model.model_cnn import Conv
-from model.model_dilated_conv import TemporalModel
-from model.model_mlp import Mlp
-from model.model_rnn import ConvRNN
+import pinta.settings as settings
+from pinta.model.model_base import NN
+from pinta.model.model_cnn import Conv
+from pinta.model.model_dilated_conv import TemporalModel
+from pinta.model.model_mlp import Mlp
+from pinta.model.model_rnn import ConvRNN
+from pinta.settings import ModelType
 
 
 class SequenceLength(int, Enum):

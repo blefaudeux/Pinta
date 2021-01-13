@@ -3,12 +3,13 @@
 import argparse
 from pathlib import Path
 
-import settings
-from data_processing.load import load_folder, load_sets
-from data_processing.plot import polar_plot
-from data_processing.training_set import TrainingSetBundle
-from model.model_factory import model_factory
-from synthetic import polar
+import pinta.settings
+
+from pinta.data_processing.load import load_folder, load_sets
+from pinta.data_processing.plot import polar_plot
+from pinta.data_processing.training_set import TrainingSetBundle
+from pinta.model.model_factory import model_factory
+from pinta.synthetic import polar
 
 
 def run(args):

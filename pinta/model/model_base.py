@@ -12,8 +12,8 @@ from typing import Any, Dict, Union
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from settings import Scheduler, _amp_available
-from settings import device as _device
+from pinta.settings import Scheduler, _amp_available
+from pinta.settings import device as _device
 from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter

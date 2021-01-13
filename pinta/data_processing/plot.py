@@ -5,8 +5,8 @@ from typing import Any, Dict, List
 import numpy as np
 import plotly.graph_objs as go
 import plotly.offline as py
+from pinta.synthetic.polar import SpeedPolarPoint
 from plotly import tools
-from synthetic.polar import SpeedPolarPoint
 
 """ Several helper functions to produce plots, pretty self-explanatory """
 

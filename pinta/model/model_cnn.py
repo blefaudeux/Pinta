@@ -3,8 +3,7 @@ from typing import List
 import numpy as np
 import torch
 import torch.nn as nn
-
-from model.model_base import NN
+from pinta.model.model_base import NN
 
 
 class Conv(NN):

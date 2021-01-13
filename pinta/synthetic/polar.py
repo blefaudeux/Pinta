@@ -3,9 +3,9 @@ from typing import List
 
 import numpy as np
 import torch
-from data_processing.training_set import TrainingSample, TrainingSet, TrainingSetBundle
-from data_processing.transforms import Normalize, SinglePrecision
-from settings import device
+from pinta.data_processing.training_set import TrainingSample, TrainingSet, TrainingSetBundle
+from pinta.data_processing.transforms import Normalize, SinglePrecision
+from pinta.settings import device
 from torch.utils.data import DataLoader
 
 SpeedPolarPoint = namedtuple("SpeedPolarPoint", ["twa", "tws", "helm", "sog"])

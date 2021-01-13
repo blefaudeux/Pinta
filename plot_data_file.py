@@ -3,8 +3,8 @@
 import argparse
 from pathlib import Path
 
-from data_processing.load import load
-from data_processing.plot import multi_plot, speed_plot
+from pinta.data_processing.load import load
+from pinta.data_processing.plot import multi_plot, speed_plot
 
 
 def run(args):

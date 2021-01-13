@@ -7,12 +7,12 @@ from pathlib import Path
 import numpy as np
 import torch
 
-import settings
-from data_processing import plot as plt
-from data_processing.load import load_folder, load_sets
-from data_processing.training_set import TrainingSetBundle
-from data_processing.transforms import Normalize, SinglePrecision, transform_factory
-from model.model_factory import model_factory
+import pinta.settings as settings
+from pinta.data_processing import plot as plt
+from pinta.data_processing.load import load_folder, load_sets
+from pinta.data_processing.training_set import TrainingSetBundle
+from pinta.data_processing.transforms import Normalize, SinglePrecision, transform_factory
+from pinta.model.model_factory import model_factory
 
 
 def run(args):
