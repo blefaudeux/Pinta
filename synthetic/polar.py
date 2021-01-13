@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 import torch
 from data_processing.training_set import TrainingSample, TrainingSet, TrainingSetBundle
-from data_processing.transforms import Normalize
+from data_processing.transforms import Normalize, SinglePrecision
 from settings import device
 from torch.utils.data import DataLoader
 
@@ -26,8 +26,8 @@ def generate(
     # (repeat the same inputs for the whole sequence)
     datasets = []
 
-    mean = mean.to(device, torch.float)
-    std = std.to(device, torch.float)
+    mean = mean.to(device)
+    std = std.to(device)
 
     normalizer = Normalize(
         mean,
@@ -45,8 +45,8 @@ def generate(
             # Expected size for transform is [Time x Channels],
             # so we unsqueeze front
 
-            # Defaults are the mean values, then substitute wind speed and direction
-            sample_inputs = mean.inputs
+            # Default to zero, then substitute wind speed and direction
+            sample_inputs = torch.zeros_like(mean.inputs)
             sample_inputs[i_wind_speed] = w
             sample_inputs[i_wa_x] = np.cos(a)
             sample_inputs[i_wa_y] = np.sin(a)
@@ -64,7 +64,9 @@ def generate(
     dataset_bundle = TrainingSetBundle(datasets)
 
     # - get a dataloader from the ad-hoc dataset
-    dataloader = DataLoader(dataset_bundle.get_training_set(seq_len)[0], batch_size=100, shuffle=False)
+    training_set, _ = dataset_bundle.get_training_set(seq_len)
+    training_set.set_transforms([SinglePrecision()])  # tensors from numpy can be doubles
+    dataloader = DataLoader(training_set, batch_size=100, shuffle=False)
 
     # FW pass in the DNN.
     # Passing in the mean and std allows for de-normalization on the way out

@@ -33,9 +33,13 @@ def transform_factory(params: Dict[str, Any]) -> List[Callable]:
             return RandomFlip(dimensions=[params["inputs"].index(p) for p in transform_args[0]], odds=transform_args[1])
 
         transforms.append(
-            {"denormalize": get_denormalize, "normalize": get_normalize, "random_flip": get_random_flip}[
-                transform_name
-            ]()
+            {
+                "denormalize": get_denormalize,
+                "normalize": get_normalize,
+                "random_flip": get_random_flip,
+                "half_precision": HalfPrecision,
+                "single_precision": SinglePrecision,
+            }[transform_name]()
         )
 
     return transforms
@@ -152,3 +156,25 @@ class RandomFlip:
             return TrainingSample(inputs=inputs, outputs=sample.outputs)
 
         return sample
+
+
+class SinglePrecision:
+    def __init__(self):
+        """
+        Move the sample to fp32. Noop if it's already of this type
+        """
+        pass
+
+    def __call__(self, sample: TrainingSample):
+        return TrainingSample(inputs=sample.inputs.float(), outputs=sample.outputs.float())
+
+
+class HalfPrecision:
+    def __init__(self):
+        """
+        Move the sample to fp16. Noop if it's already of this type
+        """
+        pass
+
+    def __call__(self, sample: TrainingSample):
+        return TrainingSample(inputs=sample.inputs.half(), outputs=sample.outputs.half())

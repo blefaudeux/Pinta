@@ -11,7 +11,7 @@ import settings
 from data_processing import plot as plt
 from data_processing.load import load_folder, load_sets
 from data_processing.training_set import TrainingSetBundle
-from data_processing.transforms import Normalize, transform_factory
+from data_processing.transforms import Normalize, SinglePrecision, transform_factory
 from model.model_factory import model_factory
 
 
@@ -58,7 +58,7 @@ def run(args):
     if args.evaluate or args.plot:
         tester, split_indices = training_bundle.get_sequential_dataloader(
             params["seq_length"],
-            transforms=[Normalize(*params["data_stats"])],
+            transforms=[Normalize(*params["data_stats"]), SinglePrecision()],
             batch_size=params["train_batch_size"],
         )
 
@@ -87,6 +87,9 @@ def run(args):
             )
 
             # - de-whiten the data
+            std = std.to(settings.device)
+            mean = mean.to(settings.device)
+
             def denormalize(data: torch.Tensor):
                 return torch.add(
                     torch.mul(data, std.outputs),
@@ -96,7 +99,7 @@ def run(args):
             reference = torch.cat([denormalize(batch.outputs) for batch in tester]).detach().cpu().numpy()
 
             # - limit the display to fewer samples
-            SAMPLES = 100
+            SAMPLES = 10000
             reference = reference[:SAMPLES]
             prediction = prediction[:SAMPLES]
 
@@ -110,7 +113,8 @@ def run(args):
 
             plt.parallel_plot(
                 reference + prediction,
-                [f"Ground truth {i}" for i in range(len(reference))] + [f"Conv {i}" for i in range(len(prediction))],
+                [f"Ground truth {i}" for i in range(len(reference))]
+                + [f"Prediction {i}" for i in range(len(prediction))],
                 title="Network predictions vs ground truth",
                 auto_open=True,
             )

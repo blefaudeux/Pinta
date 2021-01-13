@@ -20,8 +20,8 @@ class TrainingSample(TrainingSample_base):
     and matching in between inputs and outputs are always respected
     """
 
-    def to(self, device: torch.device = None, dtype: torch.dtype = None) -> TrainingSample:
-        return TrainingSample(inputs=self.inputs.to(device, dtype), outputs=self.outputs.to(device, dtype))
+    def to(self, device: torch.device = None) -> TrainingSample:
+        return TrainingSample(inputs=self.inputs.to(device), outputs=self.outputs.to(device))
 
     def __str__(self):
         return f"inputs: {self.inputs.cpu().tolist()}\noutputs: {self.outputs.cpu().tolist()}"
@@ -136,7 +136,6 @@ class TrainingSetBundle:
 
         # To Torch tensor and mean
         mean = TrainingSample(torch.stack(mean_inputs).mean(dim=0), torch.stack(mean_outputs).mean(dim=0))
-
         std = TrainingSample(torch.stack(std_inputs).mean(dim=0), torch.stack(std_outputs).mean(dim=0))
 
         return mean, std
@@ -187,11 +186,9 @@ class TrainingSetBundle:
 
         def collate(samples: List[TrainingSample]):
             return TrainingSample(
-                inputs=torch.stack([t.inputs for t in samples]).squeeze(),
-                outputs=torch.stack([t.outputs for t in samples]).squeeze(),
+                inputs=torch.stack([t.inputs for t in samples]).squeeze().to(device),
+                outputs=torch.stack([t.outputs for t in samples]).squeeze().to(device),
             )
-
-        pin_memory = True if device.type == torch.device("cuda").type else False
 
         return (
             DataLoader(
@@ -200,8 +197,6 @@ class TrainingSetBundle:
                 batch_size=train_batch_size,
                 shuffle=shuffle,
                 drop_last=True,
-                num_workers=2,
-                pin_memory=pin_memory,
             ),
             DataLoader(
                 tester,
@@ -209,8 +204,6 @@ class TrainingSetBundle:
                 batch_size=val_batch_size,
                 shuffle=shuffle,
                 drop_last=True,
-                num_workers=2,
-                pin_memory=pin_memory,
             ),
         )
 
@@ -227,19 +220,15 @@ class TrainingSetBundle:
 
         def collate(samples: List[TrainingSample]):
             return TrainingSample(
-                inputs=torch.stack([t.inputs for t in samples]).squeeze(),
-                outputs=torch.stack([t.outputs for t in samples]).squeeze(),
+                inputs=torch.stack([t.inputs for t in samples]).squeeze().to(device),
+                outputs=torch.stack([t.outputs for t in samples]).squeeze().to(device),
             )
-
-        pin_memory = True if device.type == torch.device("cuda").type else False
 
         return (
             DataLoader(
                 training_set,
                 collate_fn=collate,
                 batch_size=batch_size,
-                num_workers=2,
-                pin_memory=pin_memory,
             ),
             split_indices,
         )

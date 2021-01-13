@@ -14,7 +14,6 @@ import torch.nn as nn
 import torch.optim as optim
 from settings import Scheduler, _amp_available
 from settings import device as _device
-from settings import dtype as _dtype
 from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -55,7 +54,7 @@ class NN(nn.Module):
         losses = []
 
         for seq in dataloader:
-            seq = seq.to(_device, _dtype)
+            seq = seq.to(_device)
 
             out, _ = self(seq.inputs)
             loss = criterion(out, seq.outputs.view(out.size()[0], -1))
@@ -73,7 +72,7 @@ class NN(nn.Module):
         # Move the predictions to cpu() on the fly to save on GPU memory
         predictions = []
         for seq in dataloader:
-            predictions.append(self(seq.inputs.to(_device, _dtype))[0].detach().cpu())
+            predictions.append(self(seq.inputs.to(_device))[0].detach().cpu())
             del seq
         predictions_tensor = torch.cat(predictions).squeeze()
 
@@ -124,7 +123,6 @@ class NN(nn.Module):
 
                 # Eval computation on the training data
                 optimizer.zero_grad()
-                train_batch = train_batch.to(_device, _dtype)
 
                 # FW pass, optionally with mixed precision
                 with context:
@@ -147,7 +145,6 @@ class NN(nn.Module):
 
                 # Loss on the validation data
                 def closure_validation(data=validation_batch):
-                    data = data.to(_device, _dtype)
                     pred, _ = self(data.inputs)
                     loss = criterion(pred.squeeze(), data.outputs.squeeze()).detach()
 

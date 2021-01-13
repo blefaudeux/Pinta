@@ -6,7 +6,7 @@ from typing import Any, Dict
 import torch
 
 try:
-    from torch.cuda.amp import autocast
+    from torch.cuda.amp import autocast  # noqa
 
     _amp_available = True
 except ImportError:
@@ -14,7 +14,6 @@ except ImportError:
 
 # Select our target at runtime
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-dtype = torch.float32
 
 
 if torch.cuda.is_available():

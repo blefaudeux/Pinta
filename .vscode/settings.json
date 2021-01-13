@@ -15,6 +15,7 @@
         "--generate-members"
     ],
     "python.linting.mypyEnabled": true,
+    "python.linting.lintOnSave": true,
     "python.linting.flake8Enabled": true,
     "python.linting.flake8Args": [
         "--max-line-length",
@@ -24,5 +25,6 @@
     ],
     "editor.trimAutoWhitespace": true,
     "files.trimFinalNewlines": true,
-    "files.trimTrailingWhitespace": true
+    "files.trimTrailingWhitespace": true,
+    "python.pythonPath": "venv/bin/python"
 }

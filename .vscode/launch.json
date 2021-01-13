@@ -20,7 +20,10 @@
             "cwd": "${workspaceRoot}",
             "args": [
                 "--data_path",
-                "~/Dropbox/Pinta/convert"
+                "data",
+                "--settings_path",
+                "settings_mini.json",
+                "--amp"
             ]
         },
         {
