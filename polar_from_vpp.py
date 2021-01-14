@@ -3,8 +3,7 @@
 import argparse
 from pathlib import Path
 
-import pinta.settings
-
+import pinta.settings as settings
 from pinta.data_processing.load import load_folder, load_sets
 from pinta.data_processing.plot import polar_plot
 from pinta.data_processing.training_set import TrainingSetBundle

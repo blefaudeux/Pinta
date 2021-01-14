@@ -90,7 +90,7 @@ class NN(nn.Module):
         epochs: int = 50,
     ):
         # Setup the training loop
-        optimizer = optim.Adam(self.parameters(), lr=settings["learning_rate"], amsgrad=True)
+        optimizer = optim.AdamW(self.parameters(), lr=settings["learning_rate"], amsgrad=True)
 
         scheduler: Union[ReduceLROnPlateau, CosineAnnealingLR] = (
             ReduceLROnPlateau(optimizer=optimizer, patience=2)
