@@ -70,7 +70,7 @@ class TrainingSet(Dataset):
         assert inputs.shape[0] == outputs.shape[0], "Dimensions mismatch"
 
         self.inputs = torch.cat((self.inputs, inputs), 0)
-        self.outputs = torch.cat((self.inputs, inputs), 0)
+        self.outputs = torch.cat((self.outputs, outputs), 0)
 
     def __getitem__(self, index):
         return self.transform(TrainingSample(inputs=self.inputs[index, :, :], outputs=self.outputs[index, :]))

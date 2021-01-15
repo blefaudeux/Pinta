@@ -25,12 +25,12 @@
                 0.5
             ]
         ],
-        [
-            "offset_inputs_outputs",
-            [
-                10
-            ]
-        ],
+        // [
+        //     "offset_inputs_outputs",
+        //     [
+        //         10
+        //     ]
+        // ],
         [
             "single_precision",
             []

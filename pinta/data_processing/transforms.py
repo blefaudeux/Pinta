@@ -193,4 +193,10 @@ class OffsetInputsOutputs:
         self.offset = offset_samples
 
     def __call__(self, sample: TrainingSample):
-        return TrainingSample(inputs=sample.inputs[:, :, : -self.offset], outputs=sample.outputs[:, :, self.offset :])
+        # FIXME not very elegant, there must be a cleaner, branchless way
+        if len(sample.inputs.shape) > 1:
+            return TrainingSample(
+                inputs=sample.inputs[:, :, : -self.offset], outputs=sample.outputs[:, :, self.offset :]
+            )
+
+        return TrainingSample(inputs=sample.inputs[: -self.offset], outputs=sample.outputs[self.offset :])
