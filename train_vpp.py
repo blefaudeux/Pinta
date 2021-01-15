@@ -36,13 +36,20 @@ def run(args):
 
     log.info("Loaded {} samples. Batch is {}".format(len(training_bundle), params["train_batch_size"]))
 
-    # Data augmentation / preparation
+    # Data augmentation / preparation. Adjust for a possible time offset requirement
     transforms = transform_factory(params)
+    offset_transform = list(filter(lambda t: t[0] == "offset_inputs_outputs", params["transforms"]))
+
+    if len(offset_transform) > 0:
+        offset = offset_transform[0][1][0]
+        log.info(
+            "Offset transform rquired, adjusting the raw sequence length to {}".format(params["seq_length"] + offset)
+        )
+        params["seq_length"] += offset
 
     # Train a new model from scratch if need be
     if not dnn.valid:
         log.info("Training a new model, this can take a while")
-
         trainer, valider = training_bundle.get_dataloaders(
             params["training_ratio"],
             params["seq_length"],

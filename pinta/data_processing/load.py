@@ -3,7 +3,7 @@ import multiprocessing
 import os
 from itertools import repeat
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 from pandas import DataFrame
@@ -21,7 +21,7 @@ def _angle_split(data):
 
 def load(filepath: Path, zero_mean_helm: bool = False) -> DataFrame:
     LOG.info("Loading %s" % filepath)
-    data_frame = load_json(filepath, skip_zeros=True)
+    data_frame = load_json(filepath, skip_zeros=True).astype('float32')
 
     # Fix a possible offset in the rudder angle sensor
     if zero_mean_helm:
@@ -55,28 +55,32 @@ def to_training_set(raw_data, settings):
     cat_out = settings["outputs"]
 
     # Move samples to first dimension, makes more sense if output is 1d
-    inputs = np.array([raw_data[cat].values for cat in cat_in]).transpose()
-    outputs = np.array([raw_data[cat].values for cat in cat_out]).transpose()
+    inputs = np.array([raw_data[cat].values for cat in cat_in], dtype=np.float).transpose()
+    outputs = np.array([raw_data[cat].values for cat in cat_out], dtype=np.float).transpose()
 
     return TrainingSet.from_numpy(inputs, outputs)
 
 
-def split(raw_data, settings):
+def split(raw_data: DataFrame, settings: Dict[str, Any]) -> Tuple[TrainingSet, TrainingSet]:
+    """
+    Given a dataframe, split in between train and validation, requested inputs and outputs, and offset the samples
+    if time prediction is involved
+    """
+
     cat_in = settings["inputs"]
     cat_out = settings["outputs"]
     ratio = settings["training_ratio"]
-
     train_size = int(len(raw_data) * ratio)
-    LOG.info("Training set is {} samples long".format(train_size))
+    LOG.info("Training set is {} samples long. Selecting inputs: {} and outputs {}".format(train_size, cat_in, cat_out))
 
     train, test = raw_data.iloc[:train_size], raw_data.iloc[train_size : len(raw_data)]
 
-    train_inputs = np.array([train[cat].values for cat in cat_in])
-    test_inputs = np.array([test[cat].values for cat in cat_in])
+    train_inputs = np.array([train[cat].values for cat in cat_in], dtype=np.float)
+    test_inputs = np.array([test[cat].values for cat in cat_in], dtype=np.float)
 
     # Move samples to first dimension, makes more sense if output is 1d
-    train_output = np.array([train[cat].values for cat in cat_out]).transpose()
-    test_output = np.array([test[cat].values for cat in cat_out]).transpose()
+    train_output = np.array([train[cat].values for cat in cat_out], dtype=np.float).transpose()
+    test_output = np.array([test[cat].values for cat in cat_out], dtype=np.float).transpose()
 
     return (
         TrainingSet(train_inputs, train_output),

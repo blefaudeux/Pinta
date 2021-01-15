@@ -31,6 +31,9 @@ def transform_factory(params: Dict[str, Any]) -> List[Callable]:
         def get_random_flip():
             return RandomFlip(dimensions=[params["inputs"].index(p) for p in transform_args[0]], odds=transform_args[1])
 
+        def get_offset():
+            return OffsetInputsOutputs(offset_samples=transform_args[0])
+
         transforms.append(
             {
                 "denormalize": get_denormalize,
@@ -38,6 +41,7 @@ def transform_factory(params: Dict[str, Any]) -> List[Callable]:
                 "random_flip": get_random_flip,
                 "half_precision": HalfPrecision,
                 "single_precision": SinglePrecision,
+                "offset_inputs_outputs": get_offset,
             }[transform_name]()
         )
 
@@ -177,3 +181,16 @@ class HalfPrecision:
 
     def __call__(self, sample: TrainingSample):
         return TrainingSample(inputs=sample.inputs.half(), outputs=sample.outputs.half())
+
+
+class OffsetInputsOutputs:
+    def __init__(self, offset_samples: int):
+        """Offset the samples from inputs and outputs. Needed for time prediction for instance
+
+        Args:
+            offset_samples (int): number of samples by which inputs and outputs should be offset
+        """
+        self.offset = offset_samples
+
+    def __call__(self, sample: TrainingSample):
+        return TrainingSample(inputs=sample.inputs[:, :, : -self.offset], outputs=sample.outputs[:, :, self.offset :])

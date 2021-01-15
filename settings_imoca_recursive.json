@@ -27,10 +27,19 @@
             ]
         ],
         [
+            "offset_inputs_outputs",
+            [
+                5
+            ]
+        ],
+        [
             "single_precision",
             []
         ]
     ],
+    "data": {
+        "time_offset": 10
+    },
     "model_type": "dilated_conv",
     "hidden_size": 128,
     "seq_length": 27,

@@ -24,7 +24,10 @@ class TrainingSample(TrainingSample_base):
         return TrainingSample(inputs=self.inputs.to(device), outputs=self.outputs.to(device))
 
     def __str__(self):
-        return f"inputs: {self.inputs.cpu().tolist()}\noutputs: {self.outputs.cpu().tolist()}"
+        inputs_str = "".join(["{:.2f} ".format(i) for i in self.inputs.cpu().tolist()])
+        outputs_str = "".join(["{:.2f} ".format(i) for i in self.outputs.cpu().tolist()])
+
+        return f"inputs: {inputs_str}\noutputs: {outputs_str}\n"
 
 
 class TrainingSet(Dataset):

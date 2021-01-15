@@ -6,7 +6,9 @@
         "helm"
     ],
     "outputs": [
-        "sog"
+        "sog",
+        "twa_x",
+        "twa_y"
     ],
     "transforms": [
         [
@@ -24,15 +26,24 @@
             ]
         ],
         [
+            "offset_inputs_outputs",
+            [
+                10
+            ]
+        ],
+        [
             "single_precision",
             []
         ]
     ],
+    "data": {
+        "time_offset": 10
+    },
     "model_type": "mlp",
     "hidden_size": 128,
     "seq_length": 27,
     "training_ratio": 0.9,
-    "train_batch_size": 10000,
+    "train_batch_size": 30000,
     "val_batch_size": 1000,
     "epoch": 40,
     "learning_rate": 0.01,
