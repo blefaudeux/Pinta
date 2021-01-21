@@ -106,10 +106,10 @@ def run(args):
                     mean.outputs,
                 )
 
-            reference = torch.cat([denormalize(batch.outputs) for batch in tester]).detach().cpu().numpy()
+            reference = torch.cat([denormalize(batch.outputs[:, :, -1]) for batch in tester]).detach().cpu().numpy()
 
             # - limit the display to fewer samples
-            SAMPLES = 10000
+            SAMPLES = 500
             reference = reference[:SAMPLES]
             prediction = prediction[:SAMPLES]
 
