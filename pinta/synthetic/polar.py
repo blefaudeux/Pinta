@@ -8,7 +8,7 @@ from pinta.data_processing.transforms import Normalize, SinglePrecision
 from pinta.settings import device
 from torch.utils.data import DataLoader
 
-SpeedPolarPoint = namedtuple("SpeedPolarPoint", ["twa", "tws", "helm", "sog"])
+SpeedPolarPoint = namedtuple("SpeedPolarPoint", ["twa", "tws", "sog"])
 
 
 def generate(
@@ -26,8 +26,7 @@ def generate(
     # (repeat the same inputs for the whole sequence)
     datasets = []
 
-    mean = mean.to(device)
-    std = std.to(device)
+    mean, std = mean.to(device), std.to(device)
 
     normalizer = Normalize(
         mean,
@@ -42,8 +41,7 @@ def generate(
     for w in range(wind_range[0], wind_range[1], wind_step):
         for a in np.arange(0.0, np.pi, angular_step):
             # Generate the sample we want for this point in the polar plot
-            # Expected size for transform is [Time x Channels],
-            # so we unsqueeze front
+            # Expected size for transform is [Time x Channels], so we unsqueeze front
 
             # Default to zero, then substitute wind speed and direction
             sample_inputs = torch.zeros_like(mean.inputs)
@@ -82,7 +80,6 @@ def generate(
                 SpeedPolarPoint(
                     twa=a,
                     tws=w,
-                    helm=0.0,
                     sog=pred[i_pred],
                 )
             )

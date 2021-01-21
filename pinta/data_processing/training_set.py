@@ -118,7 +118,14 @@ class TrainingSetBundle:
             2,
         )
 
-        output_seq = tensor_output[: -seq_len + 1, :]
+        output_seq = torch.transpose(
+            torch.stack(
+                [tensor_output[start : start + seq_len, :] for start in range(n_sequences)],
+                dim=0,
+            ),
+            1,
+            2,
+        )
 
         return input_seq, output_seq
 

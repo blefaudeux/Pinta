@@ -19,8 +19,7 @@ def transform_factory(params: Dict[str, Any]) -> List[Callable]:
     transforms: List[Callable] = []
 
     for transform_param in params["transforms"]:
-        transform_name = transform_param[0]
-        transform_args = transform_param[1]
+        transform_name, transform_args = transform_param[0], transform_param[1]
 
         def get_normalize():
             return Normalize(*params["data_stats"])
@@ -34,6 +33,9 @@ def transform_factory(params: Dict[str, Any]) -> List[Callable]:
         def get_offset():
             return OffsetInputsOutputs(offset_samples=transform_args[0])
 
+        def get_cut_sequence():
+            return CutSequence(inputs_cut=transform_args[0], outputs_cut=transform_args[1])
+
         transforms.append(
             {
                 "denormalize": get_denormalize,
@@ -42,6 +44,7 @@ def transform_factory(params: Dict[str, Any]) -> List[Callable]:
                 "half_precision": HalfPrecision,
                 "single_precision": SinglePrecision,
                 "offset_inputs_outputs": get_offset,
+                "cut_sequence": get_cut_sequence,
             }[transform_name]()
         )
 
@@ -126,7 +129,10 @@ class Normalize:
                 torch.add(sample.inputs, -self.mean.inputs.reshape(1, -1, 1)),
                 self.std.inputs.reshape(1, -1, 1),
             ),
-            outputs=torch.div(torch.add(sample.outputs, -self.mean.outputs), self.std.outputs),
+            outputs=torch.div(
+                torch.add(sample.outputs, -self.mean.outputs.reshape(1, -1, 1)),
+                self.std.outputs.reshape(1, -1, 1),
+            ),
         )
 
 
@@ -200,3 +206,33 @@ class OffsetInputsOutputs:
             )
 
         return TrainingSample(inputs=sample.inputs[: -self.offset], outputs=sample.outputs[self.offset :])
+
+
+class CutSequence:
+    def __init__(self, inputs_cut: int, outputs_cut: int):
+        """Given temporal sequences as inputs and outputs, subselect the ones of interest
+
+        Args:
+            inputs_cut (int): the number of samples to keep from the input sequence, following python notation.
+                (positive from the beginning of the array, negative from the end.
+                -3 means keep the 3 last samples
+                None -null in json- means keep everything)
+
+            outputs_cut (int): the number of samples to keep from the output sequence, following python notation
+                (positive from the beginning of the array, negative from the end)
+
+        """
+        self.inputs_cut = inputs_cut
+        self.outputs_cut = outputs_cut
+
+    @staticmethod
+    def __cut(seq: torch.Tensor, cut: int):
+        if cut is None or cut > 0:
+            return seq[:, :, :cut]
+
+        return seq[:, :, cut:]
+
+    def __call__(self, sample: TrainingSample):
+        return TrainingSample(
+            inputs=self.__cut(sample.inputs, self.inputs_cut), outputs=self.__cut(sample.outputs, self.outputs_cut)
+        )

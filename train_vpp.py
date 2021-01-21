@@ -11,7 +11,7 @@ import pinta.settings as settings
 from pinta.data_processing import plot as plt
 from pinta.data_processing.load import load_folder, load_sets
 from pinta.data_processing.training_set import TrainingSetBundle
-from pinta.data_processing.transforms import Normalize, SinglePrecision, transform_factory
+from pinta.data_processing.transforms import Normalize, OffsetInputsOutputs, SinglePrecision, transform_factory
 from pinta.model.model_factory import model_factory
 
 
@@ -36,14 +36,16 @@ def run(args):
 
     log.info("Loaded {} samples. Batch is {}".format(len(training_bundle), params["train_batch_size"]))
 
-    # Data augmentation / preparation. Adjust for a possible time offset requirement
+    # Data augmentation / preparation.
     transforms = transform_factory(params)
-    offset_transform = list(filter(lambda t: t[0] == "offset_inputs_outputs", params["transforms"]))
+
+    # Adjust for a possible time offset requirement
+    offset_transform = list(filter(lambda t: isinstance(t, OffsetInputsOutputs), transforms))
 
     if len(offset_transform) > 0:
-        offset = offset_transform[0][1][0]
+        offset = offset_transform.pop().offset
         log.info(
-            "Offset transform rquired, adjusting the raw sequence length to {}".format(params["seq_length"] + offset)
+            "Offset transform requested, adjusting the raw sequence length to {}".format(params["seq_length"] + offset)
         )
         params["seq_length"] += offset
 

@@ -22,7 +22,7 @@
                 "--data_path",
                 "data",
                 "--settings_path",
-                "settings_mini.json",
+                "settings_mini_polar.json",
                 "--amp"
             ]
         },

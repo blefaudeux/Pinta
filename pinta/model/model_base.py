@@ -125,7 +125,7 @@ class NN(nn.Module):
                 optimizer.zero_grad()
 
                 # FW pass, optionally with mixed precision
-                with context:
+                with context:  # type: ignore
                     out, _ = self(train_batch.inputs)
                     loss = criterion(out.squeeze(), train_batch.outputs.squeeze())
 
