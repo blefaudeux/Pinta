@@ -35,9 +35,6 @@
             []
         ]
     ],
-    "data": {
-        "time_offset": 10
-    },
     "model_type": "mlp",
     "hidden_size": 128,
     "seq_length": 27,
