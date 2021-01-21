@@ -80,6 +80,7 @@ def run(args):
 
         # Compare visually the outputs
         if args.plot:
+            # FIXME: @lefaudeux Timings are misaligned
             log.info("---\nQuality evaluation:")
             mean, std = params["data_stats"]
 
@@ -96,10 +97,10 @@ def run(args):
             )
 
             # - de-whiten the data
-            std = std.to(settings.device)
-            mean = mean.to(settings.device)
+            std, mean = std.to(settings.device), mean.to(settings.device)
 
             def denormalize(data: torch.Tensor):
+                # Broadcast the normalization factor to the hidden dimensions
                 return torch.add(
                     torch.mul(data, std.outputs),
                     mean.outputs,
