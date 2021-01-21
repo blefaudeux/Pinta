@@ -11,10 +11,10 @@ from typing import Any, Dict, Optional
 
 import pandas as pd
 
-from data_processing.csv2pandas import parse_csv
-from data_processing.json2pandas import parse_raw_json
-from data_processing.nmea2pandas import parse_nmea
-from data_processing.utils import save_json
+from pinta.data_processing.csv2pandas import parse_csv
+from pinta.data_processing.json2pandas import parse_raw_json
+from pinta.data_processing.nmea2pandas import parse_nmea
+from pinta.data_processing.utils import save_json
 
 LOG = logging.getLogger("DataConversion")
 SUPPORTED_FILES = [".json", ".csv", ".nmea"]
