@@ -1,4 +1,4 @@
-# Pinta Pilot
+# Pinta Pilot  ![Basic Checks](https://github.com/blefaudeux/Pinta/workflows/Python%20package/badge.svg)
 Pilot, machine learning, fitering and physics experiment
 
 ## Requirements & install
