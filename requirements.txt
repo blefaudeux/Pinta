@@ -8,3 +8,4 @@ tensorflow
 numba
 plotly
 pytest
+python-rapidjson
