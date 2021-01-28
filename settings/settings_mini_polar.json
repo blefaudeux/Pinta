@@ -33,13 +33,13 @@
             []
         ]
     ],
-    "model_type": "dilated_conv",
+    "model_type": "mlp",
     "hidden_size": 128,
     "seq_length": 27,
     "training_ratio": 0.9,
-    "train_batch_size": 50000,
+    "train_batch_size": 30000,
     "val_batch_size": 1000,
-    "epoch": 5,
+    "epoch": 30,
     "learning_rate": 0.01,
     "dilated_conv": {
         "dropout": 0.25
@@ -60,7 +60,7 @@
             3
         ]
     },
-    "log": "pinta_imoca",
+    "log": "pinta_mini",
     "scheduler": "reduce_plateau",
     "amp": false
 }

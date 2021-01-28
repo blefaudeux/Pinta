@@ -35,6 +35,7 @@ def run(args):
     params["data_stats"] = training_bundle.get_norm()
 
     log.info("Loaded {} samples. Batch is {}".format(len(training_bundle), params["train_batch_size"]))
+    log.info("Available fields: {}".format(dataframes[0].columns.values))
 
     # Data augmentation / preparation.
     transforms = transform_factory(params)
