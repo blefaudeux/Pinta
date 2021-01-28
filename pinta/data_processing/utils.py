@@ -1,7 +1,7 @@
-import rapidjson
 from pathlib import Path
 
 import pandas as pd
+import rapidjson
 
 
 def save_json(dataframe: pd.DataFrame, filepath: Path):
@@ -20,4 +20,7 @@ def load_json(filepath: Path, skip_zeros=True) -> pd.DataFrame:
         data = rapidjson.load(file_in)
 
     dataframe = pd.read_json(data)
-    return dataframe if not skip_zeros else dataframe[dataframe.sog > 0].dropna()
+    try:
+        return dataframe if not skip_zeros else dataframe[dataframe.sog > 0].dropna()
+    except AttributeError:
+        return dataframe.dropna()

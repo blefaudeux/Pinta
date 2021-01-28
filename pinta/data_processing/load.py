@@ -21,7 +21,7 @@ def _angle_split(data):
 
 def load(filepath: Path, zero_mean_helm: bool = False) -> DataFrame:
     LOG.info("Loading %s" % filepath)
-    data_frame = load_json(filepath, skip_zeros=True).astype('float32')
+    data_frame = load_json(filepath, skip_zeros=True)
 
     # Fix a possible offset in the rudder angle sensor
     if zero_mean_helm:

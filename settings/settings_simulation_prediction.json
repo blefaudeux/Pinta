@@ -1,0 +1,78 @@
+{
+    "inputs": [
+        "tws",
+        "twa_x",
+        "twa_y",
+        "heel"
+    ],
+    "outputs": [
+        "tws",
+        "twa_x",
+        "twa_y",
+        "heel",
+        "sog"
+    ],
+    "transforms": [
+        [
+            "normalize",
+            []
+        ],
+        [
+            "random_flip",
+            [
+                [
+                    "heel",
+                    "twa_y"
+                ],
+                0.5
+            ]
+        ],
+        [
+            "offset_inputs_outputs",
+            [
+                10
+            ]
+        ],
+        [
+            "cut_sequence",
+            [
+                null,
+                -1
+            ]
+        ],
+        [
+            "single_precision",
+            []
+        ]
+    ],
+    "model_type": "dilated_conv",
+    "hidden_size": 128,
+    "seq_length": 27,
+    "training_ratio": 0.9,
+    "train_batch_size": 10000,
+    "val_batch_size": 1000,
+    "epoch": 2,
+    "learning_rate": 0.01,
+    "dilated_conv": {
+        "dropout": 0.25
+    },
+    "mlp": {
+        "inner_layers": 3
+    },
+    "rnn": {
+        "gru_layers": 2,
+        "kernel_sizes": [
+            3,
+            3
+        ]
+    },
+    "conv": {
+        "kernel_sizes": [
+            3,
+            3
+        ]
+    },
+    "log": "pinta_imoca",
+    "scheduler": "reduce_plateau",
+    "amp": false
+}
