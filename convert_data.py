@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 """ Convert the NMEA data logs into pandas-compatible jsons """
 
