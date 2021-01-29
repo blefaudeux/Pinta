@@ -196,24 +196,16 @@ class TrainingSetBundle:
 
         def collate(samples: List[TrainingSample]):
             return TrainingSample(
-                inputs=torch.stack([t.inputs for t in samples]).squeeze().to(device),
-                outputs=torch.stack([t.outputs for t in samples]).squeeze().to(device),
+                inputs=torch.stack([t.inputs for t in samples]).squeeze(),
+                outputs=torch.stack([t.outputs for t in samples]).squeeze(),
             )
 
         return (
             DataLoader(
-                trainer,
-                collate_fn=collate,
-                batch_size=train_batch_size,
-                shuffle=shuffle,
-                drop_last=True,
+                trainer, collate_fn=collate, batch_size=train_batch_size, shuffle=shuffle, drop_last=True, num_workers=2
             ),
             DataLoader(
-                tester,
-                collate_fn=collate,
-                batch_size=val_batch_size,
-                shuffle=shuffle,
-                drop_last=True,
+                tester, collate_fn=collate, batch_size=val_batch_size, shuffle=shuffle, drop_last=True, num_workers=2
             ),
         )
 
@@ -230,8 +222,8 @@ class TrainingSetBundle:
 
         def collate(samples: List[TrainingSample]):
             return TrainingSample(
-                inputs=torch.stack([t.inputs for t in samples]).squeeze().to(device),
-                outputs=torch.stack([t.outputs for t in samples]).squeeze().to(device),
+                inputs=torch.stack([t.inputs for t in samples]).squeeze(),
+                outputs=torch.stack([t.outputs for t in samples]).squeeze(),
             )
 
         return (

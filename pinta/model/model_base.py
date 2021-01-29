@@ -126,6 +126,9 @@ class NN(nn.Module):
 
                 # FW pass, optionally with mixed precision
                 with context:  # type: ignore
+                    train_batch = train_batch.to(_device)
+                    validation_batch = validation_batch.to(_device)
+
                     out, _ = self(train_batch.inputs)
                     loss = criterion(out.squeeze(), train_batch.outputs.squeeze())
 
