@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
-import rapidjson
+import simdjson
 
 
 def save_json(dataframe: pd.DataFrame, filepath: Path):
@@ -9,7 +9,7 @@ def save_json(dataframe: pd.DataFrame, filepath: Path):
         filepath = Path(filepath)
 
     with filepath.open("w") as file_out:
-        rapidjson.dump(dataframe.to_json(), file_out)
+        simdjson.dump(dataframe.to_json(), file_out)
 
 
 def load_json(filepath: Path, skip_zeros=True) -> pd.DataFrame:
@@ -17,7 +17,7 @@ def load_json(filepath: Path, skip_zeros=True) -> pd.DataFrame:
         filepath = Path(filepath)
 
     with filepath.open("r") as file_in:
-        dataframe = pd.read_json(rapidjson.load(file_in))
+        dataframe = pd.read_json(simdjson.load(file_in))
 
     try:
         return dataframe if not skip_zeros else dataframe[dataframe.sog > 0].dropna()

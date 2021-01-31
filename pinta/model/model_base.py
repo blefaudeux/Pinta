@@ -93,7 +93,7 @@ class NN(nn.Module):
         optimizer = optim.AdamW(self.parameters(), lr=settings["learning_rate"], amsgrad=True)
 
         scheduler: Union[ReduceLROnPlateau, CosineAnnealingLR] = (
-            ReduceLROnPlateau(optimizer=optimizer, patience=2)
+            ReduceLROnPlateau(optimizer=optimizer, patience=10)
             if settings["scheduler"] == Scheduler.REDUCE_PLATEAU
             else CosineAnnealingLR(optimizer=optimizer, T_max=epochs, eta_min=1e-6, last_epoch=-1)
         )
@@ -115,8 +115,6 @@ class NN(nn.Module):
 
             self.log.info("***** Epoch %d", i_epoch)
             self.log.info(" {}/{} LR: {:.4f}".format(i_epoch, epochs, optimizer.param_groups[0]["lr"]))
-
-            validation_loss = torch.zeros(1).to(_device)
 
             for i_batch, (train_batch, validation_batch) in enumerate(zip(trainer, tester)):
                 batch_start = time.time()
@@ -155,7 +153,7 @@ class NN(nn.Module):
                     self.log.info(" {}/{},{} Validation loss: {:.4f}".format(i_epoch, epochs, i_batch, loss.item()))
                     return loss
 
-                validation_loss += closure_validation()
+                validation_loss = closure_validation()
 
                 # Time some operations
                 batch_stop = time.time()
@@ -172,9 +170,9 @@ class NN(nn.Module):
 
                 i_log += 1
 
-            # Adjust learning rate if needed
-            if isinstance(scheduler, ReduceLROnPlateau):
-                scheduler.step(metrics=validation_loss)
+                # Adjust learning rate if needed
+                if isinstance(scheduler, ReduceLROnPlateau):
+                    scheduler.step(metrics=validation_loss)
 
             # Display the layer weights
             weights = self.get_layer_weights()

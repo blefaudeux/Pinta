@@ -8,4 +8,4 @@ numba
 plotly
 pytest
 torch
-python-rapidjson
+pysimdjson
