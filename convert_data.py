@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import pandas as pd
+import json
 
 from pinta.data_processing.csv2pandas import parse_csv
 from pinta.data_processing.json2pandas import parse_raw_json
@@ -46,18 +47,21 @@ def handle_directory(args: argparse.Namespace):
     Path(args.data_export_path).mkdir(parents=True, exist_ok=True)
 
     # Get the optional lookup table
-    extra_data = None
+    lut = None
     if args.data_lookup_table != "":
-        extra_data = pd.read_json(Path(args.data_lookup_table).absolute())
+        with open(args.data_lookup_table, "r") as fileio:
+            lut = json.load(fileio)
+
+        LOG.info("Provided look-up table: {}".format(lut))
 
     # Batch process all the files
     if args.parallel:
         pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
-        barrier = pool.starmap_async(process_file, zip(filelist, repeat(args), repeat(extra_data)))
+        barrier = pool.starmap_async(process_file, zip(filelist, repeat(args), repeat(lut)))
         barrier.wait()
     else:
         for f in filelist:
-            process_file(f, args, extra_data)
+            process_file(f, args, lut)
 
 
 if __name__ == "__main__":

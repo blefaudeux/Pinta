@@ -1,0 +1,21 @@
+{
+    "time": "time",
+    "boat_speed": "sog",
+    "leeway": "leeway",
+    "trim": "trim",
+    "heel": "heel",
+    "wind_angle": "twa",
+    "rudder_angle": "rudder_angle",
+    "port_foil_altitude": "port_foil_altitude",
+    "center_hull_disp": null,
+    "center_board_disp": null,
+    "center_rudder_disp": null,
+    "port_foil_disp": null,
+    "port_hull_disp": null,
+    "port_rud_disp": null,
+    "stbd_rud_disp": null,
+    "sails": "sails",
+    "rudder_rake": null,
+    "port_foil_rake": "port_foil_rake",
+    "wind_speed": "tws"
+}

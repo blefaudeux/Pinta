@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
+import simdjson
 
 """
     Parse linear Json logs, return a Pandas dataframe.
@@ -44,37 +45,45 @@ _FIELDS = {
 
 
 def parse_raw_json(
-    filepath: Path, reference_lookup: Optional[Dict] = None, *args
+    filepath: Path, data_lut: Optional[Dict] = None, *args
 ) -> Tuple[pd.DataFrame, Optional[Dict[str, Any]]]:
 
     # Load raw values
-    raw_load = pd.read_json(filepath)
+    with open(filepath, "r") as fileio:
+        json = simdjson.load(fileio)
+        raw_load = pd.read_json(json)
 
     # If we have a reference lookup
-    if reference_lookup is not None:
+    if data_lut is not None:
+        # Delete the collumns which are explicitly marked null
+        for key in data_lut.keys():
+            if data_lut[key] is None:
+                LOG.debug(f"Deleting collumn {key} - as requested")
+                del raw_load[key]
+
         # Match the column names with the normalized ones
         try:
-            normalized_fields = [reference_lookup[f] for f in list(raw_load.columns)]
+            normalized_fields = [data_lut[f] for f in list(raw_load.columns)]
         except KeyError as e:
-            LOG.error(f"KeyError {e}\n *** Please use a conversion table. Keys: {list(raw_load.columns)}\n")
+            LOG.error(f"KeyError {e}\n *** Please use a matching conversion table. Keys: {list(raw_load.columns)}\n")
 
         raw_load.columns = normalized_fields
 
-        #  check whether we have some extra data for this file
-        try:
-            match = reference_lookup[reference_lookup["run"] == filepath.stem]
-            for k, v in zip(reference_lookup.keys(), match.values[0]):
-                try:
-                    raw_load[_FIELDS[k]] = v
-                except KeyError:
-                    # skip this field on purpose
-                    pass
+        # #  check whether we have some extra data for this file
+        # try:
+        #     match = reference_lookup[reference_lookup["run"] == filepath.stem]
+        #     for k, v in zip(reference_lookup.keys(), match.values[0]):
+        #         try:
+        #             raw_load[_FIELDS[k]] = v
+        #         except KeyError:
+        #             # skip this field on purpose
+        #             pass
 
-            # Unroll the init point
-            for k, v in _PRESETS[match["initPoint"].item()].items():
-                raw_load[k] = v
+        #     # Unroll the init point
+        #     for k, v in _PRESETS[match["initPoint"].item()].items():
+        #         raw_load[k] = v
 
-        except IndexError:
-            LOG.info(f"No extra data found in the reference lookup for the file {filepath.stem}")
+        # except IndexError:
+        #     LOG.info(f"No extra data found in the reference lookup for the file {filepath.stem}")
 
     return raw_load
