@@ -69,16 +69,7 @@ def parse_raw_json(
 
         raw_load.columns = normalized_fields
 
-        # #  check whether we have some extra data for this file
-        # try:
-        #     match = reference_lookup[reference_lookup["run"] == filepath.stem]
-        #     for k, v in zip(reference_lookup.keys(), match.values[0]):
-        #         try:
-        #             raw_load[_FIELDS[k]] = v
-        #         except KeyError:
-        #             # skip this field on purpose
-        #             pass
-
+        #  check whether we have some extra data for this file
         #     # Unroll the init point
         #     for k, v in _PRESETS[match["initPoint"].item()].items():
         #         raw_load[k] = v
