@@ -69,12 +69,4 @@ def parse_raw_json(
 
         raw_load.columns = normalized_fields
 
-        #  check whether we have some extra data for this file
-        #     # Unroll the init point
-        #     for k, v in _PRESETS[match["initPoint"].item()].items():
-        #         raw_load[k] = v
-
-        # except IndexError:
-        #     LOG.info(f"No extra data found in the reference lookup for the file {filepath.stem}")
-
     return raw_load
