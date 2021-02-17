@@ -126,12 +126,12 @@ class Normalize:
         # Batch data coming in. Could also be handled through broadcasting
         return TrainingSample(
             inputs=torch.div(
-                torch.add(sample.inputs, -self.mean.inputs.reshape(1, -1, 1)),
-                self.std.inputs.reshape(1, -1, 1),
+                torch.add(sample.inputs, -self.mean.inputs),
+                self.std.inputs,
             ),
             outputs=torch.div(
-                torch.add(sample.outputs, -self.mean.outputs.reshape(1, -1, 1)),
-                self.std.outputs.reshape(1, -1, 1),
+                torch.add(sample.outputs, -self.mean.outputs),
+                self.std.outputs,
             ),
         )
 
@@ -160,7 +160,7 @@ class RandomFlip:
             # Flip all the dimensions at the same time
             inputs = sample.inputs
             for d in self.dims:
-                inputs[0, d, :] *= -1
+                inputs[0, d] *= -1
 
             return TrainingSample(inputs=inputs, outputs=sample.outputs)
 
@@ -228,9 +228,9 @@ class CutSequence:
     @staticmethod
     def __cut(seq: torch.Tensor, cut: int):
         if cut is None or cut > 0:
-            return seq[:, :, :cut]
+            return seq[:cut, :]
 
-        return seq[:, :, cut:]
+        return seq[cut:, :]
 
     def __call__(self, sample: TrainingSample):
         return TrainingSample(

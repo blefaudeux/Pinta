@@ -8,10 +8,9 @@ from typing import Callable, List, Tuple
 import numpy as np
 import torch
 import torchvision
-from pinta.settings import device
 from torch.utils.data import DataLoader, Dataset, random_split
 
-TrainingSample_base = namedtuple("TrainingSample", ["inputs", "outputs"])
+TrainingSample_base = namedtuple("TrainingSample_base", ["inputs", "outputs"])
 
 
 class TrainingSample(TrainingSample_base):
@@ -33,9 +32,12 @@ class TrainingSample(TrainingSample_base):
 class TrainingSet(Dataset):
     """
     Holds the training or testing data, with some helper functions.
-    This keeps all the time coherent data in one package
+    This keeps all the time coherent data in one package.
 
-    Expected shape is [Time sample x Channels]
+    .. warning: Time incoherent data should not be stored in a TrainingSet,
+        sequences sampled out of it could overlap with boundaries and become nonsensical
+
+    .. note: Expected shape is [Time sample x Channels]
     """
 
     def __init__(self, inputs: torch.Tensor, outputs: torch.Tensor):
@@ -72,8 +74,15 @@ class TrainingSet(Dataset):
         self.inputs = torch.cat((self.inputs, inputs), 0)
         self.outputs = torch.cat((self.outputs, outputs), 0)
 
-    def __getitem__(self, index):
-        return self.transform(TrainingSample(inputs=self.inputs[index, :, :], outputs=self.outputs[index, :]))
+    def __getitem__(self, index) -> TrainingSample:
+        return self.transform(TrainingSample(inputs=self.inputs[index, :], outputs=self.outputs[index, :]))
+
+    def get_sequence(self, index: int, seq_length: int) -> TrainingSample:
+        index = min(index, self.inputs.shape[0] - seq_length)  # Handle the sequence length overflowing the dataset
+        index_next = index + seq_length
+        return self.transform(
+            TrainingSample(inputs=self.inputs[index:index_next, :], outputs=self.outputs[index:index_next, :])
+        )
 
     def __len__(self):
         return self.inputs.shape[0]
@@ -85,20 +94,35 @@ class TrainingSet(Dataset):
         self.transform = torchvision.transforms.Compose(transforms)
 
 
-class TrainingSetBundle:
+class TrainingSetBundle(Dataset):
     """
     Hold a list of training sets, with some helper functions.
+
     This allows us to maintain a bigger pool of data
     without any time coherency / time continuity constraints.
+
     All the data can be used for training, but we can enforce
     time-continuous streams where needed.
     """
 
     def __init__(self, training_sets: List[TrainingSet]):
         self.sets = training_sets
+        self.transform = lambda x: x
+        # Build the index map, used to redirect __get_item__ to the proper
+        # dataset
+        self.index_map = [0]
+        for s in self.sets:
+            self.index_map.append(len(s) + self.index_map[-1])
+        self.seq_length = -1
 
     def __len__(self):
         return sum(map(lambda x: len(x), self.sets))
+
+    def set_transforms(self, transforms: List[Callable]):
+        """
+        Pass a list of transforms which are applied on a per sample fetch basis
+        """
+        self.transform = torchvision.transforms.Compose(transforms)
 
     @staticmethod
     def generate_temporal_seq(tensor_input: torch.Tensor, tensor_output: torch.Tensor, seq_len: int):
@@ -150,9 +174,21 @@ class TrainingSetBundle:
 
         return mean, std
 
+    def __getitem__(self, index):
+        # Find the relevant TrainingSet.
+        match = next(i for i, x in enumerate(map(lambda x: x > index, self.index_map)) if x) - 1
+        local_index = index - self.index_map[match]
+
+        # Use the TrainingSet to fetch the appropriate sequence, transform and return
+        sample = self.sets[match].get_sequence(local_index, self.seq_length)
+        return self.transform(sample)
+
     def get_training_set(self, seq_len: int) -> Tuple[TrainingSet, List[int]]:
         """
-        Generate a single TrainingSet from a bundle
+        Generate a single TrainingSet from a bundle.
+
+        .. warning: This will take a lot of space in memory, since all the possible
+            sequences are statically generated
         """
 
         inputs = []
@@ -184,20 +220,22 @@ class TrainingSetBundle:
         Create two PyTorch DataLoaders out of this dataset, randomly splitting
         the data in between training and testing
         """
-        # Create a consolidated dataset on the fly,
-        # with the appropriate sequence cuts
-        training_set, _ = self.get_training_set(seq_len)
-        training_set.set_transforms(transforms)
+        # Keep using the bundled dataset. Generate the sequences on the fly
+        self.set_transforms(transforms)
+        self.seq_length = seq_len
 
         # Split the dataset in train/test instances
-        train_len = int(ratio * len(training_set))
-        test_len = len(training_set) - train_len
-        trainer, tester = random_split(training_set, [train_len, test_len])
+        train_len = int(ratio * len(self))
+        test_len = len(self) - train_len
+        trainer, tester = random_split(self, [train_len, test_len])
 
         def collate(samples: List[TrainingSample]):
+            """
+            Dimensions are [Batch x TimeSequence x Channels]
+            """
             return TrainingSample(
-                inputs=torch.stack([t.inputs for t in samples]).squeeze(),
-                outputs=torch.stack([t.outputs for t in samples]).squeeze(),
+                inputs=torch.stack([t.inputs for t in samples]),
+                outputs=torch.stack([t.outputs for t in samples]),
             )
 
         return (
