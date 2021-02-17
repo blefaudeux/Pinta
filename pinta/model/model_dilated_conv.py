@@ -84,7 +84,9 @@ class TemporalModelBase(NN):
         assert len(x.shape) == 3
 
         x = x.permute(0, 2, 1)
-        assert x.shape[-1] == self.num_input_channels
+        assert (
+            x.shape[-1] == self.num_input_channels
+        ), f"Input shape {x.shape} - expected {self.num_input_channels} inputs"
 
         sz = x.shape[:3]
         x = x.view(x.shape[0], x.shape[1], -1)

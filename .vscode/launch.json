@@ -20,10 +20,11 @@
             "cwd": "${workspaceRoot}",
             "args": [
                 "--data_path",
-                "data",
+                "/media/lesle/Data/Dropbox/Pinta/imoca/convert/",
                 "--settings_path",
-                "settings/settings_mini_polar.json",
-                "--amp"
+                "settings/settings_imoca_prediction.json",
+                "--amp",
+                "--parallel"
             ]
         },
         {
