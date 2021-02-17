@@ -83,8 +83,8 @@ class Denormalize:
     def __call__(self, sample: TrainingSample):
         return TrainingSample(
             inputs=torch.mul(
-                torch.add(sample.inputs, self.mean.inputs.reshape(1, -1, 1)),
-                self.std.inputs.reshape(1, -1, 1),
+                torch.add(sample.inputs, self.mean.inputs),
+                self.std.inputs,
             ),
             outputs=torch.mul(torch.add(sample.outputs, self.mean.outputs), self.std.outputs),
         )
@@ -201,9 +201,7 @@ class OffsetInputsOutputs:
     def __call__(self, sample: TrainingSample):
         # FIXME not very elegant, there must be a cleaner, branchless way
         if len(sample.inputs.shape) > 1:
-            return TrainingSample(
-                inputs=sample.inputs[:, :, : -self.offset], outputs=sample.outputs[:, :, self.offset :]
-            )
+            return TrainingSample(inputs=sample.inputs[:, : -self.offset], outputs=sample.outputs[:, self.offset :])
 
         return TrainingSample(inputs=sample.inputs[: -self.offset], outputs=sample.outputs[self.offset :])
 
