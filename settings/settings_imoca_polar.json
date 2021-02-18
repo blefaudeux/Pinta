@@ -33,13 +33,18 @@
             []
         ]
     ],
-    "model_type": "rnn",
+    "model_type": "mlp",
     "hidden_size": 256,
     "seq_length": 27,
-    "training_ratio": 0.9,
-    "train_batch_size": 20000,
-    "val_batch_size": 500,
-    "epoch": 10,
+    "data": {
+        "train_batch_size": 30000,
+        "test_batch_size": 1000,
+        "training_ratio": 0.9,
+        "shuffle": true,
+        "train_workers": 3,
+        "test_workers": 1
+    },
+    "epoch": 3,
     "learning_rate": 0.01,
     "dilated_conv": {
         "dropout": 0.25

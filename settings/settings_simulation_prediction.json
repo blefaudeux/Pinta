@@ -38,9 +38,14 @@
     "model_type": "dilated_conv",
     "hidden_size": 32,
     "seq_length": 27,
-    "training_ratio": 0.9,
-    "train_batch_size": 10000,
-    "val_batch_size": 1000,
+    "data": {
+        "train_batch_size": 10000,
+        "test_batch_size": 1000,
+        "training_ratio": 0.9,
+        "shuffle": true,
+        "train_workers": 3,
+        "test_workers": 1
+    },
     "epoch": 5,
     "learning_rate": 0.1,
     "dilated_conv": {

@@ -69,9 +69,14 @@ _DEFAULTS = {
     "hidden_size": 256,
     "seq_length": 81,
     "conv_width": [3, 3, 3, 3],
-    "training_ratio": 0.9,
-    "train_batch_size": 10 ** 3,
-    "val_batch_size": 10 ** 2,
+    "data": {
+        "train_batch_size": 10000,
+        "test_batch_size": 1000,
+        "training_ratio": 0.9,
+        "shuffle": True,
+        "train_workers": 3,
+        "test_workers": 1,
+    },
     "epoch": 30,
     "learning_rate": 5 * 1e-2,
     "dilated_conv": {"dropout": 0.25},
@@ -100,7 +105,7 @@ def get_name(params: Dict[str, Any]):
         + "_hidden_"
         + str(params["hidden_size"])
         + "_batch_"
-        + str(params["train_batch_size"])
+        + str(params["data"]["train_batch_size"])
         + "_lr_"
         + str(params["learning_rate"])
         + "_ep_"

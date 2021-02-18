@@ -32,9 +32,11 @@ def run(args):
     dataframes = load_folder(Path(args.data_path), zero_mean_helm=False, parallel_load=args.parallel)
     data_list = load_sets(dataframes, params)
     training_bundle = TrainingSetBundle(data_list)
-    params["data_stats"] = training_bundle.get_norm()
+    if "stats" not in params["data"].keys():
+        log.info("Updating the normalization statistics with the current data pool")
+        params["data"]["stats"] = training_bundle.get_norm()
 
-    log.info("Loaded {} samples. Batch is {}".format(len(training_bundle), params["train_batch_size"]))
+    log.info("Loaded {} samples. Batch is {}".format(len(training_bundle), params["data"]["train_batch_size"]))
     log.info("Available fields: {}".format(dataframes[0].columns.values))
 
     # Data augmentation / preparation.
@@ -54,11 +56,7 @@ def run(args):
     if not dnn.valid:
         log.info("Training a new model, this can take a while")
         trainer, valider = training_bundle.get_dataloaders(
-            params["training_ratio"],
-            params["seq_length"],
-            params["train_batch_size"],
-            params["val_batch_size"],
-            shuffle=True,
+            params,
             transforms=transforms,
         )
 
@@ -68,8 +66,8 @@ def run(args):
     if args.evaluate or args.plot:
         tester, split_indices = training_bundle.get_sequential_dataloader(
             params["seq_length"],
-            transforms=[Normalize(*params["data_stats"]), SinglePrecision()],
-            batch_size=params["train_batch_size"],
+            transforms=[Normalize(*params["data"]["stats"]), SinglePrecision()],
+            batch_size=params["data"]["train_batch_size"],
         )
 
         # Check the training
@@ -83,7 +81,7 @@ def run(args):
         if args.plot:
             # FIXME: @lefaudeux Timings are misaligned
             log.info("---\nQuality evaluation:")
-            mean, std = params["data_stats"]
+            mean, std = params["data"]["stats"]
 
             # - prediction: go through the net, split the output sequence to re-align,
             prediction = (

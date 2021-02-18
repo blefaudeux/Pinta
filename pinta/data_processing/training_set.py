@@ -3,7 +3,7 @@ from __future__ import annotations
 # Our lightweight base data structure..
 # specialize inputs/outputs, makes it readable down the line
 from collections import namedtuple
-from typing import Callable, List, Tuple
+from typing import Callable, List, Tuple, Dict, Any
 
 import numpy as np
 import torch
@@ -209,23 +209,20 @@ class TrainingSetBundle(Dataset):
 
     def get_dataloaders(
         self,
-        ratio: float,
-        seq_len: int,
-        train_batch_size: int,
-        val_batch_size: int,
-        shuffle: bool,
+        params: Dict[str, Any],
         transforms: List[Callable],
     ) -> Tuple[DataLoader, DataLoader]:
         """
         Create two PyTorch DataLoaders out of this dataset, randomly splitting
         the data in between training and testing
         """
+
         # Keep using the bundled dataset. Generate the sequences on the fly
         self.set_transforms(transforms)
-        self.seq_length = seq_len
+        self.seq_length = params["seq_length"]
 
         # Split the dataset in train/test instances
-        train_len = int(ratio * len(self))
+        train_len = int(params["data"]["training_ratio"] * len(self))
         test_len = len(self) - train_len
         trainer, tester = random_split(self, [train_len, test_len])
 
@@ -240,10 +237,20 @@ class TrainingSetBundle(Dataset):
 
         return (
             DataLoader(
-                trainer, collate_fn=collate, batch_size=train_batch_size, shuffle=shuffle, drop_last=True, num_workers=2
+                trainer,
+                collate_fn=collate,
+                batch_size=params["data"]["train_batch_size"],
+                shuffle=params["data"]["shuffle"],
+                drop_last=True,
+                num_workers=params["data"]["train_workers"],
             ),
             DataLoader(
-                tester, collate_fn=collate, batch_size=val_batch_size, shuffle=shuffle, drop_last=True, num_workers=2
+                tester,
+                collate_fn=collate,
+                batch_size=params["data"]["test_batch_size"],
+                shuffle=params["data"]["shuffle"],
+                drop_last=True,
+                num_workers=params["data"]["test_workers"],
             ),
         )
 

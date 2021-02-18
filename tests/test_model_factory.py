@@ -1,4 +1,3 @@
-import pytest
 from pinta.model.model_factory import model_factory
 from pinta.settings import ModelType
 
@@ -11,9 +10,11 @@ def test_create_models():
         "model_type": "mlp",
         "hidden_size": 256,
         "seq_length": 27,
-        "training_ratio": 0.9,
-        "train_batch_size": 100000,
-        "val_batch_size": 10000,
+        "data": {
+            "training_ratio": 0.9,
+            "train_batch_size": 100000,
+            "test_batch_size": 10000,
+        },
         "epoch": 15,
         "learning_rate": 0.01,
         "dilated_conv": {"dropout": 0.25},
