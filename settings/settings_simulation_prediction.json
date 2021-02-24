@@ -35,8 +35,8 @@
             []
         ]
     ],
-    "model_type": "dilated_conv",
-    "hidden_size": 32,
+    "model_type": "rnn",
+    "hidden_size": 128,
     "seq_length": 27,
     "data": {
         "train_batch_size": 10000,

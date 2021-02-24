@@ -19,53 +19,29 @@ _PRESETS = {
 }
 
 
-_FIELDS = {
-    "Block.Time": "time",
-    "Block.Boat.Speed_kts": "sog",
-    "Block.Boat.Leeway": "leeway",
-    "Block.Boat.Trim": "trim",
-    "Block.Boat.Heel": "heel",
-    "Block.Boat.TWA": "twa",
-    "Block.Boat.Helm": "helm",
-    "Block.Boat.Center.HullDisplPercent": "center_hull_disp",
-    "Block.Boat.Center.BoardDisplPercent": "center_board_disp",
-    "Block.Boat.Center.RudDisplPercent": "center_rudder_disp",
-    "Block.Boat.Port.FoilAltitude": "port_foil_altitude",
-    "Block.Boat.Port.FoilDisplPercent": "port_foil_disp",
-    "Block.Boat.Port.HullDisplPercent": "port_hull_disp",
-    "Block.Boat.Port.RudDisplPercent": "port_rud_disp",
-    "Block.Boat.Stbd.FoilAltitude": "stbd_foil_altitude",
-    "Block.Boat.Stbd.FoilDisplPercent": "stbd_foil_disp",
-    "Block.Boat.Stbd.HullDisplPercent": "stbd_hull_disp",
-    "Block.Boat.Stbd.RudDisplPercent": "stbd_rud_disp",
-    "Boat.Port.FoilRake": "port_foil_rake",
-    "Boat.RudderRake": "rudder_rake",
-    "Sails": "sails",
-}
-
-
 def parse_raw_json(
     filepath: Path, data_lut: Optional[Dict] = None, *args
 ) -> Tuple[pd.DataFrame, Optional[Dict[str, Any]]]:
 
     # Load raw values
     with open(filepath, "r") as fileio:
-        json = simdjson.load(fileio)
-        raw_load = pd.read_json(json)
+        loaded = simdjson.load(fileio)
+        raw_load = pd.DataFrame.from_dict(loaded) if isinstance(loaded, dict) else pd.read_json(loaded)
 
     # If we have a reference lookup
     if data_lut is not None:
         # Delete the collumns which are explicitly marked null
         for key in data_lut.keys():
-            if data_lut[key] is None:
-                LOG.debug(f"Deleting collumn {key} - as requested")
+            if data_lut[key] is None and key in raw_load.keys():
                 del raw_load[key]
+                LOG.debug(f"Deleting collumn {key} - as requested")
 
         # Match the column names with the normalized ones
         try:
             normalized_fields = [data_lut[f] for f in list(raw_load.columns)]
         except KeyError as e:
             LOG.error(f"KeyError {e}\n *** Please use a matching conversion table. Keys: {list(raw_load.columns)}\n")
+            raise RuntimeError
 
         raw_load.columns = normalized_fields
 

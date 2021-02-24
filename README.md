@@ -32,14 +32,16 @@ All the behaviour simulators inherit from the same NN class (defined in /train/b
 
 An example of training is done through the *train_vpp.py* script, feel free to implement more networks as you see fit.
 
-- Train a new model, given the settings in *settings.py*: `./train_vpp.py --plot`
+- Train a new model, given the settings in *settings.py*:
+`./train_vpp.py --amp --settings_path settings/settings_mini_polar.json --data_path data/ --parallel`
 
-This saves the resulting model, and produces a predicted curve against the ground truth, similar to. Noteworthy extra arguments are `--parallel` to load data files on multiple cores (useful if dataset spread over multiple files), and `--amp` to use automatic mixed precision (way faster training on somewhat recent GPUs).
+This saves the resulting model, and produces a predicted curve against the ground truth, similar to the attached example. Noteworthy extra arguments are `--parallel` to load data files on multiple cores (useful if dataset spread over multiple files), and `--amp` to use automatic mixed precision (way faster training on somewhat recent GPUs).
 
 ![Prediction vs. Ground truth example](../master/ressources/evaluation.jpg?raw=true "Prediction vs. Ground truth example")
 
 
-- Generate a polar plot from a trained model: `./polar_from_vpp.py --model_path={pathToTrainedModel.pt}`
+- Generate a polar plot from a trained model:
+`./polar_from_vpp.py --model_path={pathToTrainedModel.pt}`
 
 This does not use the whole model capacity, but can be useful to check that the results are meaningful
 

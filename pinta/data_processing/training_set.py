@@ -228,7 +228,8 @@ class TrainingSetBundle(Dataset):
 
         def collate(samples: List[TrainingSample]):
             """
-            Dimensions are [Batch x Channels x TimeSequence]
+            Dimensions are [Batch x Channels x TimeSequence].
+            Input was [Batch x TimeSequence x Channels]
             """
             return TrainingSample(
                 inputs=torch.stack([t.inputs for t in samples]).permute(0, 2, 1),
@@ -267,8 +268,8 @@ class TrainingSetBundle(Dataset):
 
         def collate(samples: List[TrainingSample]):
             return TrainingSample(
-                inputs=torch.stack([t.inputs for t in samples]).squeeze(),
-                outputs=torch.stack([t.outputs for t in samples]).squeeze(),
+                inputs=torch.stack([t.inputs for t in samples]).permute(0, 2, 1),
+                outputs=torch.stack([t.outputs for t in samples]).permute(0, 2, 1),
             )
 
         return (
