@@ -9,6 +9,7 @@ import numpy as np
 from pandas import DataFrame
 from pinta.data_processing.training_set import TrainingSet
 from pinta.data_processing.utils import load_json
+import pandas as pd
 
 LOG = logging.getLogger("DataLoad")
 
@@ -21,7 +22,7 @@ def _angle_split(data):
 
 def load(filepath: Path, zero_mean_helm: bool = False) -> DataFrame:
     LOG.info("Loading %s" % filepath)
-    data_frame = load_json(filepath, skip_zeros=True)
+    data_frame = {".json": lambda x: load_json(x, skip_zeros=True), ".pkl": pd.read_pickle}[filepath.suffix](filepath)
 
     # Fix a possible offset in the rudder angle sensor
     if zero_mean_helm:
@@ -33,7 +34,7 @@ def load(filepath: Path, zero_mean_helm: bool = False) -> DataFrame:
 def load_folder(folder_path: Path, zero_mean_helm: bool, parallel_load: bool = True) -> List[DataFrame]:
     # Get the matching files
     def valid(filepath):
-        return os.path.isfile(filepath) and os.path.splitext(filepath)[1] == ".json"
+        return os.path.isfile(filepath) and os.path.splitext(filepath)[1] in [".json", ".pkl"]
 
     filelist = [
         Path(os.path.join(folder_path, f)) for f in os.listdir(folder_path) if valid(os.path.join(folder_path, f))

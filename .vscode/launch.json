@@ -59,9 +59,13 @@
             "cwd": "${workspaceRoot}",
             "args": [
                 "--data_ingestion_path",
-                "~/Dropbox/Pinta/O60_2020/",
+                "/media/lesle/Data/Dropbox/Pinta/imoca/HB7/",
                 "--data_export_path",
-                "~/Dropbox/Pinta/convert",
+                "/media/lesle/Data/Dropbox/Pinta/imoca/HB7_convert",
+                "--data_lookup_table",
+                "lut_imoca.json",
+                "--metadata_root",
+                "runsDict"
             ]
         },
         {

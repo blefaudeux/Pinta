@@ -44,7 +44,7 @@
         "train_workers": 3,
         "test_workers": 1
     },
-    "epoch": 3,
+    "epoch": 1,
     "learning_rate": 0.01,
     "dilated_conv": {
         "dropout": 0.25

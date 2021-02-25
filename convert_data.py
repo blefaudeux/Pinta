@@ -15,6 +15,7 @@ from pinta.data_processing.csv2pandas import parse_csv
 from pinta.data_processing.json2pandas import parse_raw_json
 from pinta.data_processing.nmea2pandas import parse_nmea
 from pinta.data_processing.utils import save_json
+import pandas as pd
 
 LOG = logging.getLogger("DataConversion")
 SUPPORTED_FILES = [".json", ".csv", ".nmea"]
@@ -30,15 +31,36 @@ def process_file(
         filepath, lut
     )  # type: ignore
 
+    # Handle the optional metadata files
+    if metadata is not None:
+        # - find the run ID
+        id_run, id_meta = None, -1
+        for _ in metadata:
+            id_meta += 1
+            for k, v in metadata[id_meta]["run"].items():
+                if v == filepath.stem:
+                    id_run = k
+                    break
+
+        if id_run is not None:
+            # - add the metadata in the DataFrame
+            LOG.debug(f"Found ID for file {filepath.stem} : {id_run} in metadata file {id_meta}")
+
+            for k in metadata[id_meta].keys():
+                if k == "run" or k == "ID":
+                    continue
+
+                df[k] = metadata[id_meta][k][id_run]
+
     # Fill in the gaps in data
     # Drop the collumns which are completely empty
     df = df.bfill().ffill().dropna(axis=1)  # interpolate() ?
-    save_json(df, Path(args.data_export_path) / Path(filepath.stem + ".json"))
-    LOG.info(f"File {filepath.stem } processed")
+    if args.pickle:
+        df.to_pickle(Path(args.data_export_path) / Path(filepath.stem + ".pkl"))
+    else:
+        save_json(df, Path(args.data_export_path) / Path(filepath.stem + ".json"))
 
-    # Handle the optional metadata files
-    # TODO: Find if this metadata file has a matching run number,
-    # copy the extra data as needed in the pandas DF
+    LOG.info(f"File {filepath.stem } processed")
 
 
 def handle_directory(args: argparse.Namespace):
@@ -66,16 +88,12 @@ def handle_directory(args: argparse.Namespace):
     Path(args.data_export_path).mkdir(parents=True, exist_ok=True)
 
     # Get the optional lookup table
-    # Expected fields are
-    # [ 'run', 'ID', 'initPoint', 'Sails', 'Solver', 'Wind', 'Pilot', 'Ballasts', 'Ocean', 'TrameGen',
-    #   'Boat.Port.RakeFoil', 'Boat.Port.FoilExtPerc', 'Boat.Aero.Sail.Flat',
-    #   'Boat.KeelCant', 'Boat.CWATgt', 'BaseTWS_kts' ]
     lut = None
     if args.data_lookup_table != "":
         with open(args.data_lookup_table, "r") as fileio:
             lut = json.load(fileio)
 
-        LOG.info("Provided look-up table: {}".format(lut))
+        LOG.debug("Provided look-up table: {}".format(lut))
 
     # Batch process all the files
     if args.parallel:
@@ -115,6 +133,13 @@ if __name__ == "__main__":
         "--parallel",
         action="store_true",
         help="Convert muliple files in parallel. Errors may not be properly visible",
+        default=False,
+    )
+
+    parser.add_argument(
+        "--pickle",
+        action="store_true",
+        help="Save data files as pickled files -more compact, faster to load-",
         default=False,
     )
 
