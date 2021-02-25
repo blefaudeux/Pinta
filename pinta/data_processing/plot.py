@@ -36,7 +36,10 @@ def polar_plot(data: List[SpeedPolarPoint], filename: str = "speed_polar"):
         twa_rad = np.array([data[k].twa for k in speed_lines[tws]]).flatten()
         sogs = np.array([data[k].sog for k in speed_lines[tws]]).flatten()
 
-        labels = ["Wind: {}deg - {}kt ** Boat: {}kt".format(angle, tws, sog) for angle, sog in zip(twa_rad, sogs)]
+        labels = [
+            "Wind: {:.2f} deg - {:.2f} kts<br>Boat: {:.2f} kts".format(angle * 180 / 3.14, tws, sog)
+            for angle, sog in zip(twa_rad, sogs)
+        ]
 
         traces.append(
             go.Scatterpolar(
@@ -51,7 +54,7 @@ def polar_plot(data: List[SpeedPolarPoint], filename: str = "speed_polar"):
                     opacity=0.5,
                 ),
                 text=labels,
-                name="Wind {}kt".format(tws),
+                name="Wind {:.1f} kts".format(tws),
             )
         )
 
