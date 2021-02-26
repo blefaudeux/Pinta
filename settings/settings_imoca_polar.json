@@ -3,7 +3,9 @@
         "tws",
         "twa_x",
         "twa_y",
-        "heel"
+        "heel",
+        "leeway",
+        "helm"
     ],
     "outputs": [
         "sog"
@@ -36,9 +38,9 @@
     ],
     "model_type": "mlp",
     "hidden_size": 512,
-    "seq_length": 81,
+    "seq_length": 27,
     "data": {
-        "train_batch_size": 10000,
+        "train_batch_size": 20000,
         "test_batch_size": 1000,
         "training_ratio": 0.9,
         "shuffle": true,
@@ -52,7 +54,7 @@
         "scheduler": "reduce_plateau",
         "scheduler_patience": 20,
         "scheduler_factor": 0.8,
-        "momentum": 0.99
+        "momentum": 0.9
     },
     "dilated_conv": {
         "dropout": 0.25
