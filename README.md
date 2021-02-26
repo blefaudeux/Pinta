@@ -28,12 +28,12 @@ Visualisations for the NN could be added, probably a good idea (can also be adde
 ![Experimental trace](../master/ressources/trace.png?raw=true "Experimental trace")
 
 ## Neural nets - behaviour simulation
-All the behaviour simulators inherit from the same NN class (defined in /train/behaviour), irrespective of their architecture they can all basically be trained and predict output from inputs. All the trained networks can be saved as torchscript (.pt) files, in the /trained folder. This should simplify comprehensive testing of a lot of different NN architectures (with or without states, with different layer configurations, etc..).
+All the models inherit from the same NN class (defined in /pinta/model/model_base), irrespective of their architecture they can all basically be trained and predict output from inputs. All the trained networks can be saved as torchscript (.pt) files, in the /trained folder. This should simplify comprehensive testing of a lot of different NN architectures (with or without states, with different layer configurations, etc..).
 
 An example of training is done through the *train_vpp.py* script, feel free to implement more networks as you see fit.
 
 - Train a new model, given the settings in *settings.py*:
-`./train_vpp.py --amp --settings_path settings/settings_mini_polar.json --data_path data/ --parallel`
+`./train_vpp.py --settings_path settings/settings_mini_polar.json --data_path data/ --parallel --amp `
 
 This saves the resulting model, and produces a predicted curve against the ground truth, similar to the attached example. Noteworthy extra arguments are `--parallel` to load data files on multiple cores (useful if dataset spread over multiple files), and `--amp` to use automatic mixed precision (way faster training on somewhat recent GPUs).
 

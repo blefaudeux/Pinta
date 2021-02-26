@@ -15,8 +15,9 @@ LOG = logging.getLogger("DataLoad")
 
 
 def _angle_split(data):
-    data["twa_x"] = np.cos(np.radians(data["twa"]))
-    data["twa_y"] = np.sin(np.radians(data["twa"]))
+    if "twa" in data.keys():
+        data["twa_x"] = np.cos(np.radians(data["twa"]))
+        data["twa_y"] = np.sin(np.radians(data["twa"]))
     return data
 
 
@@ -31,7 +32,9 @@ def load(filepath: Path, zero_mean_helm: bool = False) -> DataFrame:
     return data_frame
 
 
-def load_folder(folder_path: Path, zero_mean_helm: bool, parallel_load: bool = True) -> List[DataFrame]:
+def load_folder(
+    folder_path: Path, zero_mean_helm: bool, parallel_load: bool = True, max_number_sequences: int = -1
+) -> List[DataFrame]:
     # Get the matching files
     def valid(filepath):
         return os.path.isfile(filepath) and os.path.splitext(filepath)[1] in [".json", ".pkl"]
@@ -39,6 +42,9 @@ def load_folder(folder_path: Path, zero_mean_helm: bool, parallel_load: bool = T
     filelist = [
         Path(os.path.join(folder_path, f)) for f in os.listdir(folder_path) if valid(os.path.join(folder_path, f))
     ]
+
+    if max_number_sequences > 0:
+        filelist = filelist[:max_number_sequences]
 
     # Batch load all the files, saturate IO
     if parallel_load:

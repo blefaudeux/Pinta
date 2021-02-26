@@ -35,11 +35,11 @@
             []
         ]
     ],
-    "model_type": "rnn",
+    "model_type": "dilated_conv",
     "hidden_size": 128,
     "seq_length": 27,
     "data": {
-        "train_batch_size": 10000,
+        "train_batch_size": 30000,
         "test_batch_size": 1000,
         "training_ratio": 0.9,
         "shuffle": true,

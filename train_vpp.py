@@ -22,14 +22,18 @@ def run(args):
     logging.basicConfig(level=logging.INFO)
     log = logging.getLogger(params["log"])
 
-    EPOCH = params["epoch"]
     if not args.model_path:
         # Generate a default name which describes the settings
         args.model_path = "trained/" + settings.get_name(params) + ".pt"
     dnn = model_factory(params, model_path=args.model_path)
 
     # Load the dataset
-    dataframes = load_folder(Path(args.data_path), zero_mean_helm=False, parallel_load=args.parallel)
+    dataframes = load_folder(
+        Path(args.data_path),
+        zero_mean_helm=False,
+        parallel_load=args.parallel,
+        max_number_sequences=args.max_number_sequences,
+    )
     data_list = load_sets(dataframes, params)
     training_bundle = TrainingSetBundle(data_list)
     if "stats" not in params["data"].keys():
@@ -60,10 +64,11 @@ def run(args):
             transforms=transforms,
         )
 
-        dnn.fit(trainer, valider, settings=params, epochs=EPOCH)
+        dnn.fit(trainer, valider, settings=params, epochs=params["epoch"])
         dnn.save(args.model_path)
 
     if args.evaluate or args.plot:
+        # Generate linear test data
         tester, split_indices = training_bundle.get_sequential_dataloader(
             params["seq_length"],
             transforms=[Normalize(*params["data"]["stats"]), SinglePrecision()],
@@ -179,6 +184,14 @@ if __name__ == "__main__":
         action="store_true",
         help="Test a model against a new dataset",
         default=False,
+    )
+
+    parser.add_argument(
+        "--max_number_sequences",
+        action="store",
+        help="Optionally limit the number of sequences to load from a data pool",
+        default=-1,
+        type=int,
     )
 
     args = parser.parse_args()
