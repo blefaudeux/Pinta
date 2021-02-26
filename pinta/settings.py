@@ -34,6 +34,11 @@ class Scheduler(str, Enum):
     REDUCE_PLATEAU = "reduce_plateau"
 
 
+class Optimizer(str, Enum):
+    SGD = "SGD"
+    ADAM_W = "ADAM_W"
+
+
 # Reference keys handled by the conversion and data processing utils
 _EXPAND_KEYS = {
     "tws": "true wind speed",
@@ -107,7 +112,7 @@ def get_name(params: Dict[str, Any]):
         + "_batch_"
         + str(params["data"]["train_batch_size"])
         + "_lr_"
-        + str(params["learning_rate"])
+        + str(params["optim"]["learning_rate"])
         + "_ep_"
         + str(params["epoch"])
         + "_amp_"

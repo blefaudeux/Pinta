@@ -7,12 +7,12 @@ import logging
 import time
 from contextlib import suppress
 from itertools import cycle
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from pinta.settings import Scheduler, _amp_available
+from pinta.settings import Scheduler, _amp_available, Optimizer
 from pinta.settings import device as _device
 from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau
 from torch.utils.data import DataLoader
@@ -90,13 +90,17 @@ class NN(nn.Module):
         epochs: int = 50,
     ):
         # Setup the training loop
-        optimizer = optim.AdamW(self.parameters(), lr=settings["learning_rate"], amsgrad=True)
+        optimizer = {
+            Optimizer.ADAM_W: optim.AdamW(self.parameters(), lr=settings["optim"]["learning_rate"], amsgrad=True),
+            Optimizer.SGD: optim.SGD(
+                self.parameters(), lr=settings["optim"]["learning_rate"], momentum=settings["optim"]["momentum"]
+            ),
+        }[Optimizer(settings["optim"]["name"].upper())]
 
-        scheduler: Union[ReduceLROnPlateau, CosineAnnealingLR] = (
-            ReduceLROnPlateau(optimizer=optimizer, patience=10)
-            if settings["scheduler"] == Scheduler.REDUCE_PLATEAU
-            else CosineAnnealingLR(optimizer=optimizer, T_max=epochs, eta_min=1e-6, last_epoch=-1)
-        )
+        scheduler = {
+            Scheduler.REDUCE_PLATEAU: ReduceLROnPlateau(optimizer=optimizer, patience=10, factor=0.5),
+            Scheduler.COSINE: CosineAnnealingLR(optimizer=optimizer, T_max=epochs, eta_min=1e-6, last_epoch=-1),
+        }[Scheduler(settings["optim"]["scheduler"])]
 
         criterion = nn.MSELoss()
 
@@ -173,6 +177,10 @@ class NN(nn.Module):
                 # Adjust learning rate if needed
                 if isinstance(scheduler, ReduceLROnPlateau):
                     scheduler.step(metrics=validation_loss)
+
+                # Early stop if no progress
+                if optimizer.param_groups[0]["lr"] < 1e-6:
+                    self.log.warning("No progress, stopping training")
 
             # Display the layer weights
             weights = self.get_layer_weights()

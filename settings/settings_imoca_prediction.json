@@ -58,7 +58,11 @@
         "test_workers": 1
     },
     "epoch": 2,
-    "learning_rate": 0.01,
+    "optim": {
+        "name": "adam_w",
+        "learning_rate": 0.01,
+        "scheduler": "reduce_plateau"
+    },
     "dilated_conv": {
         "dropout": 0.25
     },
@@ -79,6 +83,5 @@
         ]
     },
     "log": "pinta_imoca",
-    "scheduler": "reduce_plateau",
     "amp": false
 }

@@ -45,7 +45,12 @@
         "test_workers": 1
     },
     "epoch": 20,
-    "learning_rate": 0.01,
+    "optim": {
+        "name": "adam_w",
+        "learning_rate": 0.01,
+        "scheduler": "reduce_plateau",
+        "momentum": 0.99
+    },
     "dilated_conv": {
         "dropout": 0.25
     },
@@ -66,6 +71,5 @@
         ]
     },
     "log": "pinta_mini",
-    "scheduler": "reduce_plateau",
     "amp": false
 }

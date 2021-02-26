@@ -16,7 +16,10 @@ def test_create_models():
             "test_batch_size": 10000,
         },
         "epoch": 15,
-        "learning_rate": 0.01,
+        "optim": {
+            "name": "adamw",
+            "learning_rate": 0.01,
+        },
         "dilated_conv": {"dropout": 0.25},
         "mlp": {"inner_layers": 3},
         "rnn": {"gru_layers": 2, "kernel_sizes": [3, 3]},
