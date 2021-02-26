@@ -49,6 +49,8 @@
         "name": "adam_w",
         "learning_rate": 0.01,
         "scheduler": "reduce_plateau",
+        "scheduler_patience": 20,
+        "scheduler_factor": 0.8,
         "momentum": 0.99
     },
     "dilated_conv": {

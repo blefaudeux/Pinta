@@ -98,7 +98,11 @@ class NN(nn.Module):
         }[Optimizer(settings["optim"]["name"].upper())]
 
         scheduler = {
-            Scheduler.REDUCE_PLATEAU: ReduceLROnPlateau(optimizer=optimizer, patience=10, factor=0.5),
+            Scheduler.REDUCE_PLATEAU: ReduceLROnPlateau(
+                optimizer=optimizer,
+                patience=settings["optim"]["scheduler_patience"],
+                factor=settings["optim"]["scheduler_factor"],
+            ),
             Scheduler.COSINE: CosineAnnealingLR(optimizer=optimizer, T_max=epochs, eta_min=1e-6, last_epoch=-1),
         }[Scheduler(settings["optim"]["scheduler"])]
 

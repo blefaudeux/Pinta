@@ -2,7 +2,8 @@
     "inputs": [
         "tws",
         "twa_x",
-        "twa_y"
+        "twa_y",
+        "heel"
     ],
     "outputs": [
         "sog"
@@ -33,9 +34,9 @@
             []
         ]
     ],
-    "model_type": "dilated_conv",
-    "hidden_size": 128,
-    "seq_length": 27,
+    "model_type": "mlp",
+    "hidden_size": 512,
+    "seq_length": 81,
     "data": {
         "train_batch_size": 10000,
         "test_batch_size": 1000,
@@ -49,6 +50,8 @@
         "name": "adam_w",
         "learning_rate": 0.01,
         "scheduler": "reduce_plateau",
+        "scheduler_patience": 20,
+        "scheduler_factor": 0.8,
         "momentum": 0.99
     },
     "dilated_conv": {
