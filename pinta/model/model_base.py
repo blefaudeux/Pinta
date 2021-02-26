@@ -181,6 +181,7 @@ class NN(nn.Module):
                 # Early stop if no progress
                 if optimizer.param_groups[0]["lr"] < 1e-6:
                     self.log.warning("No progress, stopping training")
+                    return
 
             # Display the layer weights
             weights = self.get_layer_weights()
