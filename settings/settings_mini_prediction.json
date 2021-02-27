@@ -5,7 +5,9 @@
         "twa_y",
         "helm"
     ],
-    "tuning_inputs": [],
+    "tuning_inputs": [
+        "port_foil_rake"
+    ],
     "outputs": [
         "sog",
         "twa_x",

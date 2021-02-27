@@ -25,6 +25,7 @@ class ConvRNN(NN):
         n_gru_layers: int,
         output_size: int,
         filename=None,
+        tuning_input_size: int = -1,
     ):
         super().__init__(logdir)
 
@@ -55,7 +56,7 @@ class ConvRNN(NN):
 
             LOG.warning("Could not load the specified net, computing it from scratch")
 
-    def forward(self, inputs, hidden=None):
+    def forward(self, inputs, tuning_inputs, hidden=None):
         # Run through Conv1d and Pool1d layers
         r1 = self.relu(self.conv1(inputs))
         r2 = self.relu(self.conv2(r1))

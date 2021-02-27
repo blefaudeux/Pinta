@@ -200,10 +200,14 @@ class NN(nn.Module):
 
         self.log.info("... Done")
 
-    def forward(self, inputs, *kwargs):
+    def forward(self, inputs, tuning_inputs, *kwargs):
         """
         Defines the computation performed at every call.
         Should be overriden by all subclasses.
+
+        Args:
+            inputs: fast moving signals, could be about attitude, speed,...
+            tuning_inputs: slow moving signals, could be about some boat tuning parameters
         """
         raise NotImplementedError
 
