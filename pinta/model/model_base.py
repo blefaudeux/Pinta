@@ -1,7 +1,5 @@
 #!/usr/local/bin/python3
-"""
-Implement different NNs which best describe the behaviour of the system
-"""
+
 
 import logging
 import time
@@ -19,7 +17,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 if _amp_available:
-    from torch.cuda.amp import GradScaler, autocast
+    from torch.cuda.amp import GradScaler, autocast  # type: ignore
 
 
 class NN(nn.Module):
@@ -63,10 +61,7 @@ class NN(nn.Module):
         return losses
 
     def predict(
-        self,
-        dataloader: DataLoader,
-        mean: torch.Tensor = None,
-        std: torch.Tensor = None,
+        self, dataloader: DataLoader, mean: torch.Tensor = None, std: torch.Tensor = None,
     ):
 
         # Move the predictions to cpu() on the fly to save on GPU memory
@@ -83,11 +78,7 @@ class NN(nn.Module):
         return predictions_tensor
 
     def fit(
-        self,
-        trainer: DataLoader,
-        tester: DataLoader,
-        settings: Dict[str, Any],
-        epochs: int = 50,
+        self, trainer: DataLoader, tester: DataLoader, settings: Dict[str, Any], epochs: int = 50,
     ):
         # Setup the training loop
         optimizer = {

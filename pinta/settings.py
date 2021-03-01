@@ -5,12 +5,7 @@ from typing import Any, Dict
 
 import torch
 
-try:
-    from torch.cuda.amp import autocast  # noqa
-
-    _amp_available = True
-except ImportError:
-    _amp_available = False
+_amp_available = hasattr(torch.cuda, "amp")
 
 # Select our target at runtime
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")

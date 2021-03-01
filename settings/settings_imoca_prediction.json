@@ -13,6 +13,7 @@
         "heel",
         "sog"
     ],
+    "tuning_inputs": [],
     "transforms": [
         [
             "normalize",
@@ -46,8 +47,38 @@
             []
         ]
     ],
-    "model_type": "dilated_conv",
-    "hidden_size": 128,
+    "encoder": {
+        "hidden_size": 64,
+        "feature_size": 16
+    },
+    "trunk": {
+        "model_type": "dilated_conv",
+        "hidden_size": 128,
+        "dilated_conv": {
+            "dropout": 0.25
+        },
+        "mlp": {
+            "inner_layers": 3
+        },
+        "rnn": {
+            "gru_layers": 2,
+            "kernel_sizes": [
+                3,
+                3
+            ]
+        },
+        "conv": {
+            "kernel_sizes": [
+                3,
+                3
+            ]
+        }
+    },
+    "projection": {
+        "hidden_size": 64,
+        "layers": 3,
+        "feature_size": 16
+    },
     "seq_length": 27,
     "data": {
         "train_batch_size": 10000,
@@ -64,25 +95,6 @@
         "scheduler": "reduce_plateau",
         "scheduler_patience": 20,
         "scheduler_factor": 0.8
-    },
-    "dilated_conv": {
-        "dropout": 0.25
-    },
-    "mlp": {
-        "inner_layers": 3
-    },
-    "rnn": {
-        "gru_layers": 2,
-        "kernel_sizes": [
-            3,
-            3
-        ]
-    },
-    "conv": {
-        "kernel_sizes": [
-            3,
-            3
-        ]
     },
     "log": "pinta_imoca",
     "amp": false

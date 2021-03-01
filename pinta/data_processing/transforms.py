@@ -82,10 +82,7 @@ class Denormalize:
 
     def __call__(self, sample: TrainingSample):
         return TrainingSample(
-            inputs=torch.mul(
-                torch.add(sample.inputs, self.mean.inputs),
-                self.std.inputs,
-            ),
+            inputs=torch.mul(torch.add(sample.inputs, self.mean.inputs), self.std.inputs,),
             outputs=torch.mul(torch.add(sample.outputs, self.mean.outputs), self.std.outputs),
         )
 
@@ -116,31 +113,20 @@ class Normalize:
         # Non batched data
         if sample.inputs.shape[0] == 1:
             return TrainingSample(
-                inputs=torch.div(
-                    torch.add(sample.inputs, -self.mean.inputs),
-                    self.std.inputs,
-                ),
+                inputs=torch.div(torch.add(sample.inputs, -self.mean.inputs), self.std.inputs,),
                 outputs=torch.div(torch.add(sample.outputs, -self.mean.outputs), self.std.outputs),
             )
 
         # Batch data coming in. Could also be handled through broadcasting
         return TrainingSample(
-            inputs=torch.div(
-                torch.add(sample.inputs, -self.mean.inputs),
-                self.std.inputs,
-            ),
-            outputs=torch.div(
-                torch.add(sample.outputs, -self.mean.outputs),
-                self.std.outputs,
-            ),
+            inputs=torch.div(torch.add(sample.inputs, -self.mean.inputs), self.std.inputs,),
+            outputs=torch.div(torch.add(sample.outputs, -self.mean.outputs), self.std.outputs,),
         )
 
 
 class RandomFlip:
     def __init__(
-        self,
-        dimensions: List[int],
-        odds: float,
+        self, dimensions: List[int], odds: float,
     ):
         """
         Randomly flip the given dimensions.
