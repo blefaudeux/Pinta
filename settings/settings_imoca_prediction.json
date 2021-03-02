@@ -61,7 +61,8 @@
     "optim": {
         "name": "adam_w",
         "learning_rate": 0.01,
-        "scheduler": "reduce_plateau"
+        "scheduler": "reduce_plateau",
+        "momentum": 0.99
     },
     "dilated_conv": {
         "dropout": 0.25
