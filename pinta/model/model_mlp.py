@@ -21,6 +21,7 @@ class Mlp(NN):
         filename=None,
     ):
         super().__init__(logdir, "MLP")
+        self.output_size = output_size
 
         module_list: List[Tuple[str, nn.Module]] = []
 

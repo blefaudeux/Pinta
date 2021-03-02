@@ -15,9 +15,8 @@ LOG = logging.getLogger("DataLoad")
 
 
 def _angle_split(data):
-    if "twa" in data.keys():
-        data["twa_x"] = np.cos(np.radians(data["twa"]))
-        data["twa_y"] = np.sin(np.radians(data["twa"]))
+    data["twa_x"] = np.cos(np.radians(data["twa"]))
+    data["twa_y"] = np.sin(np.radians(data["twa"]))
     return data
 
 

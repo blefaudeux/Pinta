@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 import torch
 
-_amp_available = hasattr(torch.cuda, "amp")
+_amp_available = hasattr(torch.cuda, "amp") and hasattr(torch.cuda.amp, "autocast")
 
 # Select our target at runtime
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -99,11 +99,11 @@ def get_name(params: Dict[str, Any]):
     _amp = _amp_available and device.type == torch.device("cuda").type and params["amp"]
 
     return (
-        params["model_type"]
+        params["trunk"]["model_type"]
         + "_seq_"
         + str(params["seq_length"])
         + "_hidden_"
-        + str(params["hidden_size"])
+        + str(params["trunk"]["hidden_size"])
         + "_batch_"
         + str(params["data"]["train_batch_size"])
         + "_lr_"

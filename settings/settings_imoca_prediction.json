@@ -13,7 +13,10 @@
         "heel",
         "sog"
     ],
-    "tuning_inputs": [],
+    "tuning_inputs": [
+        "port_foil_rake",
+        "sails"
+    ],
     "transforms": [
         [
             "normalize",
@@ -72,12 +75,12 @@
                 3,
                 3
             ]
-        }
+        },
+        "embedding_dimensions": 32
     },
-    "projection": {
+    "mixer": {
         "hidden_size": 64,
-        "layers": 3,
-        "feature_size": 16
+        "hidden_layers": 3
     },
     "seq_length": 27,
     "data": {
@@ -94,7 +97,8 @@
         "learning_rate": 0.01,
         "scheduler": "reduce_plateau",
         "scheduler_patience": 20,
-        "scheduler_factor": 0.8
+        "scheduler_factor": 0.8,
+        "momentum": 0.99
     },
     "log": "pinta_imoca",
     "amp": false

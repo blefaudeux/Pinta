@@ -31,6 +31,7 @@ class NN(nn.Module):
         self.model = None
         self._valid = False
         self.log = logging.getLogger(log_channel)
+        self.output_size = None
 
         # Set up TensorBoard
         self.summary_writer = SummaryWriter(logdir)

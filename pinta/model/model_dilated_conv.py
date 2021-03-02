@@ -43,7 +43,7 @@ class TemporalModelBase(NN):
             assert fw % 2 != 0, "Only odd filter widths are supported"
 
         self.num_input_channels = num_input_channels
-        self.num_output_channels = num_output_channels
+        self.output_size = num_output_channels
         self.filter_widths = filter_widths
 
         self.drop = nn.Dropout(dropout)
@@ -51,7 +51,7 @@ class TemporalModelBase(NN):
 
         self.pad = [filter_widths[0] // 2]
         self.expand_bn = nn.BatchNorm1d(channels, momentum=bn_momentum)
-        self.shrink = nn.Conv1d(channels, num_output_channels, 1)
+        self.shrink = nn.Conv1d(channels, self.output_size, 1)
 
     def set_bn_momentum(self, momentum):
         self.expand_bn.momentum = momentum
@@ -95,7 +95,7 @@ class TemporalModelBase(NN):
         x = self._forward_blocks(x)
 
         x = x.permute(0, 2, 1)
-        x = x.view(sz[0], -1, self.num_output_channels)
+        x = x.view(sz[0], -1, self.output_size)
 
         return x, None
 
@@ -132,13 +132,7 @@ class TemporalModel(TemporalModelBase):
         channels -- number of convolution channels
         """
         super().__init__(
-            logdir,
-            num_input_channels,
-            num_output_channels,
-            filter_widths,
-            dropout,
-            channels,
-            bn_momentum,
+            logdir, num_input_channels, num_output_channels, filter_widths, dropout, channels, bn_momentum,
         )
 
         self.expand_conv = nn.Conv1d(num_input_channels, channels, filter_widths[0], bias=False)
@@ -152,15 +146,7 @@ class TemporalModel(TemporalModelBase):
             self.pad.append((filter_widths[i] - 1) * next_dilation // 2)
             self.causal_shift.append((filter_widths[i] // 2 * next_dilation))
 
-            layers_conv.append(
-                nn.Conv1d(
-                    channels,
-                    channels,
-                    filter_widths[i],
-                    dilation=next_dilation,
-                    bias=False,
-                )
-            )
+            layers_conv.append(nn.Conv1d(channels, channels, filter_widths[i], dilation=next_dilation, bias=False,))
             layers_bn.append(nn.BatchNorm1d(channels, momentum=bn_momentum))
             layers_conv.append(nn.Conv1d(channels, channels, 1, dilation=1, bias=False))
             layers_bn.append(nn.BatchNorm1d(channels, momentum=bn_momentum))
