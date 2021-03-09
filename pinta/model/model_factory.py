@@ -46,9 +46,9 @@ def model_factory(params: Dict[str, Any], model_path: str) -> NN:
     }[SequenceLength(params["seq_length"])]
 
     # Hack to make sure that the model are not actually instantiated in the dict
-    def lazy(x):
+    def lazy(Constructor, args):
         def getter():
-            return x
+            return Constructor(**args)
 
         return getter
 
@@ -64,46 +64,50 @@ def model_factory(params: Dict[str, Any], model_path: str) -> NN:
 
     trunk = {
         ModelType.DILATED_CONV: lazy(
-            TemporalModel(
-                logdir=log_directory,
-                num_input_channels=len(params["inputs"]),
-                num_output_channels=trunk_outputs,
-                filter_widths=conv_widths,
-                dropout=params["trunk"]["dilated_conv"]["dropout"],
-                channels=params["trunk"]["hidden_size"],
-                filename=model_path,
-            )
+            TemporalModel,
+            {
+                "logdir": log_directory,
+                "num_input_channels": len(params["inputs"]),
+                "num_output_channels": trunk_outputs,
+                "filter_widths": conv_widths,
+                "dropout": params["trunk"]["dilated_conv"]["dropout"],
+                "channels": params["trunk"]["hidden_size"],
+                "filename": model_path,
+            },
         ),
         ModelType.CONV: lazy(
-            Conv(
-                logdir=log_directory,
-                input_size=input_size,
-                hidden_size=params["trunk"]["hidden_size"],
-                kernel_sizes=params["trunk"]["conv"]["kernel_sizes"],
-                output_size=trunk_outputs,
-                filename=model_path,
-            )
+            Conv,
+            {
+                "logdir": log_directory,
+                "input_size": input_size,
+                "hidden_size": params["trunk"]["hidden_size"],
+                "kernel_sizes": params["trunk"]["conv"]["kernel_sizes"],
+                "output_size": trunk_outputs,
+                "filename": model_path,
+            },
         ),
         ModelType.RNN: lazy(
-            ConvRNN(
-                logdir=log_directory,
-                input_size=len(params["inputs"]),
-                hidden_size=params["trunk"]["hidden_size"],
-                kernel_sizes=params["trunk"]["rnn"]["kernel_sizes"],
-                n_gru_layers=params["trunk"]["rnn"]["gru_layers"],
-                output_size=trunk_outputs,
-                filename=model_path,
-            )
+            ConvRNN,
+            {
+                "logdir": log_directory,
+                "input_size": len(params["inputs"]),
+                "hidden_size": params["trunk"]["hidden_size"],
+                "kernel_sizes": params["trunk"]["rnn"]["kernel_sizes"],
+                "n_gru_layers": params["trunk"]["rnn"]["gru_layers"],
+                "output_size": trunk_outputs,
+                "filename": model_path,
+            },
         ),
         ModelType.MLP: lazy(
-            Mlp(
-                logdir=log_directory,
-                input_size=len(params["inputs"]),
-                hidden_size=params["trunk"]["hidden_size"],
-                number_hidden_layers=params["trunk"]["mlp"]["inner_layers"],
-                output_size=trunk_outputs,
-                filename=model_path,
-            )
+            Mlp,
+            {
+                "logdir": log_directory,
+                "input_size": len(params["inputs"]),
+                "hidden_size": params["trunk"]["hidden_size"],
+                "number_hidden_layers": params["trunk"]["mlp"]["inner_layers"],
+                "output_size": trunk_outputs,
+                "filename": model_path,
+            },
         ),
     }[model_type]()
 

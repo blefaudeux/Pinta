@@ -5,6 +5,7 @@
         "twa_y",
         "helm"
     ],
+    "tuning_inputs": [],
     "outputs": [
         "sog",
         "twa_x",

@@ -5,6 +5,7 @@
         "twa_y",
         "heel"
     ],
+    "tuning_inputs": [],
     "outputs": [
         "tws",
         "twa_x",

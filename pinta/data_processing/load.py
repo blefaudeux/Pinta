@@ -99,8 +99,8 @@ def load_sets(raw_list, settings) -> List[TrainingSet]:
     for x in raw_list:
         try:
             loaded.append(to_training_set(_angle_split(x), settings))
-        except KeyError:
-            LOG.warning(f"Could not load set. Cols are {x.columns}")
+        except KeyError as e:
+            LOG.warning(f"Could not load set. Cols are {x.columns}. Error is {e}")
 
     return loaded
 

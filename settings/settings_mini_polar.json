@@ -4,6 +4,7 @@
         "twa_x",
         "twa_y"
     ],
+    "tuning_inputs": [],
     "outputs": [
         "sog"
     ],
@@ -33,8 +34,30 @@
             []
         ]
     ],
-    "model_type": "mlp",
-    "hidden_size": 256,
+    "encoder": {},
+    "trunk": {
+        "model_type": "mlp",
+        "hidden_size": 256,
+        "dilated_conv": {
+            "dropout": 0.25
+        },
+        "mlp": {
+            "inner_layers": 3
+        },
+        "rnn": {
+            "gru_layers": 2,
+            "kernel_sizes": [
+                3,
+                3
+            ]
+        },
+        "conv": {
+            "kernel_sizes": [
+                3,
+                3
+            ]
+        }
+    },
     "seq_length": 27,
     "data": {
         "train_batch_size": 10000,
@@ -52,25 +75,6 @@
         "scheduler_patience": 20,
         "scheduler_factor": 0.8,
         "momentum": 0.99
-    },
-    "dilated_conv": {
-        "dropout": 0.25
-    },
-    "mlp": {
-        "inner_layers": 3
-    },
-    "rnn": {
-        "gru_layers": 2,
-        "kernel_sizes": [
-            3,
-            3
-        ]
-    },
-    "conv": {
-        "kernel_sizes": [
-            3,
-            3
-        ]
     },
     "log": "pinta_mini",
     "amp": false

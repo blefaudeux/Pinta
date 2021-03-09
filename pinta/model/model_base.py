@@ -90,7 +90,7 @@ class NN(nn.Module):
     ):
         # Setup the training loop
         optimizer = {
-            Optimizer.ADAM_W: optim.AdamW(self.parameters(), lr=settings["optim"]["learning_rate"], amsgrad=True),
+            Optimizer.ADAM_W: optim.AdamW(self.parameters(), lr=settings["optim"]["learning_rate"], amsgrad=False),
             Optimizer.SGD: optim.SGD(
                 self.parameters(), lr=settings["optim"]["learning_rate"], momentum=settings["optim"]["momentum"]
             ),
@@ -135,8 +135,12 @@ class NN(nn.Module):
                     validation_batch = validation_batch.to(_device)
 
                     # Split inputs and training inputs, then go through the mode + mixer:
-                    inputs, tuning_inputs = self._split_inputs(train_batch.inputs, settings)
-                    out, _ = self(inputs, tuning_inputs)
+                    if hasattr(self, "tuning_encoder"):
+                        inputs, tuning_inputs = self._split_inputs(train_batch.inputs, settings)
+                        out, _ = self(inputs, tuning_inputs)
+                        # FIXME: Handle different losses
+                    else:
+                        out, _ = self(train_batch.inputs)
                     loss = criterion(out.squeeze(), train_batch.outputs.squeeze())
 
                 if scaler is not None:
