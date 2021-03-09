@@ -47,6 +47,13 @@ class NN(nn.Module):
     def get_layer_weights(self):
         raise NotImplementedError
 
+    @staticmethod
+    def _split_inputs(inputs: torch.Tensor, settings: Dict[str, Any]):
+        """Split the inputs in between the signal and the tuning -slow moving- parts
+        Dimensions are [Batch x Channels x TimeSequence]
+        """
+        return torch.split(inputs, [len(settings["inputs"]), len(settings["tuning_inputs"])], dim=1)
+
     def evaluate(self, dataloader: DataLoader, settings: Dict[str, Any]):
         #  Re-use PyTorch losses on the fly
         criterion = nn.MSELoss()
@@ -127,7 +134,9 @@ class NN(nn.Module):
                     train_batch = train_batch.to(_device)
                     validation_batch = validation_batch.to(_device)
 
-                    out, _ = self(train_batch.inputs)
+                    # Split inputs and training inputs, then go through the mode + mixer:
+                    inputs, tuning_inputs = self._split_inputs(train_batch.inputs, settings)
+                    out, _ = self(inputs, tuning_inputs)
                     loss = criterion(out.squeeze(), train_batch.outputs.squeeze())
 
                 if scaler is not None:

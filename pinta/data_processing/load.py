@@ -56,10 +56,10 @@ def load_folder(
         return [load(f, zero_mean_helm=zero_mean_helm) for f in filelist]
 
 
-def to_training_set(raw_data, settings):
+def to_training_set(raw_data: pd.DataFrame, settings: Dict[str, Any]):
+    fused_inputs = settings["inputs"] + settings["tuning_inputs"]
     return TrainingSet.from_numpy(
-        np.array([raw_data[cat].values for cat in settings["inputs"]], dtype=np.float).transpose(),
-        np.array([raw_data[cat].values for cat in settings["inputs_tuning"]], dtype=np.float).transpose(),
+        np.array([raw_data[cat].values for cat in fused_inputs], dtype=np.float).transpose(),
         np.array([raw_data[cat].values for cat in settings["outputs"]], dtype=np.float).transpose(),
     )
 
@@ -70,7 +70,7 @@ def split(raw_data: DataFrame, settings: Dict[str, Any]) -> Tuple[TrainingSet, T
     if time prediction is involved
     """
 
-    cat_in = settings["inputs"]
+    cat_in = settings["inputs"] + settings["tuning_inputs"]
     cat_out = settings["outputs"]
     ratio = settings["training_ratio"]
     train_size = int(len(raw_data) * ratio)
@@ -95,7 +95,14 @@ def load_sets(raw_list, settings) -> List[TrainingSet]:
     if not isinstance(raw_list, list):
         raw_list = [raw_list]
 
-    return [to_training_set(_angle_split(x), settings) for x in raw_list]
+    loaded = []
+    for x in raw_list:
+        try:
+            loaded.append(to_training_set(_angle_split(x), settings))
+        except KeyError:
+            LOG.warning(f"Could not load set. Cols are {x.columns}")
+
+    return loaded
 
 
 def pack_sets(training_sets: List[TrainingSet]) -> TrainingSet:

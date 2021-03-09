@@ -38,6 +38,7 @@ def parse_raw_json(
 
         # Match the column names with the normalized ones
         try:
+            LOG.debug(f"Raw columns: {raw_load.columns}")
             normalized_fields = [data_lut[f] for f in list(raw_load.columns)]
         except KeyError as e:
             LOG.error(f"KeyError {e}\n *** Please use a matching conversion table. Keys: {list(raw_load.columns)}\n")
