@@ -57,14 +57,11 @@ def load_folder(
 
 
 def to_training_set(raw_data, settings):
-    cat_in = settings["inputs"]
-    cat_out = settings["outputs"]
-
-    # Move samples to first dimension, makes more sense if output is 1d
-    inputs = np.array([raw_data[cat].values for cat in cat_in], dtype=np.float).transpose()
-    outputs = np.array([raw_data[cat].values for cat in cat_out], dtype=np.float).transpose()
-
-    return TrainingSet.from_numpy(inputs, outputs)
+    return TrainingSet.from_numpy(
+        np.array([raw_data[cat].values for cat in settings["inputs"]], dtype=np.float).transpose(),
+        np.array([raw_data[cat].values for cat in settings["inputs_tuning"]], dtype=np.float).transpose(),
+        np.array([raw_data[cat].values for cat in settings["outputs"]], dtype=np.float).transpose(),
+    )
 
 
 def split(raw_data: DataFrame, settings: Dict[str, Any]) -> Tuple[TrainingSet, TrainingSet]:

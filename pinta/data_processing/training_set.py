@@ -134,21 +134,11 @@ class TrainingSetBundle(Dataset):
         n_sequences = tensor_input.shape[0] - seq_len + 1
 
         input_seq = torch.transpose(
-            torch.stack(
-                [tensor_input[start : start + seq_len, :] for start in range(n_sequences)],
-                dim=0,
-            ),
-            1,
-            2,
+            torch.stack([tensor_input[start : start + seq_len, :] for start in range(n_sequences)], dim=0,), 1, 2,
         )
 
         output_seq = torch.transpose(
-            torch.stack(
-                [tensor_output[start : start + seq_len, :] for start in range(n_sequences)],
-                dim=0,
-            ),
-            1,
-            2,
+            torch.stack([tensor_output[start : start + seq_len, :] for start in range(n_sequences)], dim=0,), 1, 2,
         )
 
         return input_seq, output_seq
@@ -207,11 +197,7 @@ class TrainingSetBundle(Dataset):
             [len(sequence) for sequence in inputs],
         )
 
-    def get_dataloaders(
-        self,
-        params: Dict[str, Any],
-        transforms: List[Callable],
-    ) -> Tuple[DataLoader, DataLoader]:
+    def get_dataloaders(self, params: Dict[str, Any], transforms: List[Callable],) -> Tuple[DataLoader, DataLoader]:
         """
         Create two PyTorch DataLoaders out of this dataset, randomly splitting
         the data in between training and testing
@@ -273,10 +259,6 @@ class TrainingSetBundle(Dataset):
             )
 
         return (
-            DataLoader(
-                training_set,
-                collate_fn=collate,
-                batch_size=batch_size,
-            ),
+            DataLoader(training_set, collate_fn=collate, batch_size=batch_size,),
             split_indices,
         )
