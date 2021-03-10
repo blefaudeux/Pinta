@@ -16,6 +16,7 @@
     "tuning_inputs": [
         "port_foil_rake",
         "port_foil_ext",
+        "keel_cant",
         "sails"
     ],
     "transforms": [

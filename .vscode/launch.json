@@ -20,7 +20,7 @@
             "cwd": "${workspaceRoot}",
             "args": [
                 "--data_path",
-                "~/Dropbox/Pinta/imoca/HB7_convert/",
+                "/media/lesle/Data/Dropbox/Pinta/imoca/HB7_convert/",
                 "--settings_path",
                 "settings/settings_imoca_prediction.json",
                 "--amp"

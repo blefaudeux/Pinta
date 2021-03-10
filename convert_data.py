@@ -8,14 +8,13 @@ import multiprocessing
 from itertools import repeat
 from pathlib import Path
 from typing import Any, Dict, Optional, List
-
+import pandas as pd
 import json
 
 from pinta.data_processing.csv2pandas import parse_csv
 from pinta.data_processing.json2pandas import parse_raw_json
 from pinta.data_processing.nmea2pandas import parse_nmea
 from pinta.data_processing.utils import save_json
-import pandas as pd
 
 LOG = logging.getLogger("DataConversion")
 SUPPORTED_FILES = [".json", ".csv", ".nmea"]
@@ -43,20 +42,32 @@ def process_file(
                     break
 
         if id_run is not None:
-            # - add the metadata in the DataFrame
-            LOG.debug(f"Found ID for file {filepath.stem} : {id_run} in metadata file {id_meta}")
+            # - add the metadata in the DataFrame (take the lookup into account)
+            LOG.info(f"Found ID for file {filepath.stem} : {id_run} in metadata file {id_meta}")
 
             for k in metadata[id_meta].keys():
                 if k == "run" or k == "ID":
                     continue
 
-                df[k] = metadata[id_meta][k][id_run]
+                key = lut[k] if lut and k in lut.keys() else k
+                if lut and k not in lut.keys():
+                    LOG.debug(f"{k} key is missing from the look-up table")
+
+                df[key] = metadata[id_meta][k][id_run]
+                LOG.debug(f"{k} brings value: {metadata[id_meta][k][id_run]}")
+        else:
+            LOG.warning(f"Could not find the metadata for {filepath}")
 
     # Fill in the gaps in data
     # Drop the collumns which are completely empty
     df = df.bfill().ffill().dropna(axis=1)  # interpolate() ?
+
     if args.pickle:
-        df.to_pickle(Path(args.data_export_path) / Path(filepath.stem + ".pkl"))
+        pd.to_pickle(df, Path(args.data_export_path) / Path(filepath.stem + ".pkl"), protocol=4)
+        # test = pd.read_pickle(Path(args.data_export_path) / Path(filepath.stem + ".pkl"))
+        # print(df.columns)
+        # print(test.columns)
+        # exit(-1)
     else:
         save_json(df, Path(args.data_export_path) / Path(filepath.stem + ".json"))
 
@@ -83,6 +94,7 @@ def handle_directory(args: argparse.Namespace):
 
         # Make sure that we don't load the metadata files
         filelist = list(set(filelist) - set(filter(lambda x: args.metadata_root in str(x), filelist)))
+        LOG.info(f"{len(filelist)} files to process, excluding metadata.")
 
     # Make the export directory
     Path(args.data_export_path).mkdir(parents=True, exist_ok=True)
@@ -93,14 +105,16 @@ def handle_directory(args: argparse.Namespace):
         with open(args.data_lookup_table, "r") as fileio:
             lut = json.load(fileio)
 
-        LOG.debug("Provided look-up table: {}".format(lut))
+        LOG.info("Provided look-up table: {}".format(lut))
 
     # Batch process all the files
     if args.parallel:
+        LOG.info("Starting parallel conversion")
         pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
-        barrier = pool.starmap_async(process_file, zip(filelist, repeat(args), repeat(lut)))
+        barrier = pool.starmap_async(process_file, zip(filelist, repeat(args), repeat(lut), repeat(metadatas)))
         barrier.wait()
     else:
+        LOG.info("Starting sequential conversion")
         for f in filelist:
             process_file(f, args, lut, metadatas)
 
