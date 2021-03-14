@@ -19,4 +19,5 @@ class TuningEncoder(torch.nn.Module):
         self.output_size = out_features
 
     def forward(self, inputs: torch.Tensor):
-        return self.mlp(inputs)
+        # for now, only consider the last item in the time series
+        return self.mlp(inputs[:,:, -1])

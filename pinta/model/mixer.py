@@ -27,7 +27,18 @@ class Mixer(NN):
         self.mixer = torch.nn.Sequential(*layers)
 
     def forward(self, inputs: torch.Tensor, tuning_inputs: torch.Tensor) -> torch.Tensor:
-        temporal_signal = self.trunk(inputs)
+        temporal_signal, _ = self.trunk(inputs)
         tuning_signal = self.tuning_encoder(tuning_inputs)
 
-        return self.mixer(torch.cat(temporal_signal, tuning_signal))
+        return self.mixer(torch.cat((temporal_signal.squeeze(), tuning_signal), dim=1))
+
+    def get_layer_weights(self):
+        import logging
+
+        logging.warning("Only returning the trunk's linear layers weights, would need to be fixed")
+
+        def is_linear(module):
+            return "layer" in module[0]
+
+        # Select the linear layers, return the weights
+        return map(lambda x: x[1].weight, filter(is_linear, self.trunk.named_modules()))

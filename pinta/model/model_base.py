@@ -137,7 +137,7 @@ class NN(nn.Module):
                     # Split inputs and training inputs, then go through the mode + mixer:
                     if hasattr(self, "tuning_encoder"):
                         inputs, tuning_inputs = self._split_inputs(train_batch.inputs, settings)
-                        out, _ = self(inputs, tuning_inputs)
+                        out = self(inputs, tuning_inputs)
                         # FIXME: Handle different losses
                     else:
                         out, _ = self(train_batch.inputs)
@@ -159,7 +159,12 @@ class NN(nn.Module):
 
                 # Loss on the validation data
                 def closure_validation(data=validation_batch):
-                    pred, _ = self(data.inputs)
+                    if hasattr(self, "tuning_encoder"):
+                        inputs, tuning_inputs = self._split_inputs(data.inputs, settings)
+                        pred = self(inputs, tuning_inputs)
+                        # FIXME: Handle different losses
+                    else:
+                        pred, _ = self(data.inputs)
                     loss = criterion(pred.squeeze(), data.outputs.squeeze()).detach()
 
                     self.summary_writer.add_scalar("validation", loss.item(), i_log)
