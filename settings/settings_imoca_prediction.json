@@ -19,6 +19,12 @@
         "keel_cant",
         "sails"
     ],
+    "tokens": {
+        "sails": {
+            "1RJ2": 1,
+            "GVJ2": 2
+        }
+    },
     "transforms": [
         [
             "normalize",

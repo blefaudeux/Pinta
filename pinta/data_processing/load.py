@@ -57,9 +57,11 @@ def load_folder(
 
 
 def to_training_set(raw_data: pd.DataFrame, settings: Dict[str, Any]):
-    # TODO: @lefaudeux tokenize the string cols
-    if settings["tuning_inputs"][0] in raw_data.columns:
-        print("valid")
+    # Optionally replace the string settings by numerical tokens
+    if "tokens" in settings.keys():
+        for cat_tokenize in settings["tokens"].keys():
+            for k, v in settings["tokens"][cat_tokenize].items():
+                raw_data[cat_tokenize] = raw_data[cat_tokenize].replace(k, v)
 
     fused_inputs = settings["inputs"] + settings["tuning_inputs"]
     return TrainingSet.from_numpy(
