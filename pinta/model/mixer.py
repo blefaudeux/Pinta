@@ -31,3 +31,14 @@ class Mixer(NN):
         tuning_signal = self.tuning_encoder(tuning_inputs)
 
         return self.mixer(torch.cat((temporal_signal.squeeze(), tuning_signal), dim=1))
+
+    def get_layer_weights(self):
+        import logging
+
+        logging.warning("Only returning the trunk's linear layers weights, would need to be fixed")
+
+        def is_linear(module):
+            return "layer" in module[0]
+
+        # Select the linear layers, return the weights
+        return map(lambda x: x[1].weight, filter(is_linear, self.trunk.named_modules()))
