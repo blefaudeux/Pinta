@@ -27,7 +27,7 @@ class Mixer(NN):
         self.mixer = torch.nn.Sequential(*layers)
 
     def forward(self, inputs: torch.Tensor, tuning_inputs: torch.Tensor) -> torch.Tensor:
-        temporal_signal = self.trunk(inputs)
+        temporal_signal, _ = self.trunk(inputs)
         tuning_signal = self.tuning_encoder(tuning_inputs)
 
-        return self.mixer(torch.cat(temporal_signal, tuning_signal))
+        return self.mixer(torch.cat((temporal_signal.squeeze(), tuning_signal), dim=1))

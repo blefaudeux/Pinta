@@ -63,7 +63,7 @@
         "feature_size": 16
     },
     "trunk": {
-        "model_type": "dilated_conv",
+        "model_type": "mlp",
         "hidden_size": 128,
         "dilated_conv": {
             "dropout": 0.25
