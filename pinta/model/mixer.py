@@ -40,5 +40,7 @@ class Mixer(NN):
         def is_linear(module):
             return "layer" in module[0]
 
+        return []
+
         # Select the linear layers, return the weights
-        return map(lambda x: x[1].weight, filter(is_linear, self.trunk.named_modules()))
+        # return map(lambda x: x[1].weight, filter(is_linear, self.trunk.named_modules()))

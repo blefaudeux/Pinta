@@ -63,7 +63,7 @@
         "feature_size": 16
     },
     "trunk": {
-        "model_type": "mlp",
+        "model_type": "dilated_conv",
         "hidden_size": 128,
         "dilated_conv": {
             "dropout": 0.25
@@ -99,7 +99,7 @@
         "train_workers": 3,
         "test_workers": 1
     },
-    "epoch": 5,
+    "epoch": 10,
     "optim": {
         "name": "adam_w",
         "learning_rate": 0.01,
