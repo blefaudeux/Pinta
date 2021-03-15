@@ -1,5 +1,5 @@
 import torch
-from typing import Dict, Any
+from typing import Dict, Any, List
 from pinta.model.model_base import NN
 from pinta.model.encoder import TuningEncoder
 
@@ -12,15 +12,17 @@ class Mixer(NN):
         self.tuning_encoder = tuning_encoder
 
         # A bit naive, just use yet another MLP for now
-        layers = [
+        layers: List[torch.nn.Module] = [
             torch.nn.Linear(
-                in_features=trunk.output_size + tuning_encoder.output_size, out_features=params["mixer"]["hidden_size"],
+                in_features=trunk.output_size + tuning_encoder.output_size,
+                out_features=params["mixer"]["hidden_size"],
             )
         ]
         for _ in range(params["mixer"]["hidden_layers"]):
             layers.append(
                 torch.nn.Linear(in_features=params["mixer"]["hidden_size"], out_features=params["mixer"]["hidden_size"])
             )
+            layers.append(torch.nn.ReLU())
 
         layers.append(torch.nn.Linear(in_features=params["mixer"]["hidden_size"], out_features=len(params["outputs"])))
 

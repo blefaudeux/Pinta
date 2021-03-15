@@ -57,8 +57,8 @@ def model_factory(params: Dict[str, Any], model_path: str) -> NN:
     # does not match a key will cause an assert
 
     trunk_outputs = (
-        params["encoder"]["embedding_dimensions"]
-        if "embedding_dimensions" in params["encoder"].keys()
+        params["trunk"]["embedding_dimensions"]
+        if "embedding_dimensions" in params["trunk"].keys()
         else len(params["outputs"])
     )
 

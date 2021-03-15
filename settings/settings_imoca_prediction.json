@@ -16,7 +16,6 @@
     "tuning_inputs": [
         "port_foil_rake",
         "port_foil_ext",
-        "keel_cant",
         "sails"
     ],
     "tokens": {
@@ -29,16 +28,6 @@
         [
             "normalize",
             []
-        ],
-        [
-            "random_flip",
-            [
-                [
-                    "heel",
-                    "twa_y"
-                ],
-                0.5
-            ]
         ],
         [
             "offset_inputs_outputs",
@@ -92,21 +81,21 @@
     },
     "seq_length": 27,
     "data": {
-        "train_batch_size": 10000,
+        "train_batch_size": 20000,
         "test_batch_size": 1000,
         "training_ratio": 0.9,
         "shuffle": true,
-        "train_workers": 3,
+        "train_workers": 2,
         "test_workers": 1
     },
-    "epoch": 10,
+    "epoch": 5,
     "optim": {
         "name": "adam_w",
-        "learning_rate": 0.01,
+        "learning_rate": 1e-2,
         "scheduler": "reduce_plateau",
         "scheduler_patience": 20,
         "scheduler_factor": 0.8,
-        "momentum": 0.99
+        "momentum": 0.9
     },
     "log": "pinta_imoca",
     "amp": false

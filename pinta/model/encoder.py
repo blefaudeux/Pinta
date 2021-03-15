@@ -15,9 +15,10 @@ class TuningEncoder(torch.nn.Module):
             torch.nn.Linear(in_features=inputs, out_features=hidden, bias=True),
             torch.nn.GELU(),
             torch.nn.Linear(hidden, out_features),
+            torch.nn.LayerNorm(out_features),
         )
         self.output_size = out_features
 
     def forward(self, inputs: torch.Tensor):
         # for now, only consider the last item in the time series
-        return self.mlp(inputs[:,:, -1])
+        return self.mlp(inputs[:, :, -1])
