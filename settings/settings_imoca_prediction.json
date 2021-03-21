@@ -53,7 +53,7 @@
     },
     "trunk": {
         "model_type": "dilated_conv",
-        "hidden_size": 128,
+        "hidden_size": 64,
         "dilated_conv": {
             "dropout": 0.25
         },
@@ -81,14 +81,14 @@
     },
     "seq_length": 27,
     "data": {
-        "train_batch_size": 20000,
+        "train_batch_size": 40000,
         "test_batch_size": 1000,
         "training_ratio": 0.9,
         "shuffle": true,
-        "train_workers": 2,
+        "train_workers": 4,
         "test_workers": 1
     },
-    "epoch": 5,
+    "epoch": 2,
     "optim": {
         "name": "adam_w",
         "learning_rate": 1e-2,
