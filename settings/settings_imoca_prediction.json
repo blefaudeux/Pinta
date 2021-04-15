@@ -52,10 +52,10 @@
         "feature_size": 16
     },
     "trunk": {
-        "model_type": "rnn",
+        "model_type": "dilated_conv",
         "hidden_size": 128,
         "dilated_conv": {
-            "dropout": 0.25
+            "dropout": 0.1
         },
         "mlp": {
             "inner_layers": 3
@@ -82,10 +82,10 @@
     "seq_length": 27,
     "data": {
         "train_batch_size": 1000,
-        "test_batch_size": 1000,
+        "test_batch_size": 100,
         "training_ratio": 0.9,
         "shuffle": true,
-        "train_workers": 2,
+        "train_workers": 3,
         "test_workers": 1
     },
     "epoch": 2,

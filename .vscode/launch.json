@@ -25,7 +25,7 @@
                 "settings/settings_imoca_prediction.json",
                 "--amp",
                 "--max_number_sequences",
-                "10"
+                "100"
             ]
         },
         {
@@ -36,6 +36,14 @@
             "python": "${command:python.interpreterPath}",
             "program": "${workspaceRoot}/polar_from_vpp.py",
             "cwd": "${workspaceRoot}",
+            "args": [
+                "--model_path",
+                "trained/dilated_conv_seq_27_hidden_64_batch_10000_lr_0.01_ep_20_amp_True.pt",
+                "--data_path",
+                "data",
+                "--settings_path",
+                "settings/settings_mini_polar.json"
+            ]
         },
         {
             "name": "ConvertCSV",

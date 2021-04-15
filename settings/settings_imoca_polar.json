@@ -7,6 +7,7 @@
         "leeway",
         "helm"
     ],
+    "tuning_inputs": [],
     "outputs": [
         "sog"
     ],
@@ -36,8 +37,29 @@
             []
         ]
     ],
-    "model_type": "mlp",
-    "hidden_size": 512,
+    "trunk": {
+        "model_type": "dilated_conv",
+        "hidden_size": 64,
+        "dilated_conv": {
+            "dropout": 0.1
+        },
+        "mlp": {
+            "inner_layers": 3
+        },
+        "rnn": {
+            "gru_layers": 2,
+            "kernel_sizes": [
+                3,
+                3
+            ]
+        },
+        "conv": {
+            "kernel_sizes": [
+                3,
+                3
+            ]
+        }
+    },
     "seq_length": 27,
     "data": {
         "train_batch_size": 20000,
@@ -47,33 +69,14 @@
         "train_workers": 4,
         "test_workers": 1
     },
-    "epoch": 10,
+    "epoch": 1,
     "optim": {
         "name": "adam_w",
         "learning_rate": 0.01,
         "scheduler": "reduce_plateau",
         "scheduler_patience": 20,
-        "scheduler_factor": 0.8,
+        "scheduler_factor": 0.8,\
         "momentum": 0.9
-    },
-    "dilated_conv": {
-        "dropout": 0.25
-    },
-    "mlp": {
-        "inner_layers": 3
-    },
-    "rnn": {
-        "gru_layers": 2,
-        "kernel_sizes": [
-            3,
-            3
-        ]
-    },
-    "conv": {
-        "kernel_sizes": [
-            3,
-            3
-        ]
     },
     "log": "pinta_imoca",
     "amp": false

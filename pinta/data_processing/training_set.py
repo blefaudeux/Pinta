@@ -3,7 +3,7 @@ from __future__ import annotations
 # Our lightweight base data structure..
 # specialize inputs/outputs, makes it readable down the line
 from collections import namedtuple
-from typing import Callable, List, Tuple, Dict, Any
+from typing import Callable, List, Tuple, Dict, Any, Optional
 
 import numpy as np
 import torch
@@ -46,6 +46,8 @@ class TrainingSet(Dataset):
         self.inputs = inputs  # type: torch.Tensor
         self.outputs = outputs  # type: torch.Tensor
         self.transform = lambda x: x
+        self.inputs_seq_view: Optional[torch.Tensor] = None
+        self.outputs_seq_view: Optional[torch.Tensor] = None
 
     @classmethod
     def from_numpy(cls, inputs: np.array, outputs: np.array):
@@ -69,7 +71,7 @@ class TrainingSet(Dataset):
         """
         Concatenate another TrainingSet
         """
-        assert inputs.shape[0] == outputs.shape[0], "Dimensions mismatch"
+        assert inputs.shape[1] == outputs.shape[1], "Dimensions mismatch"
 
         self.inputs = torch.cat((self.inputs, inputs), 0)
         self.outputs = torch.cat((self.outputs, outputs), 0)
@@ -79,10 +81,12 @@ class TrainingSet(Dataset):
 
     def get_sequence(self, index: int, seq_length: int) -> TrainingSample:
         index = min(index, self.inputs.shape[0] - seq_length)  # Handle the sequence length overflowing the dataset
-        index_next = index + seq_length
-        return self.transform(
-            TrainingSample(inputs=self.inputs[index:index_next, :], outputs=self.outputs[index:index_next, :])
-        )
+
+        if self.inputs_seq_view is None or self.outputs_seq_view is None:
+            self.inputs_seq_view = self.inputs.unfold(0, seq_length, 1)
+            self.outputs_seq_view = self.outputs.unfold(0, seq_length, 1)
+
+        return self.transform(TrainingSample(inputs=self.inputs_seq_view[index], outputs=self.outputs_seq_view[index]))
 
     def __len__(self):
         return self.inputs.shape[0]
@@ -151,12 +155,15 @@ class TrainingSetBundle(Dataset):
         local_index = index - self.index_map[match]
 
         # Use the TrainingSet to fetch the appropriate sequence, transform and return
-        sample = self.sets[match].get_sequence(local_index, self.seq_length)
-        return self.transform(sample)
+        sequence = self.sets[match].get_sequence(local_index, self.seq_length)
+        return self.transform(sequence)
 
     def get_training_set(self, seq_len: int) -> Tuple[TrainingSet, List[int]]:
         """
         Generate a single TrainingSet from a bundle.
+
+        .. warning: this can take a sizeable amount of memory, all the sequences will be materialized.
+        Use .get_item() if you want to stream the dataset
         """
 
         inputs = []
@@ -183,11 +190,11 @@ class TrainingSetBundle(Dataset):
         """
 
         # Split the dataset in train/test instances
-        unique_dataset, _ = self.get_training_set(seq_len=params["seq_length"])
-        unique_dataset.set_transforms(transforms)
-        train_len = int(params["data"]["training_ratio"] * len(unique_dataset))
-        test_len = len(unique_dataset) - train_len
-        trainer, tester = random_split(unique_dataset, [train_len, test_len])
+        self.seq_length = params["seq_length"]
+        self.set_transforms(transforms)
+        train_len = int(params["data"]["training_ratio"] * len(self))
+        test_len = len(self) - train_len
+        trainer, tester = random_split(self, [train_len, test_len])
 
         def collate(samples: List[TrainingSample]):
             """

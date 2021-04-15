@@ -117,10 +117,10 @@ class Normalize:
         if sample.inputs.shape[0] == 1:
             return TrainingSample(
                 inputs=torch.div(
-                    torch.add(sample.inputs, -self.mean.inputs),
-                    self.std.inputs,
+                    torch.add(sample.inputs, -self.mean.inputs[:, 0]),
+                    self.std.inputs[:, 0],
                 ),
-                outputs=torch.div(torch.add(sample.outputs, -self.mean.outputs), self.std.outputs),
+                outputs=torch.div(torch.add(sample.outputs, -self.mean.outputs[:, 0]), self.std.outputs[:, 0]),
             )
 
         # Batch data coming in. Could also be handled through broadcasting
