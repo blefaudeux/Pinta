@@ -82,7 +82,10 @@ class Denormalize:
 
     def __call__(self, sample: TrainingSample):
         return TrainingSample(
-            inputs=torch.mul(torch.add(sample.inputs, self.mean.inputs), self.std.inputs,),
+            inputs=torch.mul(
+                torch.add(sample.inputs, self.mean.inputs),
+                self.std.inputs,
+            ),
             outputs=torch.mul(torch.add(sample.outputs, self.mean.outputs), self.std.outputs),
         )
 
@@ -99,8 +102,8 @@ class Normalize:
             std {TrainingSample holding torch tensors}
                 -- Expected distribution second moment
         """
-        self.mean = mean
-        self.std = std
+        self.mean = TrainingSample(mean.inputs.unsqueeze(1), mean.outputs.unsqueeze(1))  # add the sequence dimension
+        self.std = TrainingSample(std.inputs.unsqueeze(1), std.outputs.unsqueeze(1))
 
         LOG.info("Initializing Normalize transform with mean\n{}\nand std\n{}".format(mean, std))
 
@@ -113,20 +116,31 @@ class Normalize:
         # Non batched data
         if sample.inputs.shape[0] == 1:
             return TrainingSample(
-                inputs=torch.div(torch.add(sample.inputs, -self.mean.inputs), self.std.inputs,),
+                inputs=torch.div(
+                    torch.add(sample.inputs, -self.mean.inputs),
+                    self.std.inputs,
+                ),
                 outputs=torch.div(torch.add(sample.outputs, -self.mean.outputs), self.std.outputs),
             )
 
         # Batch data coming in. Could also be handled through broadcasting
         return TrainingSample(
-            inputs=torch.div(torch.add(sample.inputs, -self.mean.inputs), self.std.inputs,),
-            outputs=torch.div(torch.add(sample.outputs, -self.mean.outputs), self.std.outputs,),
+            inputs=torch.div(
+                torch.add(sample.inputs, -self.mean.inputs),
+                self.std.inputs,
+            ),
+            outputs=torch.div(
+                torch.add(sample.outputs, -self.mean.outputs),
+                self.std.outputs,
+            ),
         )
 
 
 class RandomFlip:
     def __init__(
-        self, dimensions: List[int], odds: float,
+        self,
+        dimensions: List[int],
+        odds: float,
     ):
         """
         Randomly flip the given dimensions.
@@ -187,7 +201,7 @@ class OffsetInputsOutputs:
     def __call__(self, sample: TrainingSample):
         # FIXME not very elegant, there must be a cleaner, branchless way
         if len(sample.inputs.shape) > 1:
-            return TrainingSample(inputs=sample.inputs[: -self.offset, :], outputs=sample.outputs[self.offset :, :])
+            return TrainingSample(inputs=sample.inputs[:, : -self.offset], outputs=sample.outputs[:, self.offset :])
 
         return TrainingSample(inputs=sample.inputs[: -self.offset], outputs=sample.outputs[self.offset :])
 
@@ -212,9 +226,9 @@ class CutSequence:
     @staticmethod
     def __cut(seq: torch.Tensor, cut: int):
         if cut is None or cut > 0:
-            return seq[:cut, :]
+            return seq[:, :cut]
 
-        return seq[cut:, :]
+        return seq[:, cut:]
 
     def __call__(self, sample: TrainingSample):
         return TrainingSample(

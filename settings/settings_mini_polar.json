@@ -64,7 +64,7 @@
         "test_batch_size": 1000,
         "training_ratio": 0.9,
         "shuffle": true,
-        "train_workers": 3,
+        "train_workers": 4,
         "test_workers": 1
     },
     "epoch": 20,

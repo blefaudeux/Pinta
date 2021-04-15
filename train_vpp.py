@@ -36,6 +36,7 @@ def run(args):
     )
     data_list = load_sets(dataframes, params)
     training_bundle = TrainingSetBundle(data_list)
+
     if "stats" not in params["data"].keys():
         log.info("Updating the normalization statistics with the current data pool")
         params["data"]["stats"] = training_bundle.get_norm()

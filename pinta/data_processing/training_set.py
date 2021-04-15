@@ -124,25 +124,6 @@ class TrainingSetBundle(Dataset):
         """
         self.transform = torchvision.transforms.Compose(transforms)
 
-    @staticmethod
-    def generate_temporal_seq(tensor_input: torch.Tensor, tensor_output: torch.Tensor, seq_len: int):
-        """
-        Generate all the subsequences over time,
-        Useful for instance for training a temporal conv net
-        """
-
-        n_sequences = tensor_input.shape[0] - seq_len + 1
-
-        input_seq = torch.transpose(
-            torch.stack([tensor_input[start : start + seq_len, :] for start in range(n_sequences)], dim=0,), 1, 2,
-        )
-
-        output_seq = torch.transpose(
-            torch.stack([tensor_output[start : start + seq_len, :] for start in range(n_sequences)], dim=0,), 1, 2,
-        )
-
-        return input_seq, output_seq
-
     def get_norm(self) -> Tuple[TrainingSample, TrainingSample]:
         """Get Mean and STD over the whole bundle
 
@@ -176,50 +157,45 @@ class TrainingSetBundle(Dataset):
     def get_training_set(self, seq_len: int) -> Tuple[TrainingSet, List[int]]:
         """
         Generate a single TrainingSet from a bundle.
-
-        .. warning: This will take a lot of space in memory, since all the possible
-            sequences are statically generated
         """
 
         inputs = []
         outputs = []
 
         for training_set in self.sets:
-            a, b = self.generate_temporal_seq(training_set.inputs, training_set.outputs, seq_len)
-            inputs.append(a)
-            outputs.append(b)
-
-        tensor_input = torch.cat(inputs)
-        tensor_output = torch.cat(outputs)
+            # Generate memory views (no copies) with all the possible sequences
+            inputs.append(training_set.inputs.unfold(0, seq_len, 1))
+            outputs.append(training_set.outputs.unfold(0, seq_len, 1))
 
         return (
-            TrainingSet(tensor_input, tensor_output),
+            TrainingSet(torch.cat(inputs), torch.cat(outputs)),
             [len(sequence) for sequence in inputs],
         )
 
-    def get_dataloaders(self, params: Dict[str, Any], transforms: List[Callable],) -> Tuple[DataLoader, DataLoader]:
+    def get_dataloaders(
+        self,
+        params: Dict[str, Any],
+        transforms: List[Callable],
+    ) -> Tuple[DataLoader, DataLoader]:
         """
         Create two PyTorch DataLoaders out of this dataset, randomly splitting
         the data in between training and testing
         """
 
-        # Keep using the bundled dataset. Generate the sequences on the fly
-        self.set_transforms(transforms)
-        self.seq_length = params["seq_length"]
-
         # Split the dataset in train/test instances
-        train_len = int(params["data"]["training_ratio"] * len(self))
-        test_len = len(self) - train_len
-        trainer, tester = random_split(self, [train_len, test_len])
+        unique_dataset, _ = self.get_training_set(seq_len=params["seq_length"])
+        unique_dataset.set_transforms(transforms)
+        train_len = int(params["data"]["training_ratio"] * len(unique_dataset))
+        test_len = len(unique_dataset) - train_len
+        trainer, tester = random_split(unique_dataset, [train_len, test_len])
 
         def collate(samples: List[TrainingSample]):
             """
             Dimensions are [Batch x Channels x TimeSequence].
-            Input was [Batch x TimeSequence x Channels]
             """
             return TrainingSample(
-                inputs=torch.stack([t.inputs for t in samples]).permute(0, 2, 1),
-                outputs=torch.stack([t.outputs for t in samples]).permute(0, 2, 1),
+                inputs=torch.stack([t.inputs for t in samples]),
+                outputs=torch.stack([t.outputs for t in samples]),
             )
 
         return (
@@ -259,6 +235,10 @@ class TrainingSetBundle(Dataset):
             )
 
         return (
-            DataLoader(training_set, collate_fn=collate, batch_size=batch_size,),
+            DataLoader(
+                training_set,
+                collate_fn=collate,
+                batch_size=batch_size,
+            ),
             split_indices,
         )
