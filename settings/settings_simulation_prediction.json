@@ -36,9 +36,7 @@
             []
         ]
     ],
-    "model_type": "dilated_conv",
-    "hidden_size": 128,
-    "seq_length": 27,
+    "seq_length": 81,
     "data": {
         "train_batch_size": 30000,
         "test_batch_size": 1000,
@@ -52,28 +50,32 @@
         "name": "adam_w",
         "learning_rate": 0.01,
         "scheduler": "reduce_plateau",
-        "scheduler_patience": 20,
+        "scheduler_patience": 40,
         "scheduler_factor": 0.8,
         "momentum": 0.99
     },
-    "dilated_conv": {
-        "dropout": 0.15
-    },
-    "mlp": {
-        "inner_layers": 3
-    },
-    "rnn": {
-        "gru_layers": 2,
-        "kernel_sizes": [
-            3,
-            3
-        ]
-    },
-    "conv": {
-        "kernel_sizes": [
-            3,
-            3
-        ]
+    "trunk": {
+        "model_type": "dilated_conv",
+        "hidden_size": 128,
+        "dilated_conv": {
+            "dropout": 0.15
+        },
+        "mlp": {
+            "inner_layers": 3
+        },
+        "rnn": {
+            "gru_layers": 2,
+            "kernel_sizes": [
+                3,
+                3
+            ]
+        },
+        "conv": {
+            "kernel_sizes": [
+                3,
+                3
+            ]
+        }
     },
     "log": "pinta_imoca",
     "amp": false
