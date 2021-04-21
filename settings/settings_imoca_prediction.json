@@ -73,11 +73,11 @@
                 3
             ]
         },
-        "embedding_dimensions": 32
+        "embedding_dimensions": 16
     },
     "mixer": {
-        "hidden_size": 64,
-        "hidden_layers": 3
+        "hidden_size": 32,
+        "hidden_layers": 2
     },
     "seq_length": 27,
     "data": {

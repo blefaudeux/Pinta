@@ -127,5 +127,6 @@ def model_factory(params: Dict[str, Any], model_path: str) -> NN:
         # Given the original trunk and the encoder, the signal needs to be mixed
         # and have some downstream capacity
         model = Mixer(logdir=log_directory, trunk=trunk, tuning_encoder=tuning_encoder, params=params)
+        logging.info("Using a final Mixer to get the predictions")
 
     return model.to(settings.device)
