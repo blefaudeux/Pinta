@@ -48,12 +48,12 @@
         ]
     ],
     "encoder": {
-        "hidden_size": 64,
-        "feature_size": 16
+        "hidden_size": 32,
+        "feature_size": 8
     },
     "trunk": {
         "model_type": "dilated_conv",
-        "hidden_size": 128,
+        "hidden_size": 64,
         "dilated_conv": {
             "dropout": 0.1
         },
@@ -79,7 +79,7 @@
         "hidden_size": 32,
         "hidden_layers": 2
     },
-    "seq_length": 27,
+    "seq_length": 81,
     "data": {
         "train_batch_size": 1000,
         "test_batch_size": 100,
