@@ -9,3 +9,4 @@ plotly
 pytest
 torch
 pysimdjson
+gym
