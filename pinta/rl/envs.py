@@ -5,7 +5,6 @@ import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
 
-
 """ Load a trained model, wrap it as a gym environement """
 
 def load_model(model_path: str, settings_path: str) -> torch.nn.Module:
@@ -15,18 +14,19 @@ def load_model(model_path: str, settings_path: str) -> torch.nn.Module:
 
 
 class PintaEnv(gym.Env):
-    #TODO: Ben
     def __init__(self) -> None:
-        pass
+        self.model = load_model(".model.pt", ".settings.json")
 
     metadata = {'render.modes': ['human']}
 
-
     def step(self, action):
+        # apply the actions on the model, get the next state
         ...
 
     def reset(self):
+        # reload the model
         ...
 
     def render(self, mode='human', close=False):
+        # TODO: quick pyglet viewer or something related ?
         ...
