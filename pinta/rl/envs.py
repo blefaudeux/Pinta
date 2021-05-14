@@ -1,11 +1,11 @@
 import torch
-import pinta.settings  as settings
+import pinta.settings as settings
 from pinta.model.model_factory import model_factory
 import gym
-from gym import error, spaces, utils
-from gym.utils import seeding
+
 
 """ Load a trained model, wrap it as a gym environement """
+
 
 def load_model(model_path: str, settings_path: str) -> torch.nn.Module:
     # Load the saved pytorch nn

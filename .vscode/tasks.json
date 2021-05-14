@@ -1,26 +1,32 @@
 {
-    "version": "0.1.0",
+    "version": "2.0.0",
     "command": "python3",
-    "isShellCommand": true,
     "args": [],
-    "showOutput": "always",
     "echoCommand": true,
-    "suppressTaskName": true,
     "tasks": [
         {
-            "taskName": "VPP",
-            "echoCommand": true,
-            "args": ["${workspaceRoot}/test_vpp_nn.py"]
+            "label": "VPP",
+            "type": "shell",
+            "args": [
+                "${workspaceRoot}/test_vpp_nn.py"
+            ],
+            "problemMatcher": []
         },
         {
-            "taskName": "RL",
-            "echoCommand": true,
-            "args": ["${workspaceRoot}/test_rl_nn.py"]
+            "label": "RL",
+            "type": "shell",
+            "args": [
+                "${workspaceRoot}/test_rl_nn.py"
+            ],
+            "problemMatcher": []
         },
         {
-            "taskName": "Convert",
-            "echoCommand": true,
-            "args": ["${workspaceRoot}/convert_data.py"]
+            "label": "Convert",
+            "type": "shell",
+            "args": [
+                "${workspaceRoot}/convert_data.py"
+            ],
+            "problemMatcher": []
         }
     ]
 }

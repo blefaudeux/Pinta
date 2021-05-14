@@ -2,8 +2,11 @@ import json
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict
-
+from dataclasses import dataclass, field
 import torch
+from typing import List, Tuple
+import logging
+from typed_json_dataclass import TypedJsonMixin
 
 _amp_available = hasattr(torch.cuda, "amp") and hasattr(torch.cuda.amp, "autocast")
 
@@ -12,9 +15,9 @@ device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cp
 
 
 if torch.cuda.is_available():
-    print("CUDA enabled")
+    logging.warning("CUDA enabled")
 else:
-    print("CPU enabled")
+    logging.warning("CPU enabled")
 
 
 class ModelType(str, Enum):
@@ -34,65 +37,49 @@ class Optimizer(str, Enum):
     ADAM_W = "ADAM_W"
 
 
-# Reference keys handled by the conversion and data processing utils
-_EXPAND_KEYS = {
-    "tws": "true wind speed",
-    "twa": "true wind angle",
-    "awa": "apparent wind angle",
-    "sog": "speed over ground",
-    "cog": "course over ground",
-    "twd": "true wind direction",
-    "heel": "boat heel angle",
-    "trim": "trim angle",
-    "az": "azimuth",
-    "foil_port_fo_load": "",
-    "foil_stbd_fo_load": "",
-    "foil_port_rake": "",
-    "foil_stbd_rake": "",
-    "foil_port_ext": "",
-    "foil_stbd_ext": "",
-    "bobstay_load": "",
-    "j2_load": "",
-    "outrigger_port_load": "outrigger_port_load",
-    "outrigger_stbd_load": "outrigger_stbd_load",
-    "runner_port_load": "runner_port_load",
-    "runner_stbd_load": "runner_stbd_load",
-    "lat": "latitude",
-    "lon": "longitude",
-}
+@dataclass
+class TrunkSettings(TypedJsonMixin):
+    model_type: ModelType = ModelType.DILATED_CONV
+    hidden_size: int = 256
+    conv_width: List[int] = field(default_factory=lambda: [3, 3, 3, 3])
 
 
-_DEFAULTS = {
-    "inputs": ["tws", "twa_x", "twa_y", "helm"],
-    "outputs": ["sog"],
-    "model_type": ModelType.DILATED_CONV,
-    "hidden_size": 256,
-    "seq_length": 81,
-    "conv_width": [3, 3, 3, 3],
-    "data": {
-        "train_batch_size": 10000,
-        "test_batch_size": 1000,
-        "training_ratio": 0.9,
-        "shuffle": True,
-        "train_workers": 3,
-        "test_workers": 1,
-    },
-    "epoch": 30,
-    "learning_rate": 5 * 1e-2,
-    "dilated_conv": {"dropout": 0.25},
-    "mlp": {"inner_layers": 3},
-    "rnn": {"gru_layers": 2, "kernel_sizes": [3, 3]},
-    "conv": {"kernel_sizes": [3, 3]},
-    "log": "pinta",
-    "scheduler": Scheduler.REDUCE_PLATEAU,
-    "amp": False,
-}
-
-assert isinstance(_DEFAULTS["model_type"], ModelType), "Unkonwn model type"
+@dataclass
+class DataSettings(TypedJsonMixin):
+    train_batch_size: int = 20000
+    test_batch_size: int = 1000
+    training_ratio: float = 0.9
+    shuffle: bool = True
+    train_workers: int = 4
+    test_workers: int = 1
 
 
-def get_default_params():
-    return _DEFAULTS
+@dataclass
+class OptimSettings(TypedJsonMixin):
+    name: Optimizer = Optimizer.ADAM_W
+    learning_rate: float = 0.01
+    scheduler: Scheduler = Scheduler.REDUCE_PLATEAU
+    scheduler_patience: int = 20
+    scheduler_factor: float = 0.8
+    momentum: float = 0.9
+
+
+@dataclass
+class TrainingSettings(TypedJsonMixin):
+    epoch: int = 1
+    optim: OptimSettings = OptimSettings()
+
+
+@dataclass
+class Settings(TypedJsonMixin):
+    inputs: List[str] = field(default_factory=lambda: ["tws", "twa_x", "twa_y", "helm"])
+    tuning_inputs: List[str] = field(default_factory=list)
+    outputs: List[str] = field(default_factory=lambda: ["sog"])
+    transforms: List[Tuple[str, List[Any]]] = field(default_factory=list)
+    seq_length: int = 81
+    trunk: TrunkSettings = TrunkSettings()
+    data: DataSettings = DataSettings()
+    training: TrainingSettings = TrainingSettings()
 
 
 def get_name(params: Dict[str, Any]):
@@ -115,13 +102,13 @@ def get_name(params: Dict[str, Any]):
     )
 
 
-def save(filename, settings):
+def save(filename, settings: Settings):
     filepath = Path(filename).absolute()
     with open(filepath, "w") as file:
-        json.dump(settings, file)
+        json.dump(settings.__dict__, file)
 
 
-def load(filename):
+def load(filename) -> Settings:
     filepath = Path(filename).absolute()
     print(f"opening {filepath}")
     with open(filepath, "r") as file:
