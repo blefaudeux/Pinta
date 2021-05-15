@@ -9,4 +9,4 @@ pytest
 torch
 pysimdjson
 gym
-typed-json-dataclass
+dataclasses-serialization

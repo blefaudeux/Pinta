@@ -10,6 +10,7 @@ from pandas import DataFrame
 from pinta.data_processing.training_set import TrainingSet
 from pinta.data_processing.utils import load_json
 import pandas as pd
+from pinta.settings import Settings
 
 LOG = logging.getLogger("DataLoad")
 
@@ -56,17 +57,16 @@ def load_folder(
         return [load(f, zero_mean_helm=zero_mean_helm) for f in filelist]
 
 
-def to_training_set(raw_data: pd.DataFrame, settings: Dict[str, Any]):
+def to_training_set(raw_data: pd.DataFrame, settings: Settings):
     # Optionally replace the string settings by numerical tokens
-    if "tokens" in settings.keys():
-        for cat_tokenize in settings["tokens"].keys():
-            for k, v in settings["tokens"][cat_tokenize].items():
-                raw_data[cat_tokenize] = raw_data[cat_tokenize].replace(k, v)
+    for cat_tokenize in settings.tokens:
+        for k, v in settings.tokens[cat_tokenize].items():
+            raw_data[cat_tokenize] = raw_data[cat_tokenize].replace(k, v)
 
-    fused_inputs = settings["inputs"] + settings["tuning_inputs"]
+    fused_inputs = settings.inputs + settings.tuning_inputs
     return TrainingSet.from_numpy(
-        np.array([raw_data[cat].values for cat in fused_inputs], dtype=np.float).transpose(),
-        np.array([raw_data[cat].values for cat in settings["outputs"]], dtype=np.float).transpose(),
+        np.array([raw_data[cat].values for cat in fused_inputs], dtype=float).transpose(),
+        np.array([raw_data[cat].values for cat in settings.outputs], dtype=float).transpose(),
     )
 
 

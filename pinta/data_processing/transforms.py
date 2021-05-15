@@ -2,33 +2,34 @@
 
 
 import logging
-from typing import Any, Callable, Dict, List
+from typing import Callable, List
 
 import torch
 from numpy.random import random_sample
 from pinta.data_processing.training_set import TrainingSample
+from pinta.settings import Settings
 
 LOG = logging.getLogger("Transforms")
 
 EPSILON = 1e-3
 
 
-def transform_factory(params: Dict[str, Any]) -> List[Callable]:
+def transform_factory(params: Settings) -> List[Callable]:
     "Given the requested serialized transform settings, return the corresponding transform sequence"
 
     transforms: List[Callable] = []
 
-    for transform_param in params["transforms"]:
+    for transform_param in params.transforms:
         transform_name, transform_args = transform_param[0], transform_param[1]
 
         def get_normalize():
-            return Normalize(*params["data"]["stats"])
+            return Normalize(*params.data.stats)
 
         def get_denormalize():
-            return Denormalize(*params["data"]["stats"])
+            return Denormalize(*params.data.stats)
 
         def get_random_flip():
-            return RandomFlip(dimensions=[params["inputs"].index(p) for p in transform_args[0]], odds=transform_args[1])
+            return RandomFlip(dimensions=[params.inputs.index(p) for p in transform_args[0]], odds=transform_args[1])
 
         def get_offset():
             return OffsetInputsOutputs(offset_samples=transform_args[0])
@@ -214,7 +215,7 @@ class CutSequence:
             inputs_cut (int): the number of samples to keep from the input sequence, following python notation.
                 (positive from the beginning of the array, negative from the end.
                 -3 means keep the 3 last samples
-                None -null in json- means keep everything)
+                0 means keep everything)
 
             outputs_cut (int): the number of samples to keep from the output sequence, following python notation
                 (positive from the beginning of the array, negative from the end)

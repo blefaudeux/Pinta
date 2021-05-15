@@ -2,10 +2,10 @@ import torch
 from typing import Dict, Any, List
 from pinta.model.model_base import NN
 from pinta.model.encoder import TuningEncoder
-
+from pinta.settings import Settings
 
 class Mixer(NN):
-    def __init__(self, logdir, trunk: torch.nn.Module, tuning_encoder: TuningEncoder, params: Dict[str, Any]):
+    def __init__(self, logdir, trunk: torch.nn.Module, tuning_encoder: TuningEncoder, params: Settings):
         super().__init__(logdir)
 
         self.trunk = trunk
@@ -15,16 +15,14 @@ class Mixer(NN):
         layers: List[torch.nn.Module] = [
             torch.nn.Linear(
                 in_features=trunk.output_size + tuning_encoder.output_size,
-                out_features=params["mixer"]["hidden_size"],
+                out_features=params.mixer.hidden_size,
             )
         ]
-        for _ in range(params["mixer"]["hidden_layers"]):
-            layers.append(
-                torch.nn.Linear(in_features=params["mixer"]["hidden_size"], out_features=params["mixer"]["hidden_size"])
-            )
+        for _ in range(params.mixer.hidden_layers):
+            layers.append(torch.nn.Linear(in_features=params.mixer.hidden_size, out_features=params.mixer.hidden_size))
             layers.append(torch.nn.ReLU())
 
-        layers.append(torch.nn.Linear(in_features=params["mixer"]["hidden_size"], out_features=len(params["outputs"])))
+        layers.append(torch.nn.Linear(in_features=params.mixer.hidden_size, out_features=len(params.outputs)))
 
         self.mixer = torch.nn.Sequential(*layers)
 

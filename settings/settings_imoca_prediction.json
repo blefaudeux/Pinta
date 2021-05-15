@@ -38,7 +38,7 @@
         [
             "cut_sequence",
             [
-                null,
+                0,
                 -1
             ]
         ],
@@ -52,13 +52,14 @@
         "feature_size": 8
     },
     "trunk": {
+        "seq_length": 81,
         "model_type": "dilated_conv",
         "hidden_size": 64,
         "dilated_conv": {
             "dropout": 0.1
         },
         "mlp": {
-            "inner_layers": 3
+            "inner_layers": 2
         },
         "rnn": {
             "gru_layers": 2,
@@ -79,7 +80,6 @@
         "hidden_size": 32,
         "hidden_layers": 2
     },
-    "seq_length": 81,
     "data": {
         "train_batch_size": 1000,
         "test_batch_size": 100,
@@ -88,15 +88,17 @@
         "train_workers": 3,
         "test_workers": 1
     },
-    "epoch": 2,
-    "optim": {
-        "name": "adam_w",
-        "learning_rate": 1e-2,
-        "scheduler": "reduce_plateau",
-        "scheduler_patience": 50,
-        "scheduler_factor": 0.8,
-        "momentum": 0.9
+    "training": {
+        "epoch": 2,
+        "mixed_precision": false,
+        "optim": {
+            "name": "adam_w",
+            "learning_rate": 1e-2,
+            "scheduler": "reduce_plateau",
+            "scheduler_patience": 50,
+            "scheduler_factor": 0.8,
+            "momentum": 0.9
+        }
     },
-    "log": "pinta_imoca",
-    "amp": false
+    "log": "pinta_imoca"
 }

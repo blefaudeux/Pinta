@@ -18,9 +18,10 @@ from pinta.model.model_factory import model_factory
 def run(args):
     # Basic setup: get config and logger
     params = settings.load(args.settings_path)
-    params["amp"] = args.amp
+    params.training.mixed_precision = args.amp
+
     logging.basicConfig(level=logging.INFO)
-    log = logging.getLogger(params["log"])
+    log = logging.getLogger(params.log)
 
     if not args.model_path:
         # Generate a default name which describes the settings
@@ -37,11 +38,11 @@ def run(args):
     data_list = load_sets(dataframes, params)
     training_bundle = TrainingSetBundle(data_list)
 
-    if "stats" not in params["data"].keys():
+    if params.data.statistics is None:
         log.info("Updating the normalization statistics with the current data pool")
-        params["data"]["stats"] = training_bundle.get_norm()
+        params.data.statistics = training_bundle.get_norm()
 
-    log.info("Loaded {} samples. Batch is {}".format(len(training_bundle), params["data"]["train_batch_size"]))
+    log.info("Loaded {} samples. Batch is {}".format(len(training_bundle), params.data.train_batch_size))
     log.info("Available fields: {}".format(dataframes[0].columns.values))
 
     # Data augmentation / preparation.
@@ -53,9 +54,11 @@ def run(args):
     if len(offset_transform) > 0:
         offset = offset_transform.pop().offset
         log.info(
-            "Offset transform requested, adjusting the raw sequence length to {}".format(params["seq_length"] + offset)
+            "Offset transform requested, adjusting the raw sequence length to {}".format(
+                params.trunk.seq_length + offset
+            )
         )
-        params["seq_length"] += offset
+        params.trunk.seq_length += offset
 
     # Train a new model from scratch if need be
     if not dnn.valid:
@@ -65,15 +68,15 @@ def run(args):
             transforms=transforms,
         )
 
-        dnn.fit(trainer, valider, settings=params, epochs=params["epoch"])
+        dnn.fit(trainer, valider, settings=params, epochs=params.training.epoch)
         dnn.save(args.model_path)
 
     if args.evaluate or args.plot:
         # Generate linear test data
         tester, split_indices = training_bundle.get_sequential_dataloader(
             params["seq_length"],
-            transforms=[Normalize(*params["data"]["stats"]), SinglePrecision()],
-            batch_size=params["data"]["train_batch_size"],
+            transforms=[Normalize(*params.data.stats), SinglePrecision()],
+            batch_size=params.data.train_batch_size,
         )
 
         # Check the training
@@ -87,7 +90,7 @@ def run(args):
         if args.plot:
             # FIXME: @lefaudeux Timings are misaligned
             log.info("---\nQuality evaluation:")
-            mean, std = params["data"]["stats"]
+            mean, std = params.data.statistics
 
             # - prediction: go through the net, split the output sequence to re-align,
             prediction = (
