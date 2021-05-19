@@ -9,6 +9,7 @@ from pinta.data_processing.plot import polar_plot
 from pinta.data_processing.training_set import TrainingSetBundle
 from pinta.model.model_factory import model_factory
 from pinta.synthetic import polar
+from pinta.settings import Settings
 
 
 def run(args):
@@ -16,7 +17,7 @@ def run(args):
     Load a given engine, generate a couple of synthetic plots from it
     """
     # Load the saved pytorch nn
-    training_settings = settings.load(args.settings_path)
+    training_settings = settings.load(args.settings_path)  # type:Settings
 
     # a bit hacky: get the normalization factors on the fly
     data = load_folder(Path(args.data_path), zero_mean_helm=False, max_number_sequences=args.max_number_sequences)
@@ -36,10 +37,10 @@ def run(args):
         wind_range=[5, 25],
         wind_step=5,
         angular_step=0.1,
-        seq_len=training_settings["seq_length"],
+        seq_len=training_settings.trunk.seq_length,
         mean=mean,
         std=std,
-        inputs=training_settings["inputs"],
+        inputs=training_settings.inputs,
     )
 
     # Plot all that stuff

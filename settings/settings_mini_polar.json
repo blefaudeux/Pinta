@@ -37,7 +37,7 @@
     "encoder": {},
     "trunk": {
         "seq_length": 27,
-        "model_type": "mlp",
+        "model_type": "dilated_conv",
         "hidden_size": 64,
         "dilated_conv": {
             "dropout": 0.1
