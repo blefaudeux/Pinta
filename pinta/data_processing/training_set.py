@@ -3,7 +3,8 @@ from __future__ import annotations
 # Our lightweight base data structure..
 # specialize inputs/outputs, makes it readable down the line
 from collections import namedtuple
-from typing import Callable, List, Tuple, Dict, Any, Optional
+from typing import Callable, List, Tuple, Optional
+from pinta.settings import Settings
 
 import numpy as np
 import torch
@@ -50,7 +51,7 @@ class TrainingSet(Dataset):
         self.outputs_seq_view: Optional[torch.Tensor] = None
 
     @classmethod
-    def from_numpy(cls, inputs: np.array, outputs: np.array):
+    def from_numpy(cls, inputs: np.array, outputs: np.array):  # type: ignore
         """
         Alternative "constructor", straight from Numpy arrays
         """
@@ -181,7 +182,7 @@ class TrainingSetBundle(Dataset):
 
     def get_dataloaders(
         self,
-        params: Dict[str, Any],
+        params: Settings,
         transforms: List[Callable],
     ) -> Tuple[DataLoader, DataLoader]:
         """
@@ -190,9 +191,9 @@ class TrainingSetBundle(Dataset):
         """
 
         # Split the dataset in train/test instances
-        self.seq_length = params["seq_length"]
+        self.seq_length = params.trunk.seq_length
         self.set_transforms(transforms)
-        train_len = int(params["data"]["training_ratio"] * len(self))
+        train_len = int(params.data.training_ratio * len(self))
         test_len = len(self) - train_len
         trainer, tester = random_split(self, [train_len, test_len])
 
@@ -209,18 +210,18 @@ class TrainingSetBundle(Dataset):
             DataLoader(
                 trainer,
                 collate_fn=collate,
-                batch_size=params["data"]["train_batch_size"],
-                shuffle=params["data"]["shuffle"],
+                batch_size=params.data.train_batch_size,
+                shuffle=params.data.shuffle,
                 drop_last=True,
-                num_workers=params["data"]["train_workers"],
+                num_workers=params.data.train_workers,
             ),
             DataLoader(
                 tester,
                 collate_fn=collate,
-                batch_size=params["data"]["test_batch_size"],
-                shuffle=params["data"]["shuffle"],
+                batch_size=params.data.test_batch_size,
+                shuffle=params.data.shuffle,
                 drop_last=True,
-                num_workers=params["data"]["test_workers"],
+                num_workers=params.data.test_workers,
             ),
         )
 

@@ -5,12 +5,11 @@ import logging
 import time
 from contextlib import suppress
 from itertools import cycle
-from typing import Any, Dict
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from pinta.settings import Scheduler, _amp_available, Optimizer
+from pinta.settings import Scheduler, _amp_available, Optimizer, Settings
 from pinta.settings import device as _device
 from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau
 from torch.utils.data import DataLoader
@@ -31,6 +30,7 @@ class NN(nn.Module):
         self.model = None
         self._valid = False
         self.log = logging.getLogger(log_channel)
+        self.log.setLevel(level=logging.INFO)
         self.output_size = None
 
         # Set up TensorBoard
@@ -48,13 +48,13 @@ class NN(nn.Module):
         raise NotImplementedError
 
     @staticmethod
-    def _split_inputs(inputs: torch.Tensor, settings: Dict[str, Any]):
+    def _split_inputs(inputs: torch.Tensor, settings: Settings):
         """Split the inputs in between the signal and the tuning -slow moving- parts
         Dimensions are [Batch x Channels x TimeSequence]
         """
-        return torch.split(inputs, [len(settings["inputs"]), len(settings["tuning_inputs"])], dim=1)
+        return torch.split(inputs, [len(settings.inputs), len(settings.tuning_inputs)], dim=1)
 
-    def evaluate(self, dataloader: DataLoader, settings: Dict[str, Any]):
+    def evaluate(self, dataloader: DataLoader):
         #  Re-use PyTorch losses on the fly
         criterion = nn.MSELoss()
         losses = []
@@ -69,7 +69,10 @@ class NN(nn.Module):
         return losses
 
     def predict(
-        self, dataloader: DataLoader, mean: torch.Tensor = None, std: torch.Tensor = None,
+        self,
+        dataloader: DataLoader,
+        mean: torch.Tensor = None,
+        std: torch.Tensor = None,
     ):
 
         # Move the predictions to cpu() on the fly to save on GPU memory
@@ -86,24 +89,29 @@ class NN(nn.Module):
         return predictions_tensor
 
     def fit(
-        self, trainer: DataLoader, tester: DataLoader, settings: Dict[str, Any], epochs: int = 50,
+        self,
+        trainer: DataLoader,
+        tester: DataLoader,
+        settings: Settings,
     ):
         # Setup the training loop
         optimizer = {
-            Optimizer.ADAM_W: optim.AdamW(self.parameters(), lr=settings["optim"]["learning_rate"], amsgrad=False),
+            Optimizer.ADAM_W: optim.AdamW(self.parameters(), lr=settings.training.optim.learning_rate, amsgrad=False),
             Optimizer.SGD: optim.SGD(
-                self.parameters(), lr=settings["optim"]["learning_rate"], momentum=settings["optim"]["momentum"]
+                self.parameters(), lr=settings.training.optim.learning_rate, momentum=settings.training.optim.momentum
             ),
-        }[Optimizer(settings["optim"]["name"].upper())]
+        }[settings.training.optim.name]
 
         scheduler = {
             Scheduler.REDUCE_PLATEAU: ReduceLROnPlateau(
                 optimizer=optimizer,
-                patience=settings["optim"]["scheduler_patience"],
-                factor=settings["optim"]["scheduler_factor"],
+                patience=settings.training.optim.scheduler_patience,
+                factor=settings.training.optim.scheduler_factor,
             ),
-            Scheduler.COSINE: CosineAnnealingLR(optimizer=optimizer, T_max=epochs, eta_min=1e-6, last_epoch=-1),
-        }[Scheduler(settings["optim"]["scheduler"])]
+            Scheduler.COSINE: CosineAnnealingLR(
+                optimizer=optimizer, T_max=settings.training.epoch, eta_min=1e-6, last_epoch=-1
+            ),
+        }[Scheduler(settings.training.optim.scheduler)]
 
         criterion = nn.MSELoss()
 
@@ -111,17 +119,17 @@ class NN(nn.Module):
             tester = cycle(tester)  # type: ignore
 
         # If AMP is enabled, create an autocast context. Noop if normal full precision training
-        use_amp = settings["amp"] and _device.type == torch.device("cuda").type and _amp_available
+        use_amp = settings.training.mixed_precision and _device.type == torch.device("cuda").type and _amp_available
         context = autocast() if use_amp else suppress()
         scaler = GradScaler() if use_amp else None
 
         # Now to the actual training
         self.log.info("\nTraining the model... AMP: %s\n" % "enabled" if use_amp else "disabled")
         i_log = 0
-        for i_epoch in range(epochs):
+        for i_epoch in range(settings.training.epoch):
 
             self.log.info("***** Epoch %d", i_epoch)
-            self.log.info(" {}/{} LR: {:.4f}".format(i_epoch, epochs, optimizer.param_groups[0]["lr"]))
+            self.log.info(" {}/{} LR: {:.4f}".format(i_epoch, settings.training.epoch, optimizer.param_groups[0]["lr"]))
 
             for i_batch, (train_batch, validation_batch) in enumerate(zip(trainer, tester)):
                 batch_start = time.time()
@@ -154,7 +162,9 @@ class NN(nn.Module):
                     loss.backward()
                     optimizer.step()
 
-                self.log.info(" {}/{},{} Train loss: {:.4f}".format(i_epoch, epochs, i_batch, loss.item()))
+                self.log.info(
+                    " {}/{},{} Train loss: {:.4f}".format(i_epoch, settings.training.epoch, i_batch, loss.item())
+                )
                 self.summary_writer.add_scalar("train", loss.item(), i_log)
 
                 # Loss on the validation data
@@ -168,7 +178,11 @@ class NN(nn.Module):
                     loss = criterion(pred.squeeze(), data.outputs.squeeze()).detach()
 
                     self.summary_writer.add_scalar("validation", loss.item(), i_log)
-                    self.log.info(" {}/{},{} Validation loss: {:.4f}".format(i_epoch, epochs, i_batch, loss.item()))
+                    self.log.info(
+                        " {}/{},{} Validation loss: {:.4f}".format(
+                            i_epoch, settings.training.epoch, i_batch, loss.item()
+                        )
+                    )
                     return loss
 
                 validation_loss = closure_validation()
@@ -183,7 +197,9 @@ class NN(nn.Module):
                 self.summary_writer.add_scalar("LR", optimizer.param_groups[0]["lr"], i_log)
 
                 self.log.info(
-                    " {}/{},{} {:.1f}k samples/sec \n".format(i_epoch, epochs, i_batch, samples_per_sec / 1e3)
+                    " {}/{},{} {:.1f}k samples/sec \n".format(
+                        i_epoch, settings.training.epoch, i_batch, samples_per_sec / 1e3
+                    )
                 )
 
                 i_log += 1

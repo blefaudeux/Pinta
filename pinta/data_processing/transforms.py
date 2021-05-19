@@ -23,10 +23,10 @@ def transform_factory(params: Settings) -> List[Callable]:
         transform_name, transform_args = transform_param[0], transform_param[1]
 
         def get_normalize():
-            return Normalize(*params.data.stats)
+            return Normalize(*params.data.statistics)
 
         def get_denormalize():
-            return Denormalize(*params.data.stats)
+            return Denormalize(*params.data.statistics)
 
         def get_random_flip():
             return RandomFlip(dimensions=[params.inputs.index(p) for p in transform_args[0]], odds=transform_args[1])

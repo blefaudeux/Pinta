@@ -22,6 +22,7 @@ def run(args):
 
     logging.basicConfig(level=logging.INFO)
     log = logging.getLogger(params.log)
+    log.setLevel(level=logging.INFO)
 
     if not args.model_path:
         # Generate a default name which describes the settings
@@ -63,12 +64,12 @@ def run(args):
     # Train a new model from scratch if need be
     if not dnn.valid:
         log.info("Training a new model, this can take a while")
-        trainer, valider = training_bundle.get_dataloaders(
+        training_set, validation_set = training_bundle.get_dataloaders(
             params,
             transforms=transforms,
         )
 
-        dnn.fit(trainer, valider, settings=params, epochs=params.training.epoch)
+        dnn.fit(training_set, validation_set, settings=params)
         dnn.save(args.model_path)
 
     if args.evaluate or args.plot:

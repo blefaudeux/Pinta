@@ -25,7 +25,7 @@
         [
             "cut_sequence",
             [
-                null,
+                0,
                 -1
             ]
         ],
@@ -36,6 +36,7 @@
     ],
     "encoder": {},
     "trunk": {
+        "seq_length": 27,
         "model_type": "dilated_conv",
         "hidden_size": 64,
         "dilated_conv": {
@@ -58,7 +59,6 @@
             ]
         }
     },
-    "seq_length": 27,
     "data": {
         "train_batch_size": 10000,
         "test_batch_size": 1000,
@@ -67,15 +67,17 @@
         "train_workers": 2,
         "test_workers": 1
     },
-    "epoch": 20,
-    "optim": {
-        "name": "adam_w",
-        "learning_rate": 0.01,
-        "scheduler": "reduce_plateau",
-        "scheduler_patience": 20,
-        "scheduler_factor": 0.8,
-        "momentum": 0.99
+    "training": {
+        "epoch": 20,
+        "mixed_precision": false,
+        "optim": {
+            "name": "adam_w",
+            "learning_rate": 0.01,
+            "scheduler": "reduce_plateau",
+            "scheduler_patience": 20,
+            "scheduler_factor": 0.8,
+            "momentum": 0.99
+        }
     },
-    "log": "pinta_mini",
-    "amp": false
+    "log": "pinta_mini"
 }
