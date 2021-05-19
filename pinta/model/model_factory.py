@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict
 
 import pinta.settings as settings
 from pinta.model.model_base import NN
@@ -56,7 +55,7 @@ def model_factory(params: Settings, model_path: str) -> NN:
     # One benefit of that is that the settings become strict, anything which
     # does not match a key will cause an assert
 
-    trunk_outputs = params.trunk.embedding_dimensions
+    trunk_outputs = params.trunk.embedding_dimensions if len(params.tuning_inputs) > 0 else len(params.outputs)
 
     trunk = {
         ModelType.DILATED_CONV: lazy(

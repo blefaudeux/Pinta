@@ -2,7 +2,7 @@
 
 
 import logging
-from typing import Callable, List
+from typing import Callable, List, Optional
 
 import torch
 from numpy.random import random_sample
@@ -208,14 +208,14 @@ class OffsetInputsOutputs:
 
 
 class CutSequence:
-    def __init__(self, inputs_cut: int, outputs_cut: int):
+    def __init__(self, inputs_cut: Optional[int], outputs_cut: Optional[int]):
         """Given temporal sequences as inputs and outputs, subselect the ones of interest
 
         Args:
             inputs_cut (int): the number of samples to keep from the input sequence, following python notation.
                 (positive from the beginning of the array, negative from the end.
                 -3 means keep the 3 last samples
-                0 means keep everything)
+                None means keep everything)
 
             outputs_cut (int): the number of samples to keep from the output sequence, following python notation
                 (positive from the beginning of the array, negative from the end)
@@ -232,6 +232,7 @@ class CutSequence:
         return seq[:, cut:]
 
     def __call__(self, sample: TrainingSample):
-        return TrainingSample(
-            inputs=self.__cut(sample.inputs, self.inputs_cut), outputs=self.__cut(sample.outputs, self.outputs_cut)
-        )
+        inputs = self.__cut(sample.inputs, self.inputs_cut) if self.inputs_cut else sample.inputs
+        outputs = self.__cut(sample.outputs, self.outputs_cut) if self.outputs_cut else sample.outputs
+
+        return TrainingSample(inputs=inputs, outputs=outputs)

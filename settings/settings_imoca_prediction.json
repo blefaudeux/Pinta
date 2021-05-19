@@ -38,7 +38,7 @@
         [
             "cut_sequence",
             [
-                0,
+                null,
                 -1
             ]
         ],

@@ -83,14 +83,11 @@ class TemporalModelBase(NN):
     def forward(self, x):
         assert len(x.shape) == 3
 
-        x = x.permute(0, 2, 1)
         assert (
-            x.shape[-1] == self.num_input_channels
+            x.shape[1] == self.num_input_channels
         ), f"Input shape {x.shape} - expected {self.num_input_channels} inputs"
 
         sz = x.shape[:3]
-        x = x.view(x.shape[0], x.shape[1], -1)
-        x = x.permute(0, 2, 1)
 
         x = self._forward_blocks(x)
 
@@ -132,7 +129,13 @@ class TemporalModel(TemporalModelBase):
         channels -- number of convolution channels
         """
         super().__init__(
-            logdir, num_input_channels, num_output_channels, filter_widths, dropout, channels, bn_momentum,
+            logdir,
+            num_input_channels,
+            num_output_channels,
+            filter_widths,
+            dropout,
+            channels,
+            bn_momentum,
         )
 
         self.expand_conv = nn.Conv1d(num_input_channels, channels, filter_widths[0], bias=False)
@@ -146,7 +149,15 @@ class TemporalModel(TemporalModelBase):
             self.pad.append((filter_widths[i] - 1) * next_dilation // 2)
             self.causal_shift.append((filter_widths[i] // 2 * next_dilation))
 
-            layers_conv.append(nn.Conv1d(channels, channels, filter_widths[i], dilation=next_dilation, bias=False,))
+            layers_conv.append(
+                nn.Conv1d(
+                    channels,
+                    channels,
+                    filter_widths[i],
+                    dilation=next_dilation,
+                    bias=False,
+                )
+            )
             layers_bn.append(nn.BatchNorm1d(channels, momentum=bn_momentum))
             layers_conv.append(nn.Conv1d(channels, channels, 1, dilation=1, bias=False))
             layers_bn.append(nn.BatchNorm1d(channels, momentum=bn_momentum))
@@ -170,7 +181,9 @@ class TemporalModel(TemporalModelBase):
         self.log.warning("Could not load the specified net," " needs to be computed from scratch")
 
     def _forward_blocks(self, x):
-        x = self.drop(self.relu(self.expand_bn(self.expand_conv(x))))
+        x = self.expand_bn(self.expand_conv(x))
+        x = self.relu(x)
+        x = self.drop(x)
 
         for i in range(len(self.pad) - 1):
             pad = self.pad[i + 1]

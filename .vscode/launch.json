@@ -29,6 +29,22 @@
             ]
         },
         {
+            "name": "VPP_mini",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "python": "${command:python.interpreterPath}",
+            "program": "${workspaceRoot}/train_vpp.py",
+            "cwd": "${workspaceRoot}",
+            "args": [
+                "--data_path",
+                "data",
+                "--settings_path",
+                "settings/settings_mini_polar.json",
+                "--amp"
+            ]
+        },
+        {
             "name": "Polar",
             "type": "python",
             "request": "launch",

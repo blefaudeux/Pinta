@@ -25,7 +25,7 @@
         [
             "cut_sequence",
             [
-                0,
+                null,
                 -1
             ]
         ],
@@ -37,7 +37,7 @@
     "encoder": {},
     "trunk": {
         "seq_length": 27,
-        "model_type": "dilated_conv",
+        "model_type": "mlp",
         "hidden_size": 64,
         "dilated_conv": {
             "dropout": 0.1
