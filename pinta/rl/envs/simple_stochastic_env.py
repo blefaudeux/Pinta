@@ -42,22 +42,27 @@ class SimpleStochasticEnv(gym.Env):
 
     def __init__(
         self,
-        wind_speed: float,
         white_noise: float,
         slow_moving_noise: float,
         inertia: float,
         target_twa: float,
     ):
-        self.wind_speed = wind_speed
         self.white_noise = white_noise
         self.slow_moving_noise = slow_moving_noise
         self.inertia = inertia
         self.target_twa = target_twa
 
         self.state = None
-        self.action_space = spaces.Continuous(1)
-        self.observation_space = spaces.Box(-np.pi, np.pi, dtype=np.float32)
 
+        # Action space is the rudder
+        self.action_space = spaces.Box(low=np.array([-0.5]), high=np.array([0.5]), shape=(1,), dtype=np.float32)
+
+        # Observation space is the current yaw, boat speed and TWA
+        self.observation_space = spaces.Box(
+            low=np.array([-np.pi, -np.pi, 0.0]), high=np.array([np.pi, np.pi, 3.0]), shape=(3,), dtype=np.float32
+        )
+
+        self.seed()
         self.reset()
 
     @staticmethod
@@ -85,17 +90,20 @@ class SimpleStochasticEnv(gym.Env):
         # Update the state, and good to go
         self.state = np.array(yaw, twa, speed)
 
+        # A Gym env returns 4 objects:
+        # onservation, reward, done and optional info
         return self.state, reward, False, {}
 
     def reset(self):
         # State is:
         # - yaw
-        # - boat speed
         # - true wind angle
+        # - boat speed
 
         self.state = np.array([0.0, 0.0, 0.0])
         self.state[1] = self.target_twa + self.np_random.uniform(low=-0.1, high=0.1, size=(1,))
-        self.state[2] = self._speed(self.twa)
+        self.state[2] = self._speed(self.state[1])
+        return self.state
 
     def render(self, mode="human"):
         screen_width = 600

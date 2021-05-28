@@ -14,8 +14,8 @@ BATCH_SIZE = 16
 PERCENTILE = 70
 
 
-Episode = namedtuple(typename='Episode', field_names=['reward', 'steps'])
-EpisodeStep = namedtuple(typename='EpisodeStep', field_names=['observation', 'action'])
+Episode = namedtuple(typename="Episode", field_names=["reward", "steps"])
+EpisodeStep = namedtuple(typename="EpisodeStep", field_names=["observation", "action"])
 
 
 def iterate_batches(env, net, batch_size):
@@ -62,9 +62,11 @@ def filter_batch(batch, percentile):
 
 
 if __name__ == "__main__":
-    env = gym.make("CartPole-v0")
+    env_args = {"white_noise": 0.1, "slow_moving_noise": 0.1, "inertia": 0.5, "target_twa": 0.1}
+    env = gym.make("SimpleStochasticEnv-v0", **env_args)
+
     obs_size = env.observation_space.shape[0]
-    n_actions = env.action_space.n
+    n_actions = env.action_space.shape[0]
 
     net = get_agent(obs_size, HIDDEN_SIZE, n_actions)
     objective = nn.CrossEntropyLoss()
@@ -78,8 +80,7 @@ if __name__ == "__main__":
         loss_v = objective(action_scores_v, acts_v)
         loss_v.backward()
         optimizer.step()
-        print("%d: loss=%.3f, reward_mean=%.1f, reward_bound=%.1f" % (
-            iter_no, loss_v.item(), reward_m, reward_b))
+        print("%d: loss=%.3f, reward_mean=%.1f, reward_bound=%.1f" % (iter_no, loss_v.item(), reward_m, reward_b))
         writer.add_scalar("loss", loss_v.item(), iter_no)
         writer.add_scalar("reward_bound", reward_b, iter_no)
         writer.add_scalar("reward_mean", reward_m, iter_no)
