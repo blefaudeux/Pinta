@@ -50,7 +50,7 @@ class SimpleStochasticEnv(gym.Env):
         self.white_noise = white_noise
         self.slow_moving_noise = slow_moving_noise
         self.inertia = inertia
-        self.target_twa = target_twa
+        self.target_twa = np.array([target_twa])
 
         self.state = None
 
@@ -88,7 +88,7 @@ class SimpleStochasticEnv(gym.Env):
         reward = np.cos(twa, self.target_twa)
 
         # Update the state, and good to go
-        self.state = np.array(yaw, twa, speed)
+        self.state = np.array([yaw, twa, speed])
 
         # A Gym env returns 4 objects:
         # onservation, reward, done and optional info

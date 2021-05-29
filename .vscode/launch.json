@@ -11,6 +11,19 @@
             "cwd": "${workspaceRoot}",
         },
         {
+            "name": "Python A2C",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "python": "${command:python.interpreterPath}",
+            "program": "${file}",
+            "cwd": "${workspaceRoot}",
+            "args": [
+                "-n",
+                "debug"
+            ]
+        },
+        {
             "name": "VPP",
             "type": "python",
             "request": "launch",
