@@ -10,3 +10,4 @@ torch
 pysimdjson
 gym
 dataclasses-serialization
+ptan
