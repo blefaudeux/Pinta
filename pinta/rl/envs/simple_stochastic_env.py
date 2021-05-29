@@ -31,7 +31,7 @@ class SimpleStochasticEnv(gym.Env):
         0     Rudder angle
 
     Reward:
-        Reward is 1 if the boat is precisely on the TWA target, -1 if opposed.
+        Reward is 1 if the boat is precisely on the TWA target, 0 if opposed.
 
     Starting State:
         The boat has a starting position close to the target + random gaussian noise
@@ -41,11 +41,7 @@ class SimpleStochasticEnv(gym.Env):
     metadata = {"render.modes": ["human"]}
 
     def __init__(
-        self,
-        white_noise: float,
-        slow_moving_noise: float,
-        inertia: float,
-        target_twa: float,
+        self, white_noise: float, slow_moving_noise: float, inertia: float, target_twa: float, max_iter: int = 100
     ):
         self.white_noise = white_noise
         self.slow_moving_noise = slow_moving_noise
@@ -53,6 +49,8 @@ class SimpleStochasticEnv(gym.Env):
         self.target_twa = np.array([target_twa])
 
         self.state = None
+        self.max_iter = max_iter
+        self.steps_beyond_done = None
 
         # Action space is the rudder
         self.action_space = spaces.Box(low=np.array([-0.5]), high=np.array([0.5]), shape=(1,), dtype=np.float32)
@@ -72,7 +70,9 @@ class SimpleStochasticEnv(gym.Env):
 
     def step(self, action: Tuple[float]):
         if not self.action_space.contains(action):
-            return self.state, -1.0, False, {}
+            assert self.steps_beyond_done is None
+            self.steps_beyond_done = 0
+            return self.state, 0.0, True, {}
 
         assert self.state is not None
 
@@ -86,14 +86,15 @@ class SimpleStochasticEnv(gym.Env):
         speed = np.array([self.inertia * speed + (1.0 - self.inertia) * self._speed(twa)])
 
         # Reward is just cos(twa, target_twa)
-        reward = np.cos(twa, self.target_twa)
+        reward = (1.0 + np.cos(twa, self.target_twa)) / 2.0
 
         # Update the state, and good to go
         self.state = np.concatenate([yaw, twa, speed])
+        self.iter += 1
 
         # A Gym env returns 4 objects:
         # onservation, reward, done and optional info
-        return self.state, reward, False, {}
+        return self.state, reward, self.iter > self.max_iter, {}
 
     def reset(self):
         # State is:
@@ -104,6 +105,8 @@ class SimpleStochasticEnv(gym.Env):
         self.state = np.array([0.0, 0.0, 0.0])
         self.state[1] = self.target_twa + self.np_random.uniform(low=-0.1, high=0.1, size=(1,))
         self.state[2] = self._speed(self.state[1])
+        self.iter = 0
+        self.steps_beyond_done = None
         return self.state
 
     def render(self, mode="human"):

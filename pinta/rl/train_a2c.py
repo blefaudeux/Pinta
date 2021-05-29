@@ -57,7 +57,7 @@ if __name__ == "__main__":
     parser.add_argument("--cuda", default=False, action="store_true", help="Enable CUDA")
     parser.add_argument("-n", "--name", required=True, help="Name of the run")
     args = parser.parse_args()
-    device = torch.device("cuda" if args.cuda else "cpu")
+    device = torch.device("cuda" if args.cuda and torch.cuda.is_available() else "cpu")
 
     save_path = os.path.join("saves", "a2c-" + args.name)
     os.makedirs(save_path, exist_ok=True)
@@ -136,5 +136,3 @@ if __name__ == "__main__":
 
                 for k in filter(lambda x: x != "step", summary.keys()):
                     tb_tracker.track(k, summary[k], summary["step"])
-
-                print(summary)
