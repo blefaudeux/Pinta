@@ -34,6 +34,7 @@ def test_net(net, env, count=10, device="cpu"):
     for _ in range(count):
         obs = env.reset()
         while True:
+            env.render()
             obs_v = ptan.agent.float32_preprocessor([obs]).to(device)
             mu_v = net(obs_v)[0]
             action = mu_v.squeeze(dim=0).data.cpu().numpy()
@@ -136,3 +137,5 @@ if __name__ == "__main__":
 
                 for k in filter(lambda x: x != "step", summary.keys()):
                     tb_tracker.track(k, summary[k], summary["step"])
+
+    env.close()

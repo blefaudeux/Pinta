@@ -51,6 +51,7 @@ class SimpleStochasticEnv(gym.Env):
         self.state = None
         self.max_iter = max_iter
         self.steps_beyond_done = None
+        self.viewer = None
 
         # Action space is the rudder
         self.action_space = spaces.Box(low=np.array([-0.5]), high=np.array([0.5]), shape=(1,), dtype=np.float32)
@@ -128,7 +129,7 @@ class SimpleStochasticEnv(gym.Env):
             boat = rendering.FilledPolygon([(l, b), (l, t), (r, t), (r, b)])
 
             # - create the initial boat transform, then commit to the viewer
-            self.trans_boat = rendering.Transform()
+            self.trans_boat = rendering.Transform(translation=(screen_width // 2, screen_height // 2))
             boat.add_attr(self.trans_boat)
             self.viewer.add_geom(boat)
 
@@ -138,7 +139,7 @@ class SimpleStochasticEnv(gym.Env):
             wind.set_color(0.8, 0.6, 0.4)
 
             # - and the corresponding boat transform, then commit to the viewer
-            self.trans_wind = rendering.Transform(translation=(0, axleoffset))
+            self.trans_wind = rendering.Transform(translation=(screen_width // 2, screen_height // 2 + axleoffset))
             wind.add_attr(self.trans_wind)
             self.viewer.add_geom(wind)
 
