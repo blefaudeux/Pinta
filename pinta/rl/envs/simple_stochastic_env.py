@@ -71,8 +71,9 @@ class SimpleStochasticEnv(gym.Env):
         return math.sin(twa_) + math.sqrt(twa_)
 
     def step(self, action: Tuple[float]):
-        err_msg = "%r (%s) invalid" % (action, type(action))
-        assert self.action_space.contains(action), err_msg
+        if not self.action_space.contains(action):
+            return self.state, -1.0, False, {}
+
         assert self.state is not None
 
         yaw, twa, speed = self.state
@@ -82,13 +83,13 @@ class SimpleStochasticEnv(gym.Env):
         yaw_diff = action * speed
         yaw += yaw_diff
         twa += yaw_diff + self.np_random.uniform(low=-self.white_noise, high=self.white_noise)
-        speed = self.inertia * speed + (1.0 - self.inertia) * self._speed(twa)
+        speed = np.array([self.inertia * speed + (1.0 - self.inertia) * self._speed(twa)])
 
         # Reward is just cos(twa, target_twa)
         reward = np.cos(twa, self.target_twa)
 
         # Update the state, and good to go
-        self.state = np.array([yaw, twa, speed])
+        self.state = np.concatenate([yaw, twa, speed])
 
         # A Gym env returns 4 objects:
         # onservation, reward, done and optional info

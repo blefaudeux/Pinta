@@ -123,10 +123,18 @@ if __name__ == "__main__":
                 loss_v.backward()
                 optimizer.step()
 
-                tb_tracker.track("advantage", adv_v, step_idx)
-                tb_tracker.track("values", value_v, step_idx)
-                tb_tracker.track("batch_rewards", vals_ref_v, step_idx)
-                tb_tracker.track("loss_entropy", entropy_loss_v, step_idx)
-                tb_tracker.track("loss_policy", loss_policy_v, step_idx)
-                tb_tracker.track("loss_value", loss_value_v, step_idx)
-                tb_tracker.track("loss_total", loss_v, step_idx)
+                summary = {
+                    "step": step_idx,
+                    "advantage": adv_v,
+                    "values": value_v,
+                    "batch_rewards": vals_ref_v,
+                    "loss_entropy": entropy_loss_v,
+                    "loss_policy": loss_policy_v,
+                    "loss_value": loss_value_v,
+                    "loss_total": loss_v,
+                }
+
+                for k in filter(lambda x: x != "step", summary.keys()):
+                    tb_tracker.track(k, summary[k], summary["step"])
+
+                print(summary)
