@@ -2,7 +2,7 @@ import gym
 from gym import spaces
 from gym.utils import seeding
 import math
-from typing import Tuple
+from typing import Tuple, Optional
 import numpy as np
 from gym.envs.classic_control import rendering
 
@@ -50,16 +50,17 @@ class SimpleStochasticEnv(gym.Env):
 
         self.state = None
         self.max_iter = max_iter
-        self.steps_beyond_done = None
+        self.steps_beyond_done: Optional[int] = None
         self.viewer = None
 
         # Action space is the rudder
-        self.action_space = spaces.Box(low=np.array([-0.5]), high=np.array([0.5]), shape=(1,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-0.8]), high=np.array([0.8]), shape=(1,), dtype=np.float32)
 
         # Observation space is the current yaw, boat speed and TWA
         self.observation_space = spaces.Box(
             low=np.array([-np.pi, -np.pi, 0.0]), high=np.array([np.pi, np.pi, 3.0]), shape=(3,), dtype=np.float32
         )
+        self.rudder = 0.0
 
         self.seed()
         self.reset()
@@ -77,11 +78,12 @@ class SimpleStochasticEnv(gym.Env):
 
         assert self.state is not None
 
+        self.rudder = action
         yaw, twa, speed = self.state
 
         # Given the rudder action and some noise, compute the new state
         # - approximate rudder action
-        yaw_diff = action * speed
+        yaw_diff = self.rudder * speed
         yaw += yaw_diff
         twa += yaw_diff + self.np_random.uniform(low=-self.white_noise, high=self.white_noise)
         speed = np.array([self.inertia * speed + (1.0 - self.inertia) * self._speed(twa)])
@@ -110,16 +112,25 @@ class SimpleStochasticEnv(gym.Env):
         self.steps_beyond_done = None
         return self.state
 
+    @staticmethod
+    def _get_polygon(width, height):
+        l, r, t, b = -width / 2, width / 2, height / 2, -height / 2
+        return [(l, b), (l, t), (r, t), (r, b)]
+
     def render(self, mode="human"):
-        screen_width = 600
-        screen_height = 400
+        screen_width = 800
+        screen_height = 800
 
         # Draw the boat and the current wind
         if self.viewer is None:
-            boat_len = 80
-            boat_width = 5
-            wind_len = 20
-            wind_width = 2
+            boat_len = 160
+            boat_width = 10
+
+            rudder_len = 20
+            rudder_width = 6
+
+            wind_len = 60
+            wind_width = 10
 
             metrics_len = 100
             metrics_width = 5
@@ -127,8 +138,7 @@ class SimpleStochasticEnv(gym.Env):
             # initial setup
             # - create the boat geometry
             self.viewer = rendering.Viewer(screen_width, screen_height)
-            l, r, t, b = -boat_width / 2, boat_width / 2, boat_len / 2, -boat_len / 2
-            boat = rendering.FilledPolygon([(l, b), (l, t), (r, t), (r, b)])
+            boat = rendering.FilledPolygon(self._get_polygon(boat_width, boat_len))
 
             # - create the initial boat transform, then commit to the viewer
             self.trans_boat = rendering.Transform(translation=(screen_width // 2, screen_height // 2))
@@ -136,25 +146,35 @@ class SimpleStochasticEnv(gym.Env):
             self.viewer.add_geom(boat)
 
             # - now add the wind geometry
-            l, r, t, b = -wind_width / 2, wind_width / 2, wind_len / 2, -wind_len / 2
-            wind = rendering.FilledPolygon([(l, b), (l, t), (r, t), (r, b)])
+            wind = rendering.FilledPolygon(self._get_polygon(wind_width, wind_len))
             wind.set_color(0.8, 0.6, 0.4)
 
             # - and the corresponding boat transform, then commit to the viewer
-            axleoffset = boat_len / 4.0
-            self.trans_wind = rendering.Transform(translation=(screen_width // 2, screen_height // 2 + axleoffset))
+            wind_offset = boat_len / 6.0
+            self.trans_wind = rendering.Transform(translation=(0, wind_offset))
             wind.add_attr(self.trans_wind)
+            wind.add_attr(self.trans_boat)
             self.viewer.add_geom(wind)
 
+            # - now add the rudder geometry
+            rudder = rendering.FilledPolygon(self._get_polygon(rudder_width, rudder_len))
+            rudder.set_color(0.8, 0.6, 0.4)
+
+            # - and the corresponding boat transform, then commit to the viewer
+            rudder_offset = boat_len / 2.0
+            self.trans_rudder = rendering.Transform(translation=(0, -rudder_offset))
+            rudder.add_attr(self.trans_rudder)
+            rudder.add_attr(self.trans_boat)
+            self.viewer.add_geom(rudder)
+
             # - add some metrics, current twa and target
-            l, r, t, b = -metrics_width / 2, metrics_width / 2, metrics_len / 2, -metrics_len / 2
-            metrics_twa_target = rendering.FilledPolygon([(l, b), (l, t), (r, t), (r, b)])
+            metrics_twa_target = rendering.FilledPolygon(self._get_polygon(metrics_width, metrics_len))
             self.trans_metrics_twa_target = rendering.Transform(translation=(screen_width - 20, 0))
             metrics_twa_target.add_attr(self.trans_metrics_twa_target)
             metrics_twa_target.set_color(0.0, 1.0, 0.0)
             self.viewer.add_geom(metrics_twa_target)
 
-            metrics_twa = rendering.FilledPolygon([(l, b), (l, t), (r, t), (r, b)])
+            metrics_twa = rendering.FilledPolygon(self._get_polygon(metrics_width, metrics_len))
             self.trans_metrics_twa = rendering.Transform(translation=(screen_width - 40, 0))
             metrics_twa.add_attr(self.trans_metrics_twa)
             self.scale_metrics_twa = rendering.Transform(scale=(1.0, 1.0))
@@ -162,7 +182,7 @@ class SimpleStochasticEnv(gym.Env):
             metrics_twa.set_color(1.0, 0.0, 0.0)
             self.viewer.add_geom(metrics_twa)
 
-            metrics_speed = rendering.FilledPolygon([(l, b), (l, t), (r, t), (r, b)])
+            metrics_speed = rendering.FilledPolygon(self._get_polygon(metrics_width, metrics_len))
             self.trans_metrics_speed = rendering.Transform(translation=(40, 0))
             metrics_speed.add_attr(self.trans_metrics_speed)
             self.scale_metrics_speed = rendering.Transform(scale=(1.0, 1.0))
@@ -178,6 +198,7 @@ class SimpleStochasticEnv(gym.Env):
         self.trans_wind.set_translation(0, screen_height // 2)
         self.trans_wind.set_rotation(twa)
         self.trans_boat.set_rotation(yaw)
+        self.trans_rudder.set_rotation(self.rudder)
         self.scale_metrics_twa.set_scale(1, 1 - (twa - self.target_twa) / self.target_twa)
         self.scale_metrics_speed.set_scale(1, speed)
 

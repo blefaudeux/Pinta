@@ -63,7 +63,7 @@ if __name__ == "__main__":
     save_path = os.path.join("saves", "a2c-" + args.name)
     os.makedirs(save_path, exist_ok=True)
 
-    env_args = {"white_noise": 0.1, "slow_moving_noise": 0.1, "inertia": 0.8, "target_twa": 0.1}
+    env_args = {"white_noise": 0.1, "slow_moving_noise": 0.1, "inertia": 0.8, "target_twa": 0.8}
     env = gym.make("SimpleStochasticEnv-v0", **env_args)
     test_env = gym.make("SimpleStochasticEnv-v0", **env_args)
 
