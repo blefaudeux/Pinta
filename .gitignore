@@ -97,3 +97,5 @@ ENV/
 logs
 .mypy_cache
 trained
+pinta/rl/runs
+pinta/rl/saves
