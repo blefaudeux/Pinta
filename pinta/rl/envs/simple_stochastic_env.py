@@ -86,7 +86,7 @@ class SimpleStochasticEnv(gym.Env):
         yaw_diff = self.rudder * speed
         yaw += yaw_diff
         twa += yaw_diff + self.np_random.uniform(low=-self.white_noise, high=self.white_noise)
-        speed = np.array([self.inertia * speed + (1.0 - self.inertia) * self._speed(twa)])
+        speed = self.inertia * speed + (1.0 - self.inertia) * np.array([self._speed(twa)])
 
         # Reward is just cos(twa, target_twa)
         reward = (1.0 + np.cos(twa, self.target_twa)) / 2.0
@@ -158,7 +158,7 @@ class SimpleStochasticEnv(gym.Env):
 
             # - now add the rudder geometry
             rudder = rendering.FilledPolygon(self._get_polygon(rudder_width, rudder_len))
-            rudder.set_color(0.8, 0.6, 0.4)
+            rudder.set_color(0.2, 0.2, 0.2)
 
             # - and the corresponding boat transform, then commit to the viewer
             rudder_offset = boat_len / 2.0
@@ -195,8 +195,8 @@ class SimpleStochasticEnv(gym.Env):
 
         # Move the boat and the wind
         yaw, twa, speed = self.state
-        self.trans_wind.set_translation(0, screen_height // 2)
         self.trans_wind.set_rotation(twa)
+        self.trans_wind.set_translation(0, screen_height // 3)
         self.trans_boat.set_rotation(yaw)
         self.trans_rudder.set_rotation(self.rudder)
         self.scale_metrics_twa.set_scale(1, 1 - (twa - self.target_twa) / self.target_twa)
