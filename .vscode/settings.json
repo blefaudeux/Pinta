@@ -25,5 +25,6 @@
     ],
     "editor.trimAutoWhitespace": true,
     "files.trimFinalNewlines": true,
-    "files.trimTrailingWhitespace": true
+    "files.trimTrailingWhitespace": true,
+    "python.pythonPath": "/home/lesle/anaconda3/envs/pinta/bin/python"
 }

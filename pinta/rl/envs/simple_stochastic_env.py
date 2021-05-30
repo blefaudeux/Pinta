@@ -85,7 +85,7 @@ class SimpleStochasticEnv(gym.Env):
         # - approximate rudder action
         yaw_diff = self.rudder * speed
         yaw += yaw_diff
-        twa += yaw_diff + self.np_random.uniform(low=-self.white_noise, high=self.white_noise)
+        twa += yaw_diff + self.np_random.normal(loc=0, scale=self.white_noise)
         speed = self.inertia * speed + (1.0 - self.inertia) * np.array([self._speed(twa)])
 
         # Reward is just cos(twa, target_twa)
@@ -106,7 +106,9 @@ class SimpleStochasticEnv(gym.Env):
         # - boat speed
 
         self.state = np.array([0.0, 0.0, 0.0])
-        self.state[1] = self.target_twa + self.np_random.uniform(low=-0.1, high=0.1, size=(1,))
+
+        # Randomly place the boat with respect to the wind
+        self.state[1] = self.np_random.uniform(low=-3.14, high=3.14, size=(1,))
         self.state[2] = self._speed(self.state[1])
         self.iter = 0
         self.steps_beyond_done = None
@@ -195,7 +197,7 @@ class SimpleStochasticEnv(gym.Env):
 
         # Move the boat and the wind
         yaw, twa, speed = self.state
-        self.trans_wind.set_rotation(twa)
+        self.trans_wind.set_rotation(-twa)
         self.trans_wind.set_translation(0, screen_height // 3)
         self.trans_boat.set_rotation(yaw)
         self.trans_rudder.set_rotation(self.rudder)
