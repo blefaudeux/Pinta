@@ -1,13 +1,12 @@
-import gym
 from gym import spaces
 from gym.utils import seeding
 import math
 from typing import Tuple, Optional
 import numpy as np
-from gym.envs.classic_control import rendering
+from pinta.rl.envs.pinta_env import BaseEnv
 
 
-class SimpleStochasticEnv(gym.Env):
+class SimpleStochasticEnv(BaseEnv):
     """
     Description:
         The boat uses a simple law to estimate its theoretical speed with respect to the true wind angle,
@@ -41,7 +40,8 @@ class SimpleStochasticEnv(gym.Env):
     metadata = {"render.modes": ["human"]}
 
     def __init__(
-        self, white_noise: float, slow_moving_noise: float, inertia: float, target_twa: float, max_iter: int = 1000
+        self, white_noise: float, slow_moving_noise: float, inertia: float, target_twa: float,
+        max_rudder: float = 0.8, max_iter: int = 1000
     ):
         self.white_noise = white_noise
         self.slow_moving_noise = slow_moving_noise
@@ -54,7 +54,8 @@ class SimpleStochasticEnv(gym.Env):
         self.viewer = None
 
         # Action space is the rudder
-        self.action_space = spaces.Box(low=np.array([-0.8]), high=np.array([0.8]), shape=(1,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-max_rudder]),
+                                       high=np.array([max_rudder]), shape=(1,), dtype=np.float32)
 
         # Observation space is the current yaw, boat speed and TWA
         self.observation_space = spaces.Box(
@@ -83,13 +84,13 @@ class SimpleStochasticEnv(gym.Env):
 
         # Given the rudder action and some noise, compute the new state
         # - approximate rudder action
-        yaw_diff = self.rudder * speed
+        yaw_diff = 5e-2 * self.rudder * speed
         yaw += yaw_diff
         twa += yaw_diff + self.np_random.normal(loc=0, scale=self.white_noise)
         speed = self.inertia * speed + (1.0 - self.inertia) * np.array([self._speed(twa)])
 
-        # Reward is just cos(twa, target_twa)
-        reward = (1.0 + np.cos(twa, self.target_twa)) / 2.0
+        # Reward needs to take alignment and wind side into account
+        reward = np.cos(twa - self.target_twa)
 
         # Update the state, and good to go
         self.state = np.concatenate([yaw, twa, speed])
@@ -118,93 +119,6 @@ class SimpleStochasticEnv(gym.Env):
     def _get_polygon(width, height):
         l, r, t, b = -width / 2, width / 2, height / 2, -height / 2
         return [(l, b), (l, t), (r, t), (r, b)]
-
-    def render(self, mode="human"):
-        screen_width = 800
-        screen_height = 800
-
-        # Draw the boat and the current wind
-        if self.viewer is None:
-            boat_len = 160
-            boat_width = 10
-
-            rudder_len = 20
-            rudder_width = 6
-
-            wind_len = 60
-            wind_width = 10
-
-            metrics_len = 100
-            metrics_width = 5
-
-            # initial setup
-            # - create the boat geometry
-            self.viewer = rendering.Viewer(screen_width, screen_height)
-            boat = rendering.FilledPolygon(self._get_polygon(boat_width, boat_len))
-
-            # - create the initial boat transform, then commit to the viewer
-            self.trans_boat = rendering.Transform(translation=(screen_width // 2, screen_height // 2))
-            boat.add_attr(self.trans_boat)
-            self.viewer.add_geom(boat)
-
-            # - now add the wind geometry
-            wind = rendering.FilledPolygon(self._get_polygon(wind_width, wind_len))
-            wind.set_color(0.8, 0.6, 0.4)
-
-            # - and the corresponding boat transform, then commit to the viewer
-            wind_offset = boat_len / 6.0
-            self.trans_wind = rendering.Transform(translation=(0, wind_offset))
-            wind.add_attr(self.trans_wind)
-            wind.add_attr(self.trans_boat)
-            self.viewer.add_geom(wind)
-
-            # - now add the rudder geometry
-            rudder = rendering.FilledPolygon(self._get_polygon(rudder_width, rudder_len))
-            rudder.set_color(0.2, 0.2, 0.2)
-
-            # - and the corresponding boat transform, then commit to the viewer
-            rudder_offset = boat_len / 2.0
-            self.trans_rudder = rendering.Transform(translation=(0, -rudder_offset))
-            rudder.add_attr(self.trans_rudder)
-            rudder.add_attr(self.trans_boat)
-            self.viewer.add_geom(rudder)
-
-            # - add some metrics, current twa and target
-            metrics_twa_target = rendering.FilledPolygon(self._get_polygon(metrics_width, metrics_len))
-            self.trans_metrics_twa_target = rendering.Transform(translation=(screen_width - 20, 0))
-            metrics_twa_target.add_attr(self.trans_metrics_twa_target)
-            metrics_twa_target.set_color(0.0, 1.0, 0.0)
-            self.viewer.add_geom(metrics_twa_target)
-
-            metrics_twa = rendering.FilledPolygon(self._get_polygon(metrics_width, metrics_len))
-            self.trans_metrics_twa = rendering.Transform(translation=(screen_width - 40, 0))
-            metrics_twa.add_attr(self.trans_metrics_twa)
-            self.scale_metrics_twa = rendering.Transform(scale=(1.0, 1.0))
-            metrics_twa.add_attr(self.scale_metrics_twa)
-            metrics_twa.set_color(1.0, 0.0, 0.0)
-            self.viewer.add_geom(metrics_twa)
-
-            metrics_speed = rendering.FilledPolygon(self._get_polygon(metrics_width, metrics_len))
-            self.trans_metrics_speed = rendering.Transform(translation=(40, 0))
-            metrics_speed.add_attr(self.trans_metrics_speed)
-            self.scale_metrics_speed = rendering.Transform(scale=(1.0, 1.0))
-            metrics_speed.add_attr(self.scale_metrics_speed)
-            metrics_speed.set_color(0.0, 0.0, 1.0)
-            self.viewer.add_geom(metrics_speed)
-
-        if self.state is None:
-            return None
-
-        # Move the boat and the wind
-        yaw, twa, speed = self.state
-        self.trans_wind.set_rotation(-twa)
-        self.trans_wind.set_translation(0, screen_height // 3)
-        self.trans_boat.set_rotation(yaw)
-        self.trans_rudder.set_rotation(self.rudder)
-        self.scale_metrics_twa.set_scale(1, 1 - (twa - self.target_twa) / self.target_twa)
-        self.scale_metrics_speed.set_scale(1, speed)
-
-        return self.viewer.render(return_rgb_array=mode == "rgb_array")
 
     def close(self):
         if self.viewer:

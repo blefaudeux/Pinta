@@ -63,7 +63,7 @@ if __name__ == "__main__":
     save_path = os.path.join("saves", "a2c-" + args.name)
     os.makedirs(save_path, exist_ok=True)
 
-    env_args = {"white_noise": 0.05, "slow_moving_noise": 0.1, "inertia": 0.8, "target_twa": 0.8, "max_iter": 200}
+    env_args = {"white_noise": 0.05, "slow_moving_noise": 0.1, "inertia": 0.8, "target_twa": 0.8,  "max_rudder": 1.0, "max_iter": 200}
     env = gym.make("SimpleStochasticEnv-v0", **env_args)
     test_env = gym.make("SimpleStochasticEnv-v0", **env_args)
 
@@ -87,7 +87,7 @@ if __name__ == "__main__":
                     tb_tracker.track("episode_steps", steps[0], step_idx)
                     tracker.reward(rewards[0], step_idx)
 
-                if step_idx % TEST_ITERS == 0:
+                if step_idx > 0 and step_idx % TEST_ITERS == 0:
                     ts = time.time()
                     rewards, steps = test_net(net, test_env, device=device)
                     print("Test done is %.2f sec, reward %.3f, steps %d" % (time.time() - ts, rewards, steps))
