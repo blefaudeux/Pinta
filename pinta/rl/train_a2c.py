@@ -15,17 +15,17 @@ import pinta.rl.rl_common as common
 from torch.utils.tensorboard import SummaryWriter
 
 HIDDEN_SIZE = 128
-BATCH_SIZE = 16
+BATCH_SIZE = 64
 PERCENTILE = 70
 
 
 GAMMA = 0.99
 REWARD_STEPS = 2
 BATCH_SIZE = 32
-LEARNING_RATE = 5e-5
+LEARNING_RATE = 1e-4
 ENTROPY_BETA = 1e-4
 
-TEST_ITERS = 1000
+TEST_ITERS = 1e4
 
 
 def test_net(net, env, count=10, device="cpu"):

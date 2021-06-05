@@ -87,13 +87,13 @@ class SimpleStochasticEnv(BaseEnv):
         yaw_diff = 5e-2 * self.rudder * speed
         yaw += yaw_diff
         twa += yaw_diff + self.np_random.normal(loc=0, scale=self.white_noise)
-        speed = self.inertia * speed + (1.0 - self.inertia) * np.array([self._speed(twa)])
+        speed = (self.inertia * speed + (1.0 - self.inertia) * np.array([self._speed(twa)])) * (1.-self.rudder)
 
         # Reward needs to take alignment and wind side into account
         reward = np.cos(twa - self.target_twa)
 
         # Update the state, and good to go
-        self.state = np.concatenate([yaw, twa, speed])
+        self.state = np.array([yaw[0], twa[0], speed[0]])
         self.iter += 1
 
         # A Gym env returns 4 objects:
