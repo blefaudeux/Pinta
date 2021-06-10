@@ -11,7 +11,12 @@ import pinta.settings as settings
 from pinta.data_processing import plot as plt
 from pinta.data_processing.load import load_folder, load_sets
 from pinta.data_processing.training_set import TrainingSetBundle
-from pinta.data_processing.transforms import Normalize, OffsetInputsOutputs, SinglePrecision, transform_factory
+from pinta.data_processing.transforms import (
+    Normalize,
+    OffsetInputsOutputs,
+    SinglePrecision,
+    transform_factory,
+)
 from pinta.model.model_factory import model_factory
 
 
@@ -43,14 +48,20 @@ def run(args):
         log.info("Updating the normalization statistics with the current data pool")
         params.data.statistics = training_bundle.get_norm()
 
-    log.info("Loaded {} samples. Batch is {}".format(len(training_bundle), params.data.train_batch_size))
+    log.info(
+        "Loaded {} samples. Batch is {}".format(
+            len(training_bundle), params.data.train_batch_size
+        )
+    )
     log.info("Available fields: {}".format(dataframes[0].columns.values))
 
     # Data augmentation / preparation.
     transforms = transform_factory(params)
 
     # Adjust for a possible time offset requirement
-    offset_transform = list(filter(lambda t: isinstance(t, OffsetInputsOutputs), transforms))
+    offset_transform = list(
+        filter(lambda t: isinstance(t, OffsetInputsOutputs), transforms)
+    )
 
     if len(offset_transform) > 0:
         offset = offset_transform.pop().offset
@@ -115,7 +126,12 @@ def run(args):
                     mean.outputs,
                 )
 
-            reference = torch.cat([denormalize(batch.outputs[:, :, -1]) for batch in tester]).detach().cpu().numpy()
+            reference = (
+                torch.cat([denormalize(batch.outputs[:, :, -1]) for batch in tester])
+                .detach()
+                .cpu()
+                .numpy()
+            )
 
             # - limit the display to fewer samples
             SAMPLES = 500

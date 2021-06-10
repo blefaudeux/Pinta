@@ -40,8 +40,13 @@ class SimpleStochasticEnv(BaseEnv):
     metadata = {"render.modes": ["human"]}
 
     def __init__(
-        self, white_noise: float, slow_moving_noise: float, inertia: float, target_twa: float,
-        max_rudder: float = 0.8, max_iter: int = 1000
+        self,
+        white_noise: float,
+        slow_moving_noise: float,
+        inertia: float,
+        target_twa: float,
+        max_rudder: float = 0.8,
+        max_iter: int = 1000,
     ):
         self.white_noise = white_noise
         self.slow_moving_noise = slow_moving_noise
@@ -54,12 +59,19 @@ class SimpleStochasticEnv(BaseEnv):
         self.viewer = None
 
         # Action space is the rudder
-        self.action_space = spaces.Box(low=np.array([-max_rudder]),
-                                       high=np.array([max_rudder]), shape=(1,), dtype=np.float32)
+        self.action_space = spaces.Box(
+            low=np.array([-max_rudder]),
+            high=np.array([max_rudder]),
+            shape=(1,),
+            dtype=np.float32,
+        )
 
         # Observation space is the current yaw, boat speed and TWA
         self.observation_space = spaces.Box(
-            low=np.array([-np.pi, -np.pi, 0.0]), high=np.array([np.pi, np.pi, 3.0]), shape=(3,), dtype=np.float32
+            low=np.array([-np.pi, -np.pi, 0.0]),
+            high=np.array([np.pi, np.pi, 3.0]),
+            shape=(3,),
+            dtype=np.float32,
         )
         self.rudder = 0.0
 
@@ -87,7 +99,12 @@ class SimpleStochasticEnv(BaseEnv):
         yaw_diff = 5e-2 * self.rudder * speed
         yaw += yaw_diff
         twa += yaw_diff + self.np_random.normal(loc=0, scale=self.white_noise)
+
+        # Speed is based on inertia + TWA
         speed = self.inertia * speed + (1.0 - self.inertia) * np.array([self._speed(twa)])
+
+        # Changing direction costs some speed
+        speed *= 1.0 - abs(self.rudder ** 2)
 
         # Reward needs to take alignment and wind side into account
         reward = np.cos(twa - self.target_twa)
@@ -114,11 +131,6 @@ class SimpleStochasticEnv(BaseEnv):
         self.iter = 0
         self.steps_beyond_done = None
         return self.state
-
-    @staticmethod
-    def _get_polygon(width, height):
-        l, r, t, b = -width / 2, width / 2, height / 2, -height / 2
-        return [(l, b), (l, t), (r, t), (r, b)]
 
     def close(self):
         if self.viewer:

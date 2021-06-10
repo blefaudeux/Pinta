@@ -6,7 +6,11 @@ def test_create_models():
     settings = {
         "inputs": ["tws", "twa_x", "twa_y", "heel"],
         "outputs": ["sog"],
-        "transforms": [["normalize", []], ["random_flip", [["heel", "twa_y"], 0.5]], ["single_precision", []]],
+        "transforms": [
+            ["normalize", []],
+            ["random_flip", [["heel", "twa_y"], 0.5]],
+            ["single_precision", []],
+        ],
         "trunk": {
             "model_type": "mlp",
             "dilated_conv": {"dropout": 0.25},

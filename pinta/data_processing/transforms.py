@@ -29,13 +29,18 @@ def transform_factory(params: Settings) -> List[Callable]:
             return Denormalize(*params.data.statistics)
 
         def get_random_flip():
-            return RandomFlip(dimensions=[params.inputs.index(p) for p in transform_args[0]], odds=transform_args[1])
+            return RandomFlip(
+                dimensions=[params.inputs.index(p) for p in transform_args[0]],
+                odds=transform_args[1],
+            )
 
         def get_offset():
             return OffsetInputsOutputs(offset_samples=transform_args[0])
 
         def get_cut_sequence():
-            return CutSequence(inputs_cut=transform_args[0], outputs_cut=transform_args[1])
+            return CutSequence(
+                inputs_cut=transform_args[0], outputs_cut=transform_args[1]
+            )
 
         transforms.append(
             {
@@ -74,11 +79,17 @@ class Denormalize:
         self.mean = mean
         self.std = std
 
-        LOG.info("Initializing De-Normalize transform with mean:\n{}\nand std\n{}".format(mean, std))
+        LOG.info(
+            "Initializing De-Normalize transform with mean:\n{}\nand std\n{}".format(
+                mean, std
+            )
+        )
 
         # Catch noise-free data
         if torch.min(self.std.inputs).item() < EPSILON:
-            self.std = TrainingSample(torch.ones_like(self.std.inputs), torch.ones_like(self.std.outputs))
+            self.std = TrainingSample(
+                torch.ones_like(self.std.inputs), torch.ones_like(self.std.outputs)
+            )
             LOG.warning("Noise-free data detected, skip noise normalization")
 
     def __call__(self, sample: TrainingSample):
@@ -87,7 +98,9 @@ class Denormalize:
                 torch.add(sample.inputs, self.mean.inputs),
                 self.std.inputs,
             ),
-            outputs=torch.mul(torch.add(sample.outputs, self.mean.outputs), self.std.outputs),
+            outputs=torch.mul(
+                torch.add(sample.outputs, self.mean.outputs), self.std.outputs
+            ),
         )
 
 
@@ -103,14 +116,22 @@ class Normalize:
             std {TrainingSample holding torch tensors}
                 -- Expected distribution second moment
         """
-        self.mean = TrainingSample(mean.inputs.unsqueeze(1), mean.outputs.unsqueeze(1))  # add the sequence dimension
+        self.mean = TrainingSample(
+            mean.inputs.unsqueeze(1), mean.outputs.unsqueeze(1)
+        )  # add the sequence dimension
         self.std = TrainingSample(std.inputs.unsqueeze(1), std.outputs.unsqueeze(1))
 
-        LOG.info("Initializing Normalize transform with mean\n{}\nand std\n{}".format(mean, std))
+        LOG.info(
+            "Initializing Normalize transform with mean\n{}\nand std\n{}".format(
+                mean, std
+            )
+        )
 
         # Catch noise-free data
         if torch.min(self.std.inputs).item() < EPSILON:
-            self.std = TrainingSample(torch.ones_like(self.std.inputs), torch.ones_like(self.std.outputs))
+            self.std = TrainingSample(
+                torch.ones_like(self.std.inputs), torch.ones_like(self.std.outputs)
+            )
             LOG.warning("Noise-free data detected, skip noise normalization")
 
     def __call__(self, sample: TrainingSample):
@@ -121,7 +142,10 @@ class Normalize:
                     torch.add(sample.inputs, -self.mean.inputs[:, 0]),
                     self.std.inputs[:, 0],
                 ),
-                outputs=torch.div(torch.add(sample.outputs, -self.mean.outputs[:, 0]), self.std.outputs[:, 0]),
+                outputs=torch.div(
+                    torch.add(sample.outputs, -self.mean.outputs[:, 0]),
+                    self.std.outputs[:, 0],
+                ),
             )
 
         # Batch data coming in. Could also be handled through broadcasting
@@ -154,7 +178,11 @@ class RandomFlip:
         """
         self.odds = odds
         self.dims = dimensions
-        LOG.info("Initializing Random flip transform on dimensions {} with odds {}".format(dimensions, odds))
+        LOG.info(
+            "Initializing Random flip transform on dimensions {} with odds {}".format(
+                dimensions, odds
+            )
+        )
 
     def __call__(self, sample: TrainingSample):
         if random_sample() < self.odds:
@@ -176,7 +204,9 @@ class SinglePrecision:
         pass
 
     def __call__(self, sample: TrainingSample):
-        return TrainingSample(inputs=sample.inputs.float(), outputs=sample.outputs.float())
+        return TrainingSample(
+            inputs=sample.inputs.float(), outputs=sample.outputs.float()
+        )
 
 
 class HalfPrecision:
@@ -187,7 +217,9 @@ class HalfPrecision:
         pass
 
     def __call__(self, sample: TrainingSample):
-        return TrainingSample(inputs=sample.inputs.half(), outputs=sample.outputs.half())
+        return TrainingSample(
+            inputs=sample.inputs.half(), outputs=sample.outputs.half()
+        )
 
 
 class OffsetInputsOutputs:
@@ -202,9 +234,14 @@ class OffsetInputsOutputs:
     def __call__(self, sample: TrainingSample):
         # FIXME not very elegant, there must be a cleaner, branchless way
         if len(sample.inputs.shape) > 1:
-            return TrainingSample(inputs=sample.inputs[:, : -self.offset], outputs=sample.outputs[:, self.offset :])
+            return TrainingSample(
+                inputs=sample.inputs[:, : -self.offset],
+                outputs=sample.outputs[:, self.offset :],
+            )
 
-        return TrainingSample(inputs=sample.inputs[: -self.offset], outputs=sample.outputs[self.offset :])
+        return TrainingSample(
+            inputs=sample.inputs[: -self.offset], outputs=sample.outputs[self.offset :]
+        )
 
 
 class CutSequence:
@@ -232,7 +269,15 @@ class CutSequence:
         return seq[:, cut:]
 
     def __call__(self, sample: TrainingSample):
-        inputs = self.__cut(sample.inputs, self.inputs_cut) if self.inputs_cut else sample.inputs
-        outputs = self.__cut(sample.outputs, self.outputs_cut) if self.outputs_cut else sample.outputs
+        inputs = (
+            self.__cut(sample.inputs, self.inputs_cut)
+            if self.inputs_cut
+            else sample.inputs
+        )
+        outputs = (
+            self.__cut(sample.outputs, self.outputs_cut)
+            if self.outputs_cut
+            else sample.outputs
+        )
 
         return TrainingSample(inputs=inputs, outputs=outputs)

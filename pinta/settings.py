@@ -149,7 +149,11 @@ class Settings:
 
 
 def get_name(params: Settings) -> str:
-    _amp = _amp_available and device.type == torch.device("cuda").type and params.training.mixed_precision
+    _amp = (
+        _amp_available
+        and device.type == torch.device("cuda").type
+        and params.training.mixed_precision
+    )
 
     return (
         params.trunk.model_type

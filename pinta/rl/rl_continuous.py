@@ -40,7 +40,12 @@ class DDPGActor(nn.Module):
         super(DDPGActor, self).__init__()
 
         self.net = nn.Sequential(
-            nn.Linear(obs_size, 400), nn.ReLU(), nn.Linear(400, 300), nn.ReLU(), nn.Linear(300, act_size), nn.Tanh()
+            nn.Linear(obs_size, 400),
+            nn.ReLU(),
+            nn.Linear(400, 300),
+            nn.ReLU(),
+            nn.Linear(300, act_size),
+            nn.Tanh(),
         )
 
     def forward(self, x):
@@ -56,7 +61,9 @@ class DDPGCritic(nn.Module):
             nn.ReLU(),
         )
 
-        self.out_net = nn.Sequential(nn.Linear(400 + act_size, 300), nn.ReLU(), nn.Linear(300, 1))
+        self.out_net = nn.Sequential(
+            nn.Linear(400 + act_size, 300), nn.ReLU(), nn.Linear(300, 1)
+        )
 
     def forward(self, x, a):
         obs = self.obs_net(x)
@@ -72,7 +79,9 @@ class D4PGCritic(nn.Module):
             nn.ReLU(),
         )
 
-        self.out_net = nn.Sequential(nn.Linear(400 + act_size, 300), nn.ReLU(), nn.Linear(300, n_atoms))
+        self.out_net = nn.Sequential(
+            nn.Linear(400 + act_size, 300), nn.ReLU(), nn.Linear(300, n_atoms)
+        )
 
         delta = (v_max - v_min) / (n_atoms - 1)
         self.register_buffer("supports", torch.arange(v_min, v_max + delta, delta))
@@ -108,7 +117,16 @@ class AgentDDPG(ptan.agent.BaseAgent):
     Agent implementing Orstein-Uhlenbeck exploration process
     """
 
-    def __init__(self, net, device="cpu", ou_enabled=True, ou_mu=0.0, ou_teta=0.15, ou_sigma=0.2, ou_epsilon=1.0):
+    def __init__(
+        self,
+        net,
+        device="cpu",
+        ou_enabled=True,
+        ou_mu=0.0,
+        ou_teta=0.15,
+        ou_sigma=0.2,
+        ou_epsilon=1.0,
+    ):
         self.net = net
         self.device = device
         self.ou_enabled = ou_enabled

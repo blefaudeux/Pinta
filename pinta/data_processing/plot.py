@@ -37,7 +37,9 @@ def polar_plot(data: List[SpeedPolarPoint], filename: str = "speed_polar"):
         sogs = np.array([data[k].sog for k in speed_lines[tws]]).flatten()
 
         labels = [
-            "Wind: {:.2f} deg - {:.2f} kts<br>Boat: {:.2f} kts".format(angle * 180 / 3.14, tws, sog)
+            "Wind: {:.2f} deg - {:.2f} kts<br>Boat: {:.2f} kts".format(
+                angle * 180 / 3.14, tws, sog
+            )
             for angle, sog in zip(twa_rad, sogs)
         ]
 
@@ -80,7 +82,9 @@ def speed_plot(df, decimation=2, filename="speed_polar_raw"):
     # - raw polar plot
     twa_rad = np.radians(df["twa"][::decimation])
     labels = [
-        "Wind: {:.1f} deg - {:.1f}kt <br>Boat: {:.1f}kt <br>Heel: {:.1f}deg".format(wa, ws, b, r)
+        "Wind: {:.1f} deg - {:.1f}kt <br>Boat: {:.1f}kt <br>Heel: {:.1f}deg".format(
+            wa, ws, b, r
+        )
         for wa, ws, b, r in zip(
             df["twa"][::decimation],
             df["tws"][::decimation],
@@ -105,12 +109,24 @@ def speed_plot(df, decimation=2, filename="speed_polar_raw"):
 
     MAX_SPEED_R2 = int(MAX_SPEED * 1.5)
 
-    r_x = [rr * np.cos(i / 180.0 * np.pi) for rr in range(0, MAX_SPEED_R2, 2) for i in range(0, 361)]
-    r_y = [rr * np.sin(i / 180.0 * np.pi) for rr in range(0, MAX_SPEED_R2, 2) for i in range(0, 361)]
-    circle_labels = [str(i) + " knots" for i in range(0, MAX_SPEED_R2, 2) for ii in range(0, 361)]
+    r_x = [
+        rr * np.cos(i / 180.0 * np.pi)
+        for rr in range(0, MAX_SPEED_R2, 2)
+        for i in range(0, 361)
+    ]
+    r_y = [
+        rr * np.sin(i / 180.0 * np.pi)
+        for rr in range(0, MAX_SPEED_R2, 2)
+        for i in range(0, 361)
+    ]
+    circle_labels = [
+        str(i) + " knots" for i in range(0, MAX_SPEED_R2, 2) for ii in range(0, 361)
+    ]
 
     # Create a trace
-    iso_speed = go.Scattergl(x=r_x, y=r_y, mode="lines", text=circle_labels, line=dict(width=1, color="grey"))
+    iso_speed = go.Scattergl(
+        x=r_x, y=r_y, mode="lines", text=circle_labels, line=dict(width=1, color="grey")
+    )
 
     traces = [speed, iso_speed]
 
@@ -133,7 +149,9 @@ def speed_plot(df, decimation=2, filename="speed_polar_raw"):
 
 
 # Plot any traces in parallel
-def parallel_plot(data_list: List[Any], legend_list: List[str], title=None, auto_open: bool = False):
+def parallel_plot(
+    data_list: List[Any], legend_list: List[str], title=None, auto_open: bool = False
+):
     traces = []
 
     for data, name in zip(data_list, legend_list):
@@ -142,7 +160,9 @@ def parallel_plot(data_list: List[Any], legend_list: List[str], title=None, auto
 
         traces.append(go.Scatter(y=data, name=name))
 
-    layout = go.Layout(title=title if title is not None else "parallel_plot", hovermode="closest")
+    layout = go.Layout(
+        title=title if title is not None else "parallel_plot", hovermode="closest"
+    )
 
     fig = go.Figure(data=traces, layout=layout)
     py.plot(fig, filename=handle_save(title), auto_open=auto_open)

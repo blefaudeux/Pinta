@@ -15,6 +15,11 @@ class BaseEnv(gym.Env):
     def __init__(self) -> None:
         ...
 
+    @staticmethod
+    def _get_polygon(width, height):
+        l, r, t, b = -width / 2, width / 2, height / 2, -height / 2
+        return [(l, b), (l, t), (r, t), (r, b)]
+
     def render(self, mode="human"):
         screen_width = 800
         screen_height = 800
@@ -48,10 +53,9 @@ class BaseEnv(gym.Env):
             wind.set_color(0.8, 0.6, 0.4)
 
             # - and the corresponding boat transform, then commit to the viewer
-            wind_offset = boat_len / 6.0
-            self.trans_wind = rendering.Transform(translation=(0, wind_offset))
+            wind_offset = 0.8 * screen_height
+            self.trans_wind = rendering.Transform(translation=(screen_width // 2, wind_offset))
             wind.add_attr(self.trans_wind)
-            wind.add_attr(self.trans_boat)
             self.viewer.add_geom(wind)
 
             # - now add the rudder geometry
@@ -93,8 +97,7 @@ class BaseEnv(gym.Env):
 
         # Move the boat and the wind
         yaw, twa, speed = self.state
-        self.trans_wind.set_rotation(-twa)
-        self.trans_wind.set_translation(0, screen_height // 3)
+        self.trans_wind.set_rotation(yaw - twa)
         self.trans_boat.set_rotation(yaw)
         self.trans_rudder.set_rotation(-self.rudder)
         self.scale_metrics_twa.set_scale(1, 1 - (twa - self.target_twa) / self.target_twa)

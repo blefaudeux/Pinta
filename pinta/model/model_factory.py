@@ -55,7 +55,11 @@ def model_factory(params: Settings, model_path: str) -> NN:
     # One benefit of that is that the settings become strict, anything which
     # does not match a key will cause an assert
 
-    trunk_outputs = params.trunk.embedding_dimensions if len(params.tuning_inputs) > 0 else len(params.outputs)
+    trunk_outputs = (
+        params.trunk.embedding_dimensions
+        if len(params.tuning_inputs) > 0
+        else len(params.outputs)
+    )
 
     trunk = {
         ModelType.DILATED_CONV: lazy(
@@ -121,7 +125,12 @@ def model_factory(params: Settings, model_path: str) -> NN:
 
         # Given the original trunk and the encoder, the signal needs to be mixed
         # and have some downstream capacity
-        model = Mixer(logdir=log_directory, trunk=trunk, tuning_encoder=tuning_encoder, params=params)
+        model = Mixer(
+            logdir=log_directory,
+            trunk=trunk,
+            tuning_encoder=tuning_encoder,
+            params=params,
+        )
         logging.info("Using a final Mixer to get the predictions")
 
     return model.to(settings.device)

@@ -40,7 +40,9 @@ class Conv(NN):
         )
 
         out_conv_size = self._get_conv_out(input_size)
-        self.log.info("Feature vector size out of the convolution is {}".format(out_conv_size))
+        self.log.info(
+            "Feature vector size out of the convolution is {}".format(out_conv_size)
+        )
 
         # Ends with two fully connected layers
         self.fc = nn.Sequential(
@@ -59,7 +61,9 @@ class Conv(NN):
         except RuntimeError:
             pass
 
-        self.log.warning("Could not load the specified net," " needs to be computed from scratch")
+        self.log.warning(
+            "Could not load the specified net," " needs to be computed from scratch"
+        )
 
     def get_layer_weights(self):
         return [self.conv[0].weight, self.conv[2].weight]

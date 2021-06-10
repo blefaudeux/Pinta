@@ -52,7 +52,9 @@ class NN(nn.Module):
         """Split the inputs in between the signal and the tuning -slow moving- parts
         Dimensions are [Batch x Channels x TimeSequence]
         """
-        return torch.split(inputs, [len(settings.inputs), len(settings.tuning_inputs)], dim=1)
+        return torch.split(
+            inputs, [len(settings.inputs), len(settings.tuning_inputs)], dim=1
+        )
 
     def evaluate(self, dataloader: DataLoader):
         #  Re-use PyTorch losses on the fly
@@ -96,9 +98,15 @@ class NN(nn.Module):
     ):
         # Setup the training loop
         optimizer = {
-            Optimizer.ADAM_W: optim.AdamW(self.parameters(), lr=settings.training.optim.learning_rate, amsgrad=False),
+            Optimizer.ADAM_W: optim.AdamW(
+                self.parameters(),
+                lr=settings.training.optim.learning_rate,
+                amsgrad=False,
+            ),
             Optimizer.SGD: optim.SGD(
-                self.parameters(), lr=settings.training.optim.learning_rate, momentum=settings.training.optim.momentum
+                self.parameters(),
+                lr=settings.training.optim.learning_rate,
+                momentum=settings.training.optim.momentum,
             ),
         }[settings.training.optim.name]
 
@@ -109,7 +117,10 @@ class NN(nn.Module):
                 factor=settings.training.optim.scheduler_factor,
             ),
             Scheduler.COSINE: CosineAnnealingLR(
-                optimizer=optimizer, T_max=settings.training.epoch, eta_min=1e-6, last_epoch=-1
+                optimizer=optimizer,
+                T_max=settings.training.epoch,
+                eta_min=1e-6,
+                last_epoch=-1,
             ),
         }[Scheduler(settings.training.optim.scheduler)]
 
@@ -119,19 +130,31 @@ class NN(nn.Module):
             tester = cycle(tester)  # type: ignore
 
         # If AMP is enabled, create an autocast context. Noop if normal full precision training
-        use_amp = settings.training.mixed_precision and _device.type == torch.device("cuda").type and _amp_available
+        use_amp = (
+            settings.training.mixed_precision
+            and _device.type == torch.device("cuda").type
+            and _amp_available
+        )
         context = autocast() if use_amp else suppress()
         scaler = GradScaler() if use_amp else None
 
         # Now to the actual training
-        self.log.info("\nTraining the model... AMP: %s\n" % "enabled" if use_amp else "disabled")
+        self.log.info(
+            "\nTraining the model... AMP: %s\n" % "enabled" if use_amp else "disabled"
+        )
         i_log = 0
         for i_epoch in range(settings.training.epoch):
 
             self.log.info("***** Epoch %d", i_epoch)
-            self.log.info(" {}/{} LR: {:.4f}".format(i_epoch, settings.training.epoch, optimizer.param_groups[0]["lr"]))
+            self.log.info(
+                " {}/{} LR: {:.4f}".format(
+                    i_epoch, settings.training.epoch, optimizer.param_groups[0]["lr"]
+                )
+            )
 
-            for i_batch, (train_batch, validation_batch) in enumerate(zip(trainer, tester)):
+            for i_batch, (train_batch, validation_batch) in enumerate(
+                zip(trainer, tester)
+            ):
                 batch_start = time.time()
 
                 # Eval computation on the training data
@@ -144,7 +167,9 @@ class NN(nn.Module):
 
                     # Split inputs and training inputs, then go through the mode + mixer:
                     if hasattr(self, "tuning_encoder"):
-                        inputs, tuning_inputs = self._split_inputs(train_batch.inputs, settings)
+                        inputs, tuning_inputs = self._split_inputs(
+                            train_batch.inputs, settings
+                        )
                         out = self(inputs, tuning_inputs)
                         # FIXME: Handle different losses
                     else:
@@ -163,14 +188,18 @@ class NN(nn.Module):
                     optimizer.step()
 
                 self.log.info(
-                    " {}/{},{} Train loss: {:.4f}".format(i_epoch, settings.training.epoch, i_batch, loss.item())
+                    " {}/{},{} Train loss: {:.4f}".format(
+                        i_epoch, settings.training.epoch, i_batch, loss.item()
+                    )
                 )
                 self.summary_writer.add_scalar("train", loss.item(), i_log)
 
                 # Loss on the validation data
                 def closure_validation(data=validation_batch):
                     if hasattr(self, "tuning_encoder"):
-                        inputs, tuning_inputs = self._split_inputs(data.inputs, settings)
+                        inputs, tuning_inputs = self._split_inputs(
+                            data.inputs, settings
+                        )
                         pred = self(inputs, tuning_inputs)
                         # FIXME: Handle different losses
                     else:
@@ -191,10 +220,16 @@ class NN(nn.Module):
                 batch_stop = time.time()
                 elapsed = batch_stop - batch_start
 
-                samples_per_sec = (train_batch.inputs.shape[0] + validation_batch.inputs.shape[0]) / elapsed
+                samples_per_sec = (
+                    train_batch.inputs.shape[0] + validation_batch.inputs.shape[0]
+                ) / elapsed
 
-                self.summary_writer.add_scalar("Samples_per_sec", samples_per_sec, i_log)
-                self.summary_writer.add_scalar("LR", optimizer.param_groups[0]["lr"], i_log)
+                self.summary_writer.add_scalar(
+                    "Samples_per_sec", samples_per_sec, i_log
+                )
+                self.summary_writer.add_scalar(
+                    "LR", optimizer.param_groups[0]["lr"], i_log
+                )
 
                 self.log.info(
                     " {}/{},{} {:.1f}k samples/sec \n".format(

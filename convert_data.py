@@ -26,7 +26,9 @@ def process_file(
     lut: Optional[Dict[str, str]] = None,
     metadata: List[Dict[str, Any]] = None,
 ) -> None:
-    df = {".nmea": parse_nmea, ".csv": parse_csv, ".json": parse_raw_json}[filepath.suffix](
+    df = {".nmea": parse_nmea, ".csv": parse_csv, ".json": parse_raw_json}[
+        filepath.suffix
+    ](
         filepath, lut
     )  # type: ignore
 
@@ -43,7 +45,9 @@ def process_file(
 
         if id_run is not None:
             # - add the metadata in the DataFrame (take the lookup into account)
-            LOG.info(f"Found ID for file {filepath.stem} : {id_run} in metadata file {id_meta}")
+            LOG.info(
+                f"Found ID for file {filepath.stem} : {id_run} in metadata file {id_meta}"
+            )
 
             for k in metadata[id_meta].keys():
                 if k == "run" or k == "ID":
@@ -63,7 +67,9 @@ def process_file(
     df = df.bfill().ffill().dropna(axis=1)  # interpolate() ?
 
     if args.pickle:
-        pd.to_pickle(df, Path(args.data_export_path) / Path(filepath.stem + ".pkl"), protocol=4)
+        pd.to_pickle(
+            df, Path(args.data_export_path) / Path(filepath.stem + ".pkl"), protocol=4
+        )
         # test = pd.read_pickle(Path(args.data_export_path) / Path(filepath.stem + ".pkl"))
         # print(df.columns)
         # print(test.columns)
@@ -93,7 +99,10 @@ def handle_directory(args: argparse.Namespace):
                 metadatas.append(json.load(fileio))
 
         # Make sure that we don't load the metadata files
-        filelist = list(set(filelist) - set(filter(lambda x: args.metadata_root in str(x), filelist)))
+        filelist = list(
+            set(filelist)
+            - set(filter(lambda x: args.metadata_root in str(x), filelist))
+        )
         LOG.info(f"{len(filelist)} files to process, excluding metadata.")
 
     # Make the export directory
@@ -111,7 +120,9 @@ def handle_directory(args: argparse.Namespace):
     if args.parallel:
         LOG.info("Starting parallel conversion")
         pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
-        barrier = pool.starmap_async(process_file, zip(filelist, repeat(args), repeat(lut), repeat(metadatas)))
+        barrier = pool.starmap_async(
+            process_file, zip(filelist, repeat(args), repeat(lut), repeat(metadatas))
+        )
         barrier.wait()
     else:
         LOG.info("Starting sequential conversion")
@@ -120,14 +131,18 @@ def handle_directory(args: argparse.Namespace):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("Convert in between data formats. Handles NMEA and some CSVs")
+    parser = argparse.ArgumentParser(
+        "Convert in between data formats. Handles NMEA and some CSVs"
+    )
     parser.add_argument(
         "--data_ingestion_path",
         action="store",
         help="Full path of the root folder where the original data is",
     )
 
-    parser.add_argument("--data_export_path", action="store", help="Where to save the normalized data")
+    parser.add_argument(
+        "--data_export_path", action="store", help="Where to save the normalized data"
+    )
 
     parser.add_argument(
         "--data_lookup_table",

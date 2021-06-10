@@ -23,7 +23,10 @@ def _angle_split(data):
 
 def load(filepath: Path, zero_mean_helm: bool = False) -> DataFrame:
     LOG.info("Loading %s" % filepath)
-    data_frame = {".json": lambda x: load_json(x, skip_zeros=True), ".pkl": pd.read_pickle}[filepath.suffix](filepath)
+    data_frame = {
+        ".json": lambda x: load_json(x, skip_zeros=True),
+        ".pkl": pd.read_pickle,
+    }[filepath.suffix](filepath)
 
     # Fix a possible offset in the rudder angle sensor
     if zero_mean_helm:
@@ -33,14 +36,22 @@ def load(filepath: Path, zero_mean_helm: bool = False) -> DataFrame:
 
 
 def load_folder(
-    folder_path: Path, zero_mean_helm: bool, parallel_load: bool = True, max_number_sequences: int = -1
+    folder_path: Path,
+    zero_mean_helm: bool,
+    parallel_load: bool = True,
+    max_number_sequences: int = -1,
 ) -> List[DataFrame]:
     # Get the matching files
     def valid(filepath):
-        return os.path.isfile(filepath) and os.path.splitext(filepath)[1] in [".json", ".pkl"]
+        return os.path.isfile(filepath) and os.path.splitext(filepath)[1] in [
+            ".json",
+            ".pkl",
+        ]
 
     filelist = [
-        Path(os.path.join(folder_path, f)) for f in os.listdir(folder_path) if valid(os.path.join(folder_path, f))
+        Path(os.path.join(folder_path, f))
+        for f in os.listdir(folder_path)
+        if valid(os.path.join(folder_path, f))
     ]
 
     if max_number_sequences > 0:
@@ -50,7 +61,11 @@ def load_folder(
     if parallel_load:
         pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
         results: List[DataFrame] = []
-        barrier = pool.starmap_async(load, zip(filelist, repeat(zero_mean_helm)), callback=lambda x: results.append(x))
+        barrier = pool.starmap_async(
+            load,
+            zip(filelist, repeat(zero_mean_helm)),
+            callback=lambda x: results.append(x),
+        )
         barrier.wait()
         return results[0]
     else:
@@ -65,12 +80,18 @@ def to_training_set(raw_data: pd.DataFrame, settings: Settings):
 
     fused_inputs = settings.inputs + settings.tuning_inputs
     return TrainingSet.from_numpy(
-        np.array([raw_data[cat].values for cat in fused_inputs], dtype=float).transpose(),
-        np.array([raw_data[cat].values for cat in settings.outputs], dtype=float).transpose(),
+        np.array(
+            [raw_data[cat].values for cat in fused_inputs], dtype=float
+        ).transpose(),
+        np.array(
+            [raw_data[cat].values for cat in settings.outputs], dtype=float
+        ).transpose(),
     )
 
 
-def split(raw_data: DataFrame, settings: Dict[str, Any]) -> Tuple[TrainingSet, TrainingSet]:
+def split(
+    raw_data: DataFrame, settings: Dict[str, Any]
+) -> Tuple[TrainingSet, TrainingSet]:
     """
     Given a dataframe, split in between train and validation, requested inputs and outputs, and offset the samples
     if time prediction is involved
@@ -80,7 +101,11 @@ def split(raw_data: DataFrame, settings: Dict[str, Any]) -> Tuple[TrainingSet, T
     cat_out = settings["outputs"]
     ratio = settings["training_ratio"]
     train_size = int(len(raw_data) * ratio)
-    LOG.info("Training set is {} samples long. Selecting inputs: {} and outputs {}".format(train_size, cat_in, cat_out))
+    LOG.info(
+        "Training set is {} samples long. Selecting inputs: {} and outputs {}".format(
+            train_size, cat_in, cat_out
+        )
+    )
 
     train, test = raw_data.iloc[:train_size], raw_data.iloc[train_size : len(raw_data)]
 
@@ -88,8 +113,12 @@ def split(raw_data: DataFrame, settings: Dict[str, Any]) -> Tuple[TrainingSet, T
     test_inputs = np.array([test[cat].values for cat in cat_in], dtype=np.float)
 
     # Move samples to first dimension, makes more sense if output is 1d
-    train_output = np.array([train[cat].values for cat in cat_out], dtype=np.float).transpose()
-    test_output = np.array([test[cat].values for cat in cat_out], dtype=np.float).transpose()
+    train_output = np.array(
+        [train[cat].values for cat in cat_out], dtype=np.float
+    ).transpose()
+    test_output = np.array(
+        [test[cat].values for cat in cat_out], dtype=np.float
+    ).transpose()
 
     return (
         TrainingSet(train_inputs, train_output),

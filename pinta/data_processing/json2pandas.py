@@ -26,7 +26,11 @@ def parse_raw_json(
     # Load raw values
     with open(filepath, "r") as fileio:
         loaded = simdjson.load(fileio)
-        raw_load = pd.DataFrame.from_dict(loaded) if isinstance(loaded, dict) else pd.read_json(loaded)
+        raw_load = (
+            pd.DataFrame.from_dict(loaded)
+            if isinstance(loaded, dict)
+            else pd.read_json(loaded)
+        )
 
     # If we have a reference lookup
     if data_lut is not None:
@@ -41,7 +45,9 @@ def parse_raw_json(
             LOG.debug(f"Raw columns: {raw_load.columns}")
             normalized_fields = [data_lut[f] for f in list(raw_load.columns)]
         except KeyError as e:
-            LOG.error(f"KeyError {e}\n *** Please use a matching conversion table. Keys: {list(raw_load.columns)}\n")
+            LOG.error(
+                f"KeyError {e}\n *** Please use a matching conversion table. Keys: {list(raw_load.columns)}\n"
+            )
             raise RuntimeError
 
         raw_load.columns = normalized_fields

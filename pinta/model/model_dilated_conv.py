@@ -138,7 +138,9 @@ class TemporalModel(TemporalModelBase):
             bn_momentum,
         )
 
-        self.expand_conv = nn.Conv1d(num_input_channels, channels, filter_widths[0], bias=False)
+        self.expand_conv = nn.Conv1d(
+            num_input_channels, channels, filter_widths[0], bias=False
+        )
 
         layers_conv = []
         layers_bn = []
@@ -168,7 +170,11 @@ class TemporalModel(TemporalModelBase):
         self.layers_bn = nn.ModuleList(layers_bn)
         self._valid = False
 
-        LOG.info("Model created. Receptive field is {} samples".format(self.receptive_field()))
+        LOG.info(
+            "Model created. Receptive field is {} samples".format(
+                self.receptive_field()
+            )
+        )
 
         # Load from trained NN if required
         try:
@@ -178,7 +184,9 @@ class TemporalModel(TemporalModelBase):
         except RuntimeError:
             pass
 
-        self.log.warning("Could not load the specified net," " needs to be computed from scratch")
+        self.log.warning(
+            "Could not load the specified net," " needs to be computed from scratch"
+        )
 
     def _forward_blocks(self, x):
         x = self.expand_bn(self.expand_conv(x))
@@ -191,7 +199,9 @@ class TemporalModel(TemporalModelBase):
             res = x[:, :, pad + shift : x.shape[2] - pad + shift]
 
             x = self.drop(self.relu(self.layers_bn[2 * i](self.layers_conv[2 * i](x))))
-            x = res + self.drop(self.relu(self.layers_bn[2 * i + 1](self.layers_conv[2 * i + 1](x))))
+            x = res + self.drop(
+                self.relu(self.layers_bn[2 * i + 1](self.layers_conv[2 * i + 1](x)))
+            )
 
         x = self.shrink(x)
         return x

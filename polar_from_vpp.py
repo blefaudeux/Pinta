@@ -20,7 +20,11 @@ def run(args):
     training_settings = settings.load(args.settings_path)  # type:Settings
 
     # a bit hacky: get the normalization factors on the fly
-    data = load_folder(Path(args.data_path), zero_mean_helm=False, max_number_sequences=args.max_number_sequences)
+    data = load_folder(
+        Path(args.data_path),
+        zero_mean_helm=False,
+        max_number_sequences=args.max_number_sequences,
+    )
     datasplits = load_sets(data, training_settings)
     mean, std = TrainingSetBundle(datasplits).get_norm()
 
@@ -58,15 +62,27 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--model_path", action="store", help="path to the .pt serialized model", default=None, required=True
+        "--model_path",
+        action="store",
+        help="path to the .pt serialized model",
+        default=None,
+        required=True,
     )
 
     parser.add_argument(
-        "--settings_path", action="store", help="path to the json settings for the run", default=None, required=True
+        "--settings_path",
+        action="store",
+        help="path to the json settings for the run",
+        default=None,
+        required=True,
     )
 
     parser.add_argument(
-        "--max_number_sequences", action="store", help="Maximum number of sequences to load", default=-1, type=int
+        "--max_number_sequences",
+        action="store",
+        help="Maximum number of sequences to load",
+        default=-1,
+        type=int,
     )
 
     args = parser.parse_args()

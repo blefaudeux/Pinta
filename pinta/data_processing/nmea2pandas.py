@@ -69,7 +69,9 @@ def parse_nmea(filepath: Path, wind_bias=WIND_BIAS, *args):
                 except KeyError:
                     # We discard this field for now
                     if key not in skipped_fields.keys():
-                        LOG.warning("Unknown field: {}".format(sample.identifier()[:-1]))
+                        LOG.warning(
+                            "Unknown field: {}".format(sample.identifier()[:-1])
+                        )
                         skipped_fields[key] = 1
 
             except (nmea.ParseError, nmea.nmea.ChecksumError, TypeError) as exception:
@@ -84,7 +86,14 @@ def parse_nmea(filepath: Path, wind_bias=WIND_BIAS, *args):
         if ts in data["WindTrue"].keys():
             try:
                 wa.append(
-                    (float(data["Speed"][ts][0]) - float(data["WindTrue"][ts][0]) + wind_bias + 180) % 360.0 - 180.0
+                    (
+                        float(data["Speed"][ts][0])
+                        - float(data["WindTrue"][ts][0])
+                        + wind_bias
+                        + 180
+                    )
+                    % 360.0
+                    - 180.0
                 )
                 wa_index.append(ts)
 
@@ -94,12 +103,17 @@ def parse_nmea(filepath: Path, wind_bias=WIND_BIAS, *args):
 
     dataframe = {
         "twa": pd.Series(wa, index=wa_index),
-        "sog": pd.Series([float(data["Speed"][ts][4]) for ts in data["Speed"].keys()], index=data["Speed"].keys(),),
+        "sog": pd.Series(
+            [float(data["Speed"][ts][4]) for ts in data["Speed"].keys()],
+            index=data["Speed"].keys(),
+        ),
         "tws": pd.Series(
-            [float(data["WindTrue"][ts][4]) for ts in data["WindTrue"].keys()], index=data["WindTrue"].keys(),
+            [float(data["WindTrue"][ts][4]) for ts in data["WindTrue"].keys()],
+            index=data["WindTrue"].keys(),
         ),
         "helm": pd.Series(
-            [float(data["RudderAngle"][ts][0]) for ts in data["RudderAngle"].keys()], index=data["RudderAngle"].keys(),
+            [float(data["RudderAngle"][ts][0]) for ts in data["RudderAngle"].keys()],
+            index=data["RudderAngle"].keys(),
         ),
     }
 

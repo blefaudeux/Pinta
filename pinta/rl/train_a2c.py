@@ -63,11 +63,20 @@ if __name__ == "__main__":
     save_path = os.path.join("saves", "a2c-" + args.name)
     os.makedirs(save_path, exist_ok=True)
 
-    env_args = {"white_noise": 0.05, "slow_moving_noise": 0.1, "inertia": 0.8, "target_twa": 0.8,  "max_rudder": 1.0, "max_iter": 200}
+    env_args = {
+        "white_noise": 0.05,
+        "slow_moving_noise": 0.1,
+        "inertia": 0.8,
+        "target_twa": 0.8,
+        "max_rudder": 1.0,
+        "max_iter": 200,
+    }
+
     env = gym.make("SimpleStochasticEnv-v0", **env_args)
     test_env = gym.make("SimpleStochasticEnv-v0", **env_args)
 
     net = model.ModelA2C(env.observation_space.shape[0], env.action_space.shape[0]).to(device)
+
     print(net)
 
     writer = SummaryWriter(comment="-a2c_" + args.name)

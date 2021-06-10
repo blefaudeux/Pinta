@@ -21,11 +21,15 @@ class TrainingSample(TrainingSample_base):
     """
 
     def to(self, device: torch.device = None) -> TrainingSample:
-        return TrainingSample(inputs=self.inputs.to(device), outputs=self.outputs.to(device))
+        return TrainingSample(
+            inputs=self.inputs.to(device), outputs=self.outputs.to(device)
+        )
 
     def __str__(self):
         inputs_str = "".join(["{:.2f} ".format(i) for i in self.inputs.cpu().tolist()])
-        outputs_str = "".join(["{:.2f} ".format(i) for i in self.outputs.cpu().tolist()])
+        outputs_str = "".join(
+            ["{:.2f} ".format(i) for i in self.outputs.cpu().tolist()]
+        )
 
         return f"inputs: {inputs_str}\noutputs: {outputs_str}\n"
 
@@ -78,16 +82,24 @@ class TrainingSet(Dataset):
         self.outputs = torch.cat((self.outputs, outputs), 0)
 
     def __getitem__(self, index) -> TrainingSample:
-        return self.transform(TrainingSample(inputs=self.inputs[index, :], outputs=self.outputs[index, :]))
+        return self.transform(
+            TrainingSample(inputs=self.inputs[index, :], outputs=self.outputs[index, :])
+        )
 
     def get_sequence(self, index: int, seq_length: int) -> TrainingSample:
-        index = min(index, self.inputs.shape[0] - seq_length)  # Handle the sequence length overflowing the dataset
+        index = min(
+            index, self.inputs.shape[0] - seq_length
+        )  # Handle the sequence length overflowing the dataset
 
         if self.inputs_seq_view is None or self.outputs_seq_view is None:
             self.inputs_seq_view = self.inputs.unfold(0, seq_length, 1)
             self.outputs_seq_view = self.outputs.unfold(0, seq_length, 1)
 
-        return self.transform(TrainingSample(inputs=self.inputs_seq_view[index], outputs=self.outputs_seq_view[index]))
+        return self.transform(
+            TrainingSample(
+                inputs=self.inputs_seq_view[index], outputs=self.outputs_seq_view[index]
+            )
+        )
 
     def __len__(self):
         return self.inputs.shape[0]
@@ -145,14 +157,21 @@ class TrainingSetBundle(Dataset):
             std_outputs.append(training_set.outputs.std(dim=0))
 
         # To Torch tensor and mean
-        mean = TrainingSample(torch.stack(mean_inputs).mean(dim=0), torch.stack(mean_outputs).mean(dim=0))
-        std = TrainingSample(torch.stack(std_inputs).mean(dim=0), torch.stack(std_outputs).mean(dim=0))
+        mean = TrainingSample(
+            torch.stack(mean_inputs).mean(dim=0), torch.stack(mean_outputs).mean(dim=0)
+        )
+        std = TrainingSample(
+            torch.stack(std_inputs).mean(dim=0), torch.stack(std_outputs).mean(dim=0)
+        )
 
         return mean, std
 
     def __getitem__(self, index):
         # Find the relevant TrainingSet.
-        match = next(i for i, x in enumerate(map(lambda x: x > index, self.index_map)) if x) - 1
+        match = (
+            next(i for i, x in enumerate(map(lambda x: x > index, self.index_map)) if x)
+            - 1
+        )
         local_index = index - self.index_map[match]
 
         # Use the TrainingSet to fetch the appropriate sequence, transform and return

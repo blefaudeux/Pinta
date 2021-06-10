@@ -43,7 +43,9 @@ class ConvRNN(NN):
 
         # GRU / LSTM layers
         # Requires [batch, seq, inputs]
-        self.gru = nn.GRU(hidden_size, hidden_size, n_gru_layers, dropout=0.01, batch_first=True)
+        self.gru = nn.GRU(
+            hidden_size, hidden_size, n_gru_layers, dropout=0.01, batch_first=True
+        )
 
         # Ends with a fully connected layer
         self.out = nn.Linear(hidden_size, self.output_size)

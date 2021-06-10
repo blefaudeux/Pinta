@@ -3,7 +3,11 @@ from typing import List
 
 import numpy as np
 import torch
-from pinta.data_processing.training_set import TrainingSample, TrainingSet, TrainingSetBundle
+from pinta.data_processing.training_set import (
+    TrainingSample,
+    TrainingSet,
+    TrainingSetBundle,
+)
 from pinta.data_processing.transforms import Normalize, SinglePrecision
 from pinta.settings import device
 from torch.utils.data import DataLoader
@@ -55,7 +59,9 @@ def generate(
             ).to(device=device)
 
             # Normalize to get to the range the model has learnt
-            datasets.append(TrainingSet.from_training_sample(normalizer(sample), seq_len))
+            datasets.append(
+                TrainingSet.from_training_sample(normalizer(sample), seq_len)
+            )
 
     # - build a collection of unrelated points from this,
     # a TrainingSetBUndle
@@ -63,7 +69,9 @@ def generate(
 
     # - get a dataloader from the ad-hoc dataset
     training_set, _ = dataset_bundle.get_training_set(seq_len)
-    training_set.set_transforms([SinglePrecision()])  # tensors from numpy can be doubles
+    training_set.set_transforms(
+        [SinglePrecision()]
+    )  # tensors from numpy can be doubles
     dataloader = DataLoader(training_set, batch_size=100, shuffle=False)
 
     # FW pass in the DNN.
