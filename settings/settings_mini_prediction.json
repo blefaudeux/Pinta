@@ -45,7 +45,7 @@
         ]
     ],
     "trunk": {
-        "model_type": "dilated_conv",
+        "model_type": "rnn",
         "hidden_size": 128,
         "seq_length": 27,
         "dilated_conv": {
