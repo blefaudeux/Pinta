@@ -29,6 +29,8 @@ def run(args):
     log = logging.getLogger(params.log)
     log.setLevel(level=logging.INFO)
 
+    log.info("Settings:\n{}".format(params))
+
     if not args.model_path:
         # Generate a default name which describes the settings
         args.model_path = "trained/" + settings.get_name(params) + ".pt"

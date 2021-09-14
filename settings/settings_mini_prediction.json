@@ -5,9 +5,7 @@
         "twa_y",
         "helm"
     ],
-    "tuning_inputs": [
-        "port_foil_rake"
-    ],
+    "tuning_inputs": [],
     "outputs": [
         "sog",
         "twa_x",
@@ -46,9 +44,30 @@
             []
         ]
     ],
-    "model_type": "mlp",
-    "hidden_size": 128,
-    "seq_length": 27,
+    "trunk": {
+        "model_type": "dilated_conv",
+        "hidden_size": 128,
+        "seq_length": 27,
+        "dilated_conv": {
+            "dropout": 0.25
+        },
+        "mlp": {
+            "inner_layers": 3
+        },
+        "rnn": {
+            "gru_layers": 2,
+            "kernel_sizes": [
+                3,
+                3
+            ]
+        },
+        "conv": {
+            "kernel_sizes": [
+                3,
+                3
+            ]
+        }
+    },
     "data": {
         "train_batch_size": 10000,
         "test_batch_size": 1000,
@@ -57,31 +76,14 @@
         "train_workers": 3,
         "test_workers": 1
     },
-    "epoch": 40,
-    "optim": {
-        "name": "adam_w",
-        "learning_rate": 0.01,
-        "scheduler": "reduce_plateau",
-        "momentum": 0.99
-    },
-    "dilated_conv": {
-        "dropout": 0.25
-    },
-    "mlp": {
-        "inner_layers": 3
-    },
-    "rnn": {
-        "gru_layers": 2,
-        "kernel_sizes": [
-            3,
-            3
-        ]
-    },
-    "conv": {
-        "kernel_sizes": [
-            3,
-            3
-        ]
+    "training": {
+        "epoch": 40,
+        "optim": {
+            "name": "adam_w",
+            "learning_rate": 0.01,
+            "scheduler": "reduce_plateau",
+            "momentum": 0.99
+        }
     },
     "log": "pinta_mini",
     "amp": false
