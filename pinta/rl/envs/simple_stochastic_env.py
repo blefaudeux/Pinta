@@ -3,7 +3,7 @@ from gym.utils import seeding
 import math
 from typing import Tuple, Optional
 import numpy as np
-from pinta.rl.envs.pinta_env import BaseEnv
+from pinta.rl.envs.base_env import BaseEnv
 
 
 class SimpleStochasticEnv(BaseEnv):
@@ -127,7 +127,9 @@ class SimpleStochasticEnv(BaseEnv):
 
         # Randomly place the boat with respect to the wind
         self.state[1] = self.np_random.uniform(low=-3.14, high=3.14, size=(1,))
-        self.state[2] = self._speed(self.state[1])
+        self.state[2] = (
+            self._speed(self.state[1]) + 0.1
+        )  # give some initial speed, in case the boat was initialized facing the wind
         self.iter = 0
         self.steps_beyond_done = None
         return self.state

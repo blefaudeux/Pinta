@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import argparse
 import math
 import os
@@ -64,7 +65,7 @@ if __name__ == "__main__":
     os.makedirs(save_path, exist_ok=True)
 
     env_args = {
-        "white_noise": 0.05,
+        "white_noise": 0.03,
         "slow_moving_noise": 0.1,
         "inertia": 0.8,
         "target_twa": 0.8,
