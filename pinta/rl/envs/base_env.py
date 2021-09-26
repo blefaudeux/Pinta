@@ -1,5 +1,6 @@
 import gym
 from gym.envs.classic_control import rendering
+from gym.utils import seeding
 
 
 class BaseEnv(gym.Env):
@@ -101,3 +102,7 @@ class BaseEnv(gym.Env):
         self.scale_metrics_speed.set_scale(1, speed)
 
         return self.viewer.render(return_rgb_array=mode == "rgb_array")
+
+    def seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+        return [seed]

@@ -3,30 +3,28 @@
         "tws",
         "twa_x",
         "twa_y",
-        "heel"
+        "helm"
     ],
-    "tuning_inputs": [
-        "port_foil_rake",
-        "port_foil_ext",
-        "sails"
-    ],
+    "tuning_inputs": [],
     "outputs": [
-        "tws",
+        "sog",
         "twa_x",
-        "twa_y",
-        "heel",
-        "sog"
+        "twa_y"
     ],
-    "tokens": {
-        "sails": {
-            "1RJ2": 1,
-            "GVJ2": 2
-        }
-    },
     "transforms": [
         [
             "normalize",
             []
+        ],
+        [
+            "random_flip",
+            [
+                [
+                    "helm",
+                    "twa_y"
+                ],
+                0.5
+            ]
         ],
         [
             "offset_inputs_outputs",
@@ -46,29 +44,12 @@
             []
         ]
     ],
-    "seq_length": 81,
-    "data": {
-        "train_batch_size": 30000,
-        "test_batch_size": 1000,
-        "training_ratio": 0.9,
-        "shuffle": true,
-        "train_workers": 3,
-        "test_workers": 1
-    },
-    "epoch": 5,
-    "optim": {
-        "name": "adam_w",
-        "learning_rate": 0.01,
-        "scheduler": "reduce_plateau",
-        "scheduler_patience": 40,
-        "scheduler_factor": 0.8,
-        "momentum": 0.99
-    },
     "trunk": {
-        "model_type": "dilated_conv",
+        "model_type": "rnn",
         "hidden_size": 128,
+        "seq_length": 27,
         "dilated_conv": {
-            "dropout": 0.15
+            "dropout": 0.25
         },
         "mlp": {
             "inner_layers": 3
@@ -87,6 +68,23 @@
             ]
         }
     },
-    "log": "pinta_imoca",
+    "data": {
+        "train_batch_size": 10000,
+        "test_batch_size": 1000,
+        "training_ratio": 0.9,
+        "shuffle": true,
+        "train_workers": 3,
+        "test_workers": 1
+    },
+    "training": {
+        "epoch": 40,
+        "optim": {
+            "name": "adam_w",
+            "learning_rate": 0.01,
+            "scheduler": "reduce_plateau",
+            "momentum": 0.99
+        }
+    },
+    "log": "pinta_mini",
     "amp": false
 }

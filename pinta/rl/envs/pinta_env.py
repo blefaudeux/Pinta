@@ -1,7 +1,7 @@
 import torch
 from pinta.rl.envs.base_env import BaseEnv
 from pathlib import Path
-from typing import Union, Optional
+from typing import Union, Optional, Tuple
 from gym import spaces
 import numpy as np
 
@@ -18,17 +18,13 @@ def load_model(model_path: Union[str, Path], settings_path: Union[str, Path]) ->
 class PintaEnv(BaseEnv):
     """Load a trained model, wrap it as a gym environement"""
 
-    def __init__(
-        self,
-        model_path: str,
-        max_iter: int = 1000,
-        max_rudder: float = 0.8,
-    ) -> None:
+    def __init__(self, model_path: str, target_twa: float, max_iter: int = 1000, max_rudder: float = 0.8, **_) -> None:
         self._model_path = Path(model_path)
-        self._settings_path = Path(".settings.json")
+        self._settings_path = Path("settings.json")
 
         self.state = None
         self.max_iter = max_iter
+        self.target_twa = target_twa
         self.steps_beyond_done: Optional[int] = None
         self.viewer = None
 
@@ -54,12 +50,14 @@ class PintaEnv(BaseEnv):
 
     metadata = {"render.modes": ["human"]}
 
-    def step(self, action):
+    def step(self, action: Tuple[float]):
         # apply the actions on the model, get the next state
         assert self.state is not None
 
-        # DEBUG:
-        # the do-nothing env
+        # Feed the model with the current state and action, get the prediction and update the state
+        # TODO
+
+        # Compute the reward
         reward = -1
 
         # A Gym env returns 4 objects:
@@ -72,11 +70,6 @@ class PintaEnv(BaseEnv):
 
         self.model = load_model(self._model_path, self._settings_path)
 
-        # Randomly place the boat with respect to the wind
-        self.state[1] = self.np_random.uniform(low=-3.14, high=3.14, size=(1,))
-        self.state[2] = (
-            self._speed(self.state[1]) + 0.1
-        )  # give some initial speed, in case the boat was initialized facing the wind
         self.iter = 0
         self.steps_beyond_done = None
         return self.state

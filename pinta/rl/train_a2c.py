@@ -56,8 +56,12 @@ def calc_logprob(mu_v, var_v, actions_v):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cuda", default=False, action="store_true", help="Enable CUDA")
     parser.add_argument("-n", "--name", required=True, help="Name of the run")
+    parser.add_argument(
+        "-dnn", "--use_dnn", default=False, action="store_true", help="Use a machine learnt environment"
+    )
+    parser.add_argument("-cuda", "--cuda", default=False, action="store_true", help="Enable CUDA")
+
     args = parser.parse_args()
     device = torch.device("cuda" if args.cuda and torch.cuda.is_available() else "cpu")
 
@@ -71,10 +75,15 @@ if __name__ == "__main__":
         "target_twa": 0.8,
         "max_rudder": 1.0,
         "max_iter": 200,
+        "model_path": "rnn_seq_27_hidden_128_batch_10000_lr_0.01_ep_40_amp_True.pt",
     }
 
-    env = gym.make("SimpleStochasticEnv-v0", **env_args)
-    test_env = gym.make("SimpleStochasticEnv-v0", **env_args)
+    if args.use_dnn:
+        env = gym.make("PintaEnv-v0", **env_args)
+        test_env = gym.make("PintaEnv-v0", **env_args)
+    else:
+        env = gym.make("SimpleStochasticEnv-v0", **env_args)
+        test_env = gym.make("SimpleStochasticEnv-v0", **env_args)
 
     net = model.ModelA2C(env.observation_space.shape[0], env.action_space.shape[0]).to(device)
 

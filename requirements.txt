@@ -11,3 +11,4 @@ pysimdjson
 gym
 dataclasses-serialization
 ptan
+pyserde

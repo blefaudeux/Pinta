@@ -1,5 +1,4 @@
 from gym import spaces
-from gym.utils import seeding
 import math
 from typing import Tuple, Optional
 import numpy as np
@@ -138,7 +137,3 @@ class SimpleStochasticEnv(BaseEnv):
         if self.viewer:
             self.viewer.close()
             self.viewer = None
-
-    def seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-        return [seed]
