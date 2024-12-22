@@ -1,6 +1,6 @@
 import os
 from math import ceil
-from typing import Any, Dict, List
+from typing import Any, List
 
 import numpy as np
 import plotly.graph_objs as go

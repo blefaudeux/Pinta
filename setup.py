@@ -3,10 +3,8 @@
 
 import os
 import re
-import warnings
 
 import setuptools
-import torch
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 

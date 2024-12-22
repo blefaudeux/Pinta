@@ -1,5 +1,6 @@
 from pinta.model.model_factory import model_factory
-from pinta.settings import ModelType
+from pinta.settings import ModelType, Settings
+from serde import from_dict
 
 
 def test_create_models():
@@ -7,9 +8,9 @@ def test_create_models():
         "inputs": ["tws", "twa_x", "twa_y", "heel"],
         "outputs": ["sog"],
         "transforms": [
-            ["normalize", []],
-            ["random_flip", [["heel", "twa_y"], 0.5]],
-            ["single_precision", []],
+            ("normalize", []),
+            ("random_flip", [["heel", "twa_y"], 0.5]),
+            ("single_precision", []),
         ],
         "trunk": {
             "model_type": "mlp",
@@ -35,6 +36,8 @@ def test_create_models():
         "amp": False,
     }
 
+    settings_struct = from_dict(Settings, settings)
+
     for m_type in ModelType:
         settings["model_type"] = m_type.value
-        _ = model_factory(settings, model_path="")
+        _ = model_factory(settings_struct, model_path="")

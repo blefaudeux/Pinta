@@ -75,10 +75,10 @@ class TrunkSettings:
     seq_length: int = 81
     embedding_dimensions: int = 16
     conv_width: List[int] = field(default_factory=lambda: [3, 3, 3, 3])
-    dilated_conv: DilatedConvSettings = DilatedConvSettings()
-    mlp: MLPSettings = MLPSettings()
-    rnn: RNNSettings = RNNSettings()
-    conv: ConvSettings = ConvSettings()
+    dilated_conv: DilatedConvSettings = field(default_factory=DilatedConvSettings)
+    mlp: MLPSettings = field(default_factory=MLPSettings)
+    rnn: RNNSettings = field(default_factory=RNNSettings)
+    conv: ConvSettings = field(default_factory=ConvSettings)
 
 
 @serialize
@@ -127,7 +127,7 @@ class OptimSettings:
 @dataclass
 class TrainingSettings:
     epoch: int = 1
-    optim: OptimSettings = OptimSettings()
+    optim: OptimSettings = field(default_factory=OptimSettings)
     mixed_precision: bool = False
 
 
@@ -140,11 +140,11 @@ class Settings:
     outputs: List[str] = field(default_factory=lambda: ["sog"])
     tokens: Dict[str, Dict[str, int]] = field(default_factory=dict)
     transforms: List[Tuple[str, List[int]]] = field(default_factory=list)
-    trunk: TrunkSettings = TrunkSettings()
-    encoder: EncoderSettings = EncoderSettings()
-    mixer: MixerSettings = MixerSettings()
-    data: DataSettings = DataSettings()
-    training: TrainingSettings = TrainingSettings()
+    trunk: TrunkSettings = field(default_factory=TrunkSettings)
+    encoder: EncoderSettings = field(default_factory=EncoderSettings)
+    mixer: MixerSettings = field(default_factory=MixerSettings)
+    data: DataSettings = field(default_factory=DataSettings)
+    training: TrainingSettings = field(default_factory=TrainingSettings)
     log: str = "pinta"
 
 

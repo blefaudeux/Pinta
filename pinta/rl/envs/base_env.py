@@ -4,13 +4,12 @@ from gym.utils import seeding
 
 
 class BaseEnv(gym.Env):
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
 
     @staticmethod
     def _get_polygon(width, height):
-        l, r, t, b = -width / 2, width / 2, height / 2, -height / 2
-        return [(l, b), (l, t), (r, t), (r, b)]
+        left, right, top, bottom = -width / 2, width / 2, height / 2, -height / 2
+        return [(left, bottom), (left, top), (right, top), (right, bottom)]
 
     def _setup_viewer(self):
         screen_width = 800
@@ -34,7 +33,9 @@ class BaseEnv(gym.Env):
         boat = rendering.FilledPolygon(self._get_polygon(boat_width, boat_len))
 
         # - create the initial boat transform, then commit to the viewer
-        self.trans_boat = rendering.Transform(translation=(screen_width // 2, screen_height // 2))
+        self.trans_boat = rendering.Transform(
+            translation=(screen_width // 2, screen_height // 2)
+        )
         boat.add_attr(self.trans_boat)
         self.viewer.add_geom(boat)
 
@@ -44,7 +45,9 @@ class BaseEnv(gym.Env):
 
         # - and the corresponding boat transform, then commit to the viewer
         wind_offset = 0.8 * screen_height
-        self.trans_wind = rendering.Transform(translation=(screen_width // 2, wind_offset))
+        self.trans_wind = rendering.Transform(
+            translation=(screen_width // 2, wind_offset)
+        )
         wind.add_attr(self.trans_wind)
         self.viewer.add_geom(wind)
 
@@ -60,13 +63,19 @@ class BaseEnv(gym.Env):
         self.viewer.add_geom(rudder)
 
         # - add some metrics, current twa and target
-        metrics_twa_target = rendering.FilledPolygon(self._get_polygon(metrics_width, metrics_len))
-        self.trans_metrics_twa_target = rendering.Transform(translation=(screen_width - 20, 0))
+        metrics_twa_target = rendering.FilledPolygon(
+            self._get_polygon(metrics_width, metrics_len)
+        )
+        self.trans_metrics_twa_target = rendering.Transform(
+            translation=(screen_width - 20, 0)
+        )
         metrics_twa_target.add_attr(self.trans_metrics_twa_target)
         metrics_twa_target.set_color(0.0, 1.0, 0.0)
         self.viewer.add_geom(metrics_twa_target)
 
-        metrics_twa = rendering.FilledPolygon(self._get_polygon(metrics_width, metrics_len))
+        metrics_twa = rendering.FilledPolygon(
+            self._get_polygon(metrics_width, metrics_len)
+        )
         self.trans_metrics_twa = rendering.Transform(translation=(screen_width - 40, 0))
         metrics_twa.add_attr(self.trans_metrics_twa)
         self.scale_metrics_twa = rendering.Transform(scale=(1.0, 1.0))
@@ -75,7 +84,9 @@ class BaseEnv(gym.Env):
         self.viewer.add_geom(metrics_twa)
 
         # -  add speed metrics
-        metrics_speed = rendering.FilledPolygon(self._get_polygon(metrics_width, metrics_len))
+        metrics_speed = rendering.FilledPolygon(
+            self._get_polygon(metrics_width, metrics_len)
+        )
         self.trans_metrics_speed = rendering.Transform(translation=(40, 0))
         metrics_speed.add_attr(self.trans_metrics_speed)
 
@@ -98,7 +109,9 @@ class BaseEnv(gym.Env):
         self.trans_wind.set_rotation(yaw - twa)
         self.trans_boat.set_rotation(yaw)
         self.trans_rudder.set_rotation(-self.rudder)
-        self.scale_metrics_twa.set_scale(1, 1 - (twa - self.target_twa) / self.target_twa)
+        self.scale_metrics_twa.set_scale(
+            1, 1 - (twa - self.target_twa) / self.target_twa
+        )
         self.scale_metrics_speed.set_scale(1, speed)
 
         return self.viewer.render(return_rgb_array=mode == "rgb_array")

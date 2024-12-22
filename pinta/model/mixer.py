@@ -1,5 +1,5 @@
 import torch
-from typing import Dict, Any, List
+from typing import List
 from pinta.model.model_base import NN
 from pinta.model.encoder import TuningEncoder
 from pinta.settings import Settings

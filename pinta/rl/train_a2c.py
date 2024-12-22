@@ -58,9 +58,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--name", required=True, help="Name of the run")
     parser.add_argument(
-        "-dnn", "--use_dnn", default=False, action="store_true", help="Use a machine learnt environment"
+        "-dnn",
+        "--use_dnn",
+        default=False,
+        action="store_true",
+        help="Use a machine learnt environment",
     )
-    parser.add_argument("-cuda", "--cuda", default=False, action="store_true", help="Enable CUDA")
+    parser.add_argument(
+        "-cuda", "--cuda", default=False, action="store_true", help="Enable CUDA"
+    )
 
     args = parser.parse_args()
     device = torch.device("cuda" if args.cuda and torch.cuda.is_available() else "cpu")
@@ -85,13 +91,17 @@ if __name__ == "__main__":
         env = gym.make("SimpleStochasticEnv-v0", **env_args)
         test_env = gym.make("SimpleStochasticEnv-v0", **env_args)
 
-    net = model.ModelA2C(env.observation_space.shape[0], env.action_space.shape[0]).to(device)
+    net = model.ModelA2C(env.observation_space.shape[0], env.action_space.shape[0]).to(
+        device
+    )
 
     print(net)
 
     writer = SummaryWriter(comment="-a2c_" + args.name)
     agent = model.AgentA2C(net, device=device)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, GAMMA, steps_count=REWARD_STEPS)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(
+        env, agent, GAMMA, steps_count=REWARD_STEPS
+    )
 
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE)
 
@@ -109,12 +119,18 @@ if __name__ == "__main__":
                 if step_idx > 0 and step_idx % TEST_ITERS == 0:
                     ts = time.time()
                     rewards, steps = test_net(net, test_env, device=device)
-                    print("Test done is %.2f sec, reward %.3f, steps %d" % (time.time() - ts, rewards, steps))
+                    print(
+                        "Test done is %.2f sec, reward %.3f, steps %d"
+                        % (time.time() - ts, rewards, steps)
+                    )
                     writer.add_scalar("test_reward", rewards, step_idx)
                     writer.add_scalar("test_steps", steps, step_idx)
                     if best_reward is None or best_reward < rewards:
                         if best_reward is not None:
-                            print("Best reward updated: %.3f -> %.3f" % (best_reward, rewards))
+                            print(
+                                "Best reward updated: %.3f -> %.3f"
+                                % (best_reward, rewards)
+                            )
                             name = "best_%+.3f_%d.dat" % (rewards, step_idx)
                             fname = os.path.join(save_path, name)
                             torch.save(net.state_dict(), fname)
@@ -125,7 +141,7 @@ if __name__ == "__main__":
                     continue
 
                 states_v, actions_v, vals_ref_v = common.unpack_batch_a2c(
-                    batch, net, last_val_gamma=GAMMA ** REWARD_STEPS, device=device
+                    batch, net, last_val_gamma=GAMMA**REWARD_STEPS, device=device
                 )
                 batch.clear()
 
@@ -137,7 +153,9 @@ if __name__ == "__main__":
                 adv_v = vals_ref_v.unsqueeze(dim=-1) - value_v.detach()
                 log_prob_v = adv_v * calc_logprob(mu_v, var_v, actions_v)
                 loss_policy_v = -log_prob_v.mean()
-                entropy_loss_v = ENTROPY_BETA * (-(torch.log(2 * math.pi * var_v) + 1) / 2).mean()
+                entropy_loss_v = (
+                    ENTROPY_BETA * (-(torch.log(2 * math.pi * var_v) + 1) / 2).mean()
+                )
 
                 loss_v = loss_policy_v + entropy_loss_v + loss_value_v
                 loss_v.backward()

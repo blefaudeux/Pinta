@@ -100,10 +100,12 @@ class SimpleStochasticEnv(BaseEnv):
         twa += yaw_diff + self.np_random.normal(loc=0, scale=self.white_noise)
 
         # Speed is based on inertia + TWA
-        speed = self.inertia * speed + (1.0 - self.inertia) * np.array([self._speed(twa)])
+        speed = self.inertia * speed + (1.0 - self.inertia) * np.array(
+            [self._speed(twa)]
+        )
 
         # Changing direction costs some speed
-        speed *= 1.0 - abs(self.rudder ** 2)
+        speed *= 1.0 - abs(self.rudder**2)
 
         # Reward needs to take alignment and wind side into account
         reward = np.cos(twa - self.target_twa)

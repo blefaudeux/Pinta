@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-""" Convert the NMEA data logs into pandas-compatible jsons """
+"""Convert the NMEA data logs into pandas-compatible jsons"""
 
 import argparse
 import logging
@@ -28,9 +28,7 @@ def process_file(
 ) -> None:
     df = {".nmea": parse_nmea, ".csv": parse_csv, ".json": parse_raw_json}[
         filepath.suffix
-    ](
-        filepath, lut
-    )  # type: ignore
+    ](filepath, lut)  # type: ignore
 
     # Handle the optional metadata files
     if metadata is not None:

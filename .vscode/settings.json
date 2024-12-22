@@ -1,29 +1,29 @@
 {
-    "debug.toolBarLocation": "docked",
-    "python.testing.promptToConfigure": false,
-    "python.testing.pytestEnabled": false,
-    "python.testing.unittestEnabled": false,
-    "python.testing.nosetestsEnabled": false,
-    "python.formatting.provider": "black",
-    "editor.formatOnSave": true,
-    "editor.multiCursorModifier": "ctrlCmd",
-    "python.linting.pylintEnabled": true,
-    "editor.codeActionsOnSave": {
-        "source.organizeImports.python": true
-    },
-    "python.linting.pylintArgs": [
-        "--generate-members"
-    ],
-    "python.linting.mypyEnabled": true,
-    "python.linting.lintOnSave": true,
-    "python.linting.flake8Enabled": true,
-    "python.linting.flake8Args": [
-        "--max-line-length",
-        "120",
-        "--extend-ignore",
-        "E203"
-    ],
-    "editor.trimAutoWhitespace": true,
-    "files.trimFinalNewlines": true,
-    "files.trimTrailingWhitespace": true
+  "debug.toolBarLocation": "docked",
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.nosetestsEnabled": false,
+  "python.formatting.provider": "black",
+  "editor.formatOnSave": true,
+  "editor.multiCursorModifier": "ctrlCmd",
+  "python.linting.pylintEnabled": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports.python": "explicit"
+  },
+  "python.linting.pylintArgs": ["--generate-members"],
+  "python.linting.mypyEnabled": true,
+  "python.linting.lintOnSave": true,
+  "python.linting.flake8Enabled": true,
+  "python.linting.flake8Args": [
+    "--max-line-length",
+    "120",
+    "--extend-ignore",
+    "E203"
+  ],
+  "editor.trimAutoWhitespace": true,
+  "files.trimFinalNewlines": true,
+  "files.trimTrailingWhitespace": true,
+  "python.testing.pytestArgs": [
+    "tests"
+  ]
 }
