@@ -22,7 +22,6 @@ _PRESETS = {
 def parse_raw_json(
     filepath: Path, data_lut: Optional[Dict] = None, *args
 ) -> Tuple[pd.DataFrame, Optional[Dict[str, Any]]]:
-
     # Load raw values
     with open(filepath, "r") as fileio:
         loaded = simdjson.load(fileio)

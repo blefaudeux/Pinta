@@ -15,6 +15,7 @@ from pinta.model.mixer import Mixer
 
 class SequenceLength(int, Enum):
     "supported sequence lengths for the dilated convolutions architecture"
+
     small = 27
     medium = 81
     large = 243

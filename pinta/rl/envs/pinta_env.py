@@ -5,7 +5,6 @@ from typing import Union, Optional, Tuple
 from gym import spaces
 import numpy as np
 from pinta.data_processing.training_set import TrainingSample
-from pinta.data_processing.transforms import Normalize
 
 
 DEVICE = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -53,8 +52,8 @@ class PintaEnv(BaseEnv):
         self.wind_speed = wind_speed
 
         # Build a normalizer to go in and out DNN space
-        normalizer = Normalize(mean, std)
-        trajectory = []
+        # normalizer = Normalize(mean, std)
+        # trajectory = []
 
         self.seed()
         self.reset()
@@ -62,7 +61,9 @@ class PintaEnv(BaseEnv):
     metadata = {"render.modes": ["human"]}
 
     @staticmethod
-    def load_model(model_path: Union[str, Path], settings_path: Union[str, Path]) -> torch.nn.Module:
+    def load_model(
+        model_path: Union[str, Path], settings_path: Union[str, Path]
+    ) -> torch.nn.Module:
         import pinta.settings as settings
         from pinta.model.model_factory import model_factory
 

@@ -9,7 +9,6 @@ from pinta.data_processing.plot import polar_plot
 from pinta.data_processing.training_set import TrainingSetBundle
 from pinta.model.model_factory import model_factory
 from pinta.synthetic import polar
-from pinta.settings import Settings
 
 
 def run(args):

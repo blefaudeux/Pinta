@@ -76,7 +76,6 @@ class NN(nn.Module):
         mean: torch.Tensor = None,
         std: torch.Tensor = None,
     ):
-
         # Move the predictions to cpu() on the fly to save on GPU memory
         predictions = []
         for seq in dataloader:
@@ -144,7 +143,6 @@ class NN(nn.Module):
         )
         i_log = 0
         for i_epoch in range(settings.training.epoch):
-
             self.log.info("***** Epoch %d", i_epoch)
             self.log.info(
                 " {}/{} LR: {:.4f}".format(
