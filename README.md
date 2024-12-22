@@ -1,4 +1,4 @@
-# Pinta Pilot  ![Basic Checks](https://github.com/blefaudeux/Pinta/workflows/Python%20package/badge.svg)
+# Pinta  ![Basic Checks](https://github.com/blefaudeux/Pinta/workflows/Python%20package/badge.svg)
 Pilot, machine learning, fitering and physics experiment
 
 ## Requirements & install
@@ -16,7 +16,6 @@ NMEA logs get converted in jsons, easier to parse afterwards to feed the learnin
 
 ### Auto-cleaning tools
 Bias, noise, coherency could be checked automatically. Some basic operations are already done through the clean_data flag, probably not enough
-
 
 ## Plots
 There are a few wrappers to try to simplify typical plot calls (compare several traces for instance), nothing fancy, just to try to keep the code clean and concise. Generated plots are saved in the /plots subfolder.
