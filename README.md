@@ -1,8 +1,10 @@
-# Pinta  ![Basic Checks](https://github.com/blefaudeux/Pinta/workflows/Python%20package/badge.svg)
+# Pinta
+[![Python CI](https://github.com/blefaudeux/Pinta/actions/workflows/python-package.yml/badge.svg)](https://github.com/blefaudeux/Pinta/actions/workflows/python-package.yml)
+
 Pilot, machine learning, fitering and physics experiment
 
 ## Requirements & install
-Everything is in python3. You can use *pip* to install dependencies, or your favorite package manager. One option is simply (preferably from a virtual environment)
+You can use *pip* to install dependencies, or your favorite package manager. One option is simply (preferably from a virtual environment)
 
 Install all dependencies:
 `pip install -r requirements.txt`
