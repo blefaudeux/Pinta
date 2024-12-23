@@ -11,6 +11,7 @@ from pinta.data_processing.training_set import TrainingSet
 from pinta.data_processing.utils import load_json
 import pandas as pd
 from pinta.settings import Settings
+import torch
 
 LOG = logging.getLogger("DataLoad")
 
@@ -67,6 +68,7 @@ def load_folder(
             callback=lambda x: results.append(x),
         )
         barrier.wait()
+        assert len(results) > 0, "Could not load any data"
         return results[0]
     else:
         return [load(f, zero_mean_helm=zero_mean_helm) for f in filelist]
@@ -109,20 +111,20 @@ def split(
 
     train, test = raw_data.iloc[:train_size], raw_data.iloc[train_size : len(raw_data)]
 
-    train_inputs = np.array([train[cat].values for cat in cat_in], dtype=np.float)
-    test_inputs = np.array([test[cat].values for cat in cat_in], dtype=np.float)
+    train_inputs = np.array([train[cat].values for cat in cat_in], dtype=np.float32)
+    test_inputs = np.array([test[cat].values for cat in cat_in], dtype=np.float32)
 
     # Move samples to first dimension, makes more sense if output is 1d
     train_output = np.array(
-        [train[cat].values for cat in cat_out], dtype=np.float
+        [train[cat].values for cat in cat_out], dtype=np.float32
     ).transpose()
     test_output = np.array(
-        [test[cat].values for cat in cat_out], dtype=np.float
+        [test[cat].values for cat in cat_out], dtype=np.float32
     ).transpose()
 
     return (
-        TrainingSet(train_inputs, train_output),
-        TrainingSet(test_inputs, test_output),
+        TrainingSet(torch.tensor(train_inputs), torch.tensor(train_output)),
+        TrainingSet(torch.tensor(test_inputs), torch.tensor(test_output)),
     )
 
 

@@ -3,9 +3,7 @@
         "tws",
         "twa_x",
         "twa_y",
-        "heel",
-        "leeway",
-        "helm"
+        "heel"
     ],
     "tuning_inputs": [],
     "outputs": [

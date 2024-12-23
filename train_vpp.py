@@ -23,7 +23,6 @@ from pinta.model.model_factory import model_factory
 def run(args):
     # Basic setup: get config and logger
     params = settings.load(args.settings_path)
-    params.training.mixed_precision = args.amp
 
     logging.basicConfig(level=logging.INFO)
     log = logging.getLogger(params.log)
@@ -33,7 +32,7 @@ def run(args):
 
     if not args.model_path:
         # Generate a default name which describes the settings
-        args.model_path = "trained/" + settings.get_name(params) + ".pt"
+        args.model_path = "trained/" + str(params) + ".pt"
     dnn = model_factory(params, model_path=args.model_path)
 
     # Load the dataset
@@ -190,16 +189,10 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--amp",
-        action="store_true",
-        help="enable Pytorch Automatic Mixed Precision",
-    )
-
-    parser.add_argument(
         "--parallel",
         action="store_true",
         help="Load muliple files in parallel. Errors may not be properly visible",
-        default=False,
+        default=True,
     )
 
     parser.add_argument(
