@@ -36,7 +36,23 @@
                 "/media/lesle/Data/Dropbox/Pinta/imoca/HB7_convert/",
                 "--settings_path",
                 "settings/settings_imoca_prediction.json",
-                "--amp",
+                "--max_number_sequences",
+                "100"
+            ]
+        },
+        {
+            "name": "polar_malizia",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "python": "${command:python.interpreterPath}",
+            "program": "${workspaceRoot}/train_vpp.py",
+            "cwd": "${workspaceRoot}",
+            "args": [
+                "--data_path",
+                "/home/lefaudeux/Dropbox/Pinta/imoca/malizia/convert",
+                "--settings_path",
+                "settings/settings_imoca_polar.json",
                 "--max_number_sequences",
                 "100"
             ]
@@ -54,7 +70,6 @@
                 "data",
                 "--settings_path",
                 "settings/settings_mini_polar.json",
-                "--amp"
             ]
         },
         {

@@ -121,7 +121,7 @@ def handle_directory(args: argparse.Namespace):
         barrier = pool.starmap_async(
             process_file, zip(filelist, repeat(args), repeat(lut), repeat(metadatas))
         )
-        barrier.wait()
+        _ = barrier.get()  # Raise possible exceptions
     else:
         LOG.info("Starting sequential conversion")
         for f in filelist:

@@ -24,7 +24,6 @@ class SequenceLength(int, Enum):
 def model_factory(params: Settings, model_path: str) -> NN:
     """Given pipeline params, generate the appropriate model.
 
-
     Args:
         params (Dict[str, Any]):  General pipeline parameters
         model_path (str): Optional, path of a saved model
@@ -33,7 +32,7 @@ def model_factory(params: Settings, model_path: str) -> NN:
         NN : inference model
     """
 
-    log_directory = "logs/" + settings.get_name(params) + "_" + str(datetime.now())
+    log_directory = "logs/" + str(params) + "_" + str(datetime.now())
     model_type = params.trunk.model_type
     input_size = [len(params.inputs), params.trunk.seq_length]
 

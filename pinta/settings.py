@@ -3,12 +3,10 @@ from pathlib import Path
 from typing import Dict, Optional
 from dataclasses import dataclass, field
 import torch
-from typing import List, Tuple
+from typing import List, Tuple, Any
 import logging
 from serde import deserialize, serialize
 from serde.json import to_json, from_json
-
-_amp_available = hasattr(torch.cuda, "amp") and hasattr(torch.cuda.amp, "autocast")
 
 # Select our target at runtime
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -128,7 +126,7 @@ class OptimSettings:
 class TrainingSettings:
     epoch: int = 1
     optim: OptimSettings = field(default_factory=OptimSettings)
-    mixed_precision: bool = False
+    bf16: bool = True
 
 
 @serialize
@@ -139,7 +137,7 @@ class Settings:
     tuning_inputs: List[str] = field(default_factory=list)
     outputs: List[str] = field(default_factory=lambda: ["sog"])
     tokens: Dict[str, Dict[str, int]] = field(default_factory=dict)
-    transforms: List[Tuple[str, List[int]]] = field(default_factory=list)
+    transforms: List[Tuple[str, List[Any]]] = field(default_factory=list)
     trunk: TrunkSettings = field(default_factory=TrunkSettings)
     encoder: EncoderSettings = field(default_factory=EncoderSettings)
     mixer: MixerSettings = field(default_factory=MixerSettings)
@@ -147,29 +145,24 @@ class Settings:
     training: TrainingSettings = field(default_factory=TrainingSettings)
     log: str = "pinta"
 
+    def __repr__(self):
+        use_bf16 = device.type == torch.device("cuda").type and self.training.bf16
 
-def get_name(params: Settings) -> str:
-    _amp = (
-        _amp_available
-        and device.type == torch.device("cuda").type
-        and params.training.mixed_precision
-    )
-
-    return (
-        params.trunk.model_type
-        + "_seq_"
-        + str(params.trunk.seq_length)
-        + "_hidden_"
-        + str(params.trunk.hidden_size)
-        + "_batch_"
-        + str(params.data.train_batch_size)
-        + "_lr_"
-        + str(params.training.optim.learning_rate)
-        + "_ep_"
-        + str(params.training.epoch)
-        + "_amp_"
-        + str(_amp)
-    )
+        return (
+            self.trunk.model_type
+            + "_seq_"
+            + str(self.trunk.seq_length)
+            + "_hidden_"
+            + str(self.trunk.hidden_size)
+            + "_batch_"
+            + str(self.data.train_batch_size)
+            + "_lr_"
+            + str(self.training.optim.learning_rate)
+            + "_ep_"
+            + str(self.training.epoch)
+            + "_bf16_"
+            + str(use_bf16)
+        )
 
 
 def save(filename, settings: Settings):

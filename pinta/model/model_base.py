@@ -9,14 +9,11 @@ from itertools import cycle
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from pinta.settings import Scheduler, _amp_available, Optimizer, Settings
+from pinta.settings import Scheduler, Optimizer, Settings
 from pinta.settings import device as _device
 from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-
-if _amp_available:
-    from torch.cuda.amp import GradScaler, autocast  # type: ignore
 
 
 class NN(nn.Module):
@@ -73,8 +70,8 @@ class NN(nn.Module):
     def predict(
         self,
         dataloader: DataLoader,
-        mean: torch.Tensor = None,
-        std: torch.Tensor = None,
+        mean: torch.Tensor | None = None,
+        std: torch.Tensor | None = None,
     ):
         # Move the predictions to cpu() on the fly to save on GPU memory
         predictions = []
@@ -123,23 +120,23 @@ class NN(nn.Module):
             ),
         }[Scheduler(settings.training.optim.scheduler)]
 
+        # FIXME: Handle different losses
         criterion = nn.MSELoss()
 
         if len(tester) < len(trainer):
             tester = cycle(tester)  # type: ignore
 
         # If AMP is enabled, create an autocast context. Noop if normal full precision training
-        use_amp = (
-            settings.training.mixed_precision
-            and _device.type == torch.device("cuda").type
-            and _amp_available
+        use_bf16 = settings.training.bf16 and _device.type == torch.device("cuda").type
+        precision_context = (
+            torch.autocast(device_type="cuda", dtype=torch.bfloat16)
+            if use_bf16
+            else suppress()
         )
-        context = autocast() if use_amp else suppress()
-        scaler = GradScaler() if use_amp else None
 
         # Now to the actual training
         self.log.info(
-            "\nTraining the model... AMP: %s\n" % "enabled" if use_amp else "disabled"
+            "\nTraining the model... BF16: %s\n" % "enabled" if use_bf16 else "disabled"
         )
         i_log = 0
         for i_epoch in range(settings.training.epoch):
@@ -158,8 +155,7 @@ class NN(nn.Module):
                 # Eval computation on the training data
                 optimizer.zero_grad()
 
-                # FW pass, optionally with mixed precision
-                with context:  # type: ignore
+                with precision_context:  # type: ignore
                     train_batch = train_batch.to(_device)
                     validation_batch = validation_batch.to(_device)
 
@@ -169,18 +165,11 @@ class NN(nn.Module):
                             train_batch.inputs, settings
                         )
                         out = self(inputs, tuning_inputs)
-                        # FIXME: Handle different losses
+
                     else:
                         out, _ = self(train_batch.inputs)
                     loss = criterion(out.squeeze(), train_batch.outputs.squeeze())
 
-                if scaler is not None:
-                    # AMP training path
-                    # The scaler will make sure that the fp16 grads don't underflow
-                    scaler.scale(loss).backward()
-                    scaler.step(optimizer)
-                    scaler.update()
-                else:
                     # Vanilla, backward will populate the gradients and we just step()
                     loss.backward()
                     optimizer.step()
@@ -193,26 +182,29 @@ class NN(nn.Module):
                 self.summary_writer.add_scalar("train", loss.item(), i_log)
 
                 # Loss on the validation data
-                def closure_validation(data=validation_batch):
+                with torch.no_grad(), precision_context:
                     if hasattr(self, "tuning_encoder"):
                         inputs, tuning_inputs = self._split_inputs(
-                            data.inputs, settings
+                            validation_batch.inputs, settings
                         )
                         pred = self(inputs, tuning_inputs)
-                        # FIXME: Handle different losses
                     else:
-                        pred, _ = self(data.inputs)
-                    loss = criterion(pred.squeeze(), data.outputs.squeeze()).detach()
+                        pred, _ = self(validation_batch.inputs)
+                    validation_loss = criterion(
+                        pred.squeeze(), validation_batch.outputs.squeeze()
+                    ).detach()
 
-                    self.summary_writer.add_scalar("validation", loss.item(), i_log)
+                    self.summary_writer.add_scalar(
+                        "validation", validation_loss.item(), i_log
+                    )
                     self.log.info(
                         " {}/{},{} Validation loss: {:.4f}".format(
-                            i_epoch, settings.training.epoch, i_batch, loss.item()
+                            i_epoch,
+                            settings.training.epoch,
+                            i_batch,
+                            validation_loss.item(),
                         )
                     )
-                    return loss
-
-                validation_loss = closure_validation()
 
                 # Time some operations
                 batch_stop = time.time()

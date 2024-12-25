@@ -63,7 +63,6 @@ def polar_plot(data: List[SpeedPolarPoint], filename: str = "speed_polar"):
     # Some styling, get something reasonable
     layout = go.Layout(
         title="Speed vs True Wind",
-        orientation=90,
         autosize=True,
         hovermode="closest",
         plot_bgcolor="rgb(245, 245, 245)",
