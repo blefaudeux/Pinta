@@ -15,9 +15,8 @@ class Transformer(NN):
         input_size: int,
         output_size: int,
         hidden_size: int = 512,
-        num_layers: int = 6,
+        num_layers: int = 12,
         num_heads: int = 8,
-        context_len: int = 512,
         dropout: float = 0.1,
         filename="",
     ):
@@ -31,6 +30,7 @@ class Transformer(NN):
             nhead=num_heads,
             dim_feedforward=hidden_size * 4,
             dropout=dropout,
+            norm_first=True,
         )
 
         # FIXME: MLP on the way in ?
@@ -38,23 +38,17 @@ class Transformer(NN):
             OrderedDict(
                 **{
                     "proj_in": nn.Linear(input_size, hidden_size),
-                    "non_lin_in": nn.SiLU(),
                     "transformer": nn.TransformerEncoder(
                         encoder_layer=encoder_layer,
                         num_layers=num_layers,
                         enable_nested_tensor=False,
-                        # norm=nn.RMSNorm(normalized_shape=hidden_size),
+                        norm=nn.RMSNorm(normalized_shape=hidden_size),
                     ),
-                    "non_lin_out": nn.SiLU(),
                     "proj_out": nn.Linear(hidden_size, output_size),
                 }
             )
         )
         self._valid = False
-
-        self.log.info(
-            "Model created. Receptive field is {} samples".format(context_len)
-        )
         self.log.info(self.model)
 
         # Load from trained NN if required

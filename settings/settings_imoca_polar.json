@@ -37,6 +37,7 @@
     ],
     "trunk": {
         "model_type": "transformer",
+        "seq_length": 27,
         "hidden_size": 128,
         "dilated_conv": {
             "dropout": 0.1
@@ -58,9 +59,8 @@
             ]
         }
     },
-    "seq_length": 27,
     "data": {
-        "train_batch_size": 4000,
+        "train_batch_size": 8000,
         "test_batch_size": 2000,
         "training_ratio": 0.9,
         "shuffle": true,
@@ -68,10 +68,10 @@
         "test_workers": 1
     },
     "training": {
-        "epoch": 10,
+        "epoch": 5,
         "optim": {
             "name": "adam_w",
-            "learning_rate": 0.001,
+            "learning_rate": 0.01,
             "scheduler": "reduce_plateau",
             "scheduler_patience": 10,
             "scheduler_factor": 0.8,
