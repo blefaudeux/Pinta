@@ -74,7 +74,7 @@ def run(args):
         params.trunk.seq_length += offset
 
     # Train a new model from scratch if need be
-    if not dnn.valid:
+    if not dnn.valid or args.force_new:
         log.info("Training a new model, this can take a while")
         training_set, validation_set = training_bundle.get_dataloaders(
             params,
@@ -208,6 +208,13 @@ if __name__ == "__main__":
         help="Optionally limit the number of sequences to load from a data pool",
         default=-1,
         type=int,
+    )
+
+    parser.add_argument(
+        "--force_new",
+        action="store_true",
+        help="Train a new model, even if we found a saved one",
+        default=False,
     )
 
     args = parser.parse_args()

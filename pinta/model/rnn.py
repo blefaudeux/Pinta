@@ -1,12 +1,9 @@
-import logging
 from typing import List
 
 import numpy as np
 import torch
 import torch.nn as nn
 from pinta.model.model_base import NN
-
-LOG = logging.getLogger("ConvRNN")
 
 
 class ConvRNN(NN):
@@ -56,7 +53,9 @@ class ConvRNN(NN):
             if self._valid:
                 return
 
-            LOG.warning("Could not load the specified net, computing it from scratch")
+            self.log.warning(
+                "Could not load the specified model, computing it from scratch"
+            )
 
     def forward(self, inputs, hidden=None):
         # Run through Conv1d and Pool1d layers
@@ -69,9 +68,6 @@ class ConvRNN(NN):
 
         output = self.out(output_rnn[:, -1, :].squeeze())
         return output, hidden_out
-
-    def get_layer_weights(self):
-        return self.conv1.weight
 
     def _get_conv_out(self, shape):
         # Useful to compute the shape out of the conv blocks

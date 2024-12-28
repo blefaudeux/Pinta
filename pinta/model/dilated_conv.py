@@ -1,10 +1,8 @@
-import logging
 from typing import List
 
 import torch.nn as nn
 from pinta.model.model_base import NN
 
-LOG = logging.getLogger("DilatedConvModel")
 
 """
 Code from https://github.com/facebookresearch/VideoPose3D
@@ -170,7 +168,7 @@ class TemporalModel(TemporalModelBase):
         self.layers_bn = nn.ModuleList(layers_bn)
         self._valid = False
 
-        LOG.info(
+        self.log.info(
             "Model created. Receptive field is {} samples".format(
                 self.receptive_field()
             )
@@ -185,13 +183,12 @@ class TemporalModel(TemporalModelBase):
             pass
 
         self.log.warning(
-            "Could not load the specified net," " needs to be computed from scratch"
+            "Could not load the specified model," " needs to be computed from scratch"
         )
 
     def _forward_blocks(self, x):
         x = self.expand_bn(self.expand_conv(x))
-        x = self.relu(x)
-        x = self.drop(x)
+        x = self.drop(self.relu(x))
 
         for i in range(len(self.pad) - 1):
             pad = self.pad[i + 1]
@@ -203,8 +200,4 @@ class TemporalModel(TemporalModelBase):
                 self.relu(self.layers_bn[2 * i + 1](self.layers_conv[2 * i + 1](x)))
             )
 
-        x = self.shrink(x)
-        return x
-
-    def get_layer_weights(self, index: int = 0):
-        return [layer.weight for layer in self.layers_conv]
+        return self.shrink(x)

@@ -46,13 +46,6 @@ class Mlp(NN):
         except RuntimeError:
             pass
 
-    def get_layer_weights(self):
-        def is_linear(module):
-            return "layer" in module[0]
-
-        # Select the linear layers, return the weights
-        return map(lambda x: x[1].weight, filter(is_linear, self.mlp.named_modules()))
-
     def forward(self, inputs: torch.Tensor):
         inputs_avg = torch.mean(inputs, dim=2)
         return self.mlp(inputs_avg), None

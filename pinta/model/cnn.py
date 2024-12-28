@@ -62,11 +62,8 @@ class Conv(NN):
             pass
 
         self.log.warning(
-            "Could not load the specified net," " needs to be computed from scratch"
+            "Could not load the specified model," " needs to be computed from scratch"
         )
-
-    def get_layer_weights(self):
-        return [self.conv[0].weight, self.conv[2].weight]
 
     def forward(self, inputs, *kwargs):
         # One feature vector per sample in. Rearrange accordingly

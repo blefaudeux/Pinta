@@ -23,6 +23,7 @@ class ModelType(str, Enum):
     DILATED_CONV = "dilated_conv"
     MLP = "mlp"
     RNN = "rnn"
+    TRANSFORMER = "transformer"
 
 
 class Scheduler(str, Enum):

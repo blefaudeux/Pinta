@@ -36,8 +36,8 @@
         ]
     ],
     "trunk": {
-        "model_type": "dilated_conv",
-        "hidden_size": 64,
+        "model_type": "transformer",
+        "hidden_size": 128,
         "dilated_conv": {
             "dropout": 0.1
         },
@@ -60,7 +60,7 @@
     },
     "seq_length": 27,
     "data": {
-        "train_batch_size": 40000,
+        "train_batch_size": 4000,
         "test_batch_size": 2000,
         "training_ratio": 0.9,
         "shuffle": true,
