@@ -4,13 +4,14 @@ from enum import Enum
 
 import pinta.settings as settings
 from pinta.model.model_base import NN
-from pinta.model.model_cnn import Conv
-from pinta.model.model_dilated_conv import TemporalModel
-from pinta.model.model_mlp import Mlp
-from pinta.model.model_rnn import ConvRNN
+from pinta.model.cnn import Conv
+from pinta.model.dilated_conv import TemporalModel
+from pinta.model.mlp import Mlp
+from pinta.model.rnn import ConvRNN
 from pinta.settings import ModelType, Settings
 from pinta.model.encoder import TuningEncoder
 from pinta.model.mixer import Mixer
+from pinta.model.transformer import Transformer
 
 
 class SequenceLength(int, Enum):
@@ -104,6 +105,17 @@ def model_factory(params: Settings, model_path: str) -> NN:
                 "input_size": len(params.inputs),
                 "hidden_size": params.trunk.hidden_size,
                 "number_hidden_layers": params.trunk.mlp.inner_layers,
+                "output_size": trunk_outputs,
+                "filename": model_path,
+            },
+        ),
+        ModelType.TRANSFORMER: lazy(
+            # TODO: Properly organize and forward params here, this is a mess
+            Transformer,
+            {
+                "logdir": log_directory,
+                "input_size": len(params.inputs),
+                "hidden_size": params.trunk.hidden_size,
                 "output_size": trunk_outputs,
                 "filename": model_path,
             },

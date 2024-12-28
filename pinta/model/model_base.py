@@ -41,9 +41,6 @@ class NN(nn.Module):
         with open(name, "wb") as fileio:
             torch.save(self.state_dict(), fileio)
 
-    def get_layer_weights(self):
-        raise NotImplementedError
-
     @staticmethod
     def _split_inputs(inputs: torch.Tensor, settings: Settings):
         """Split the inputs in between the signal and the tuning -slow moving- parts
@@ -182,7 +179,7 @@ class NN(nn.Module):
                 self.summary_writer.add_scalar("train", loss.item(), i_log)
 
                 # Loss on the validation data
-                with torch.no_grad(), precision_context:
+                with torch.no_grad(), precision_context:  # type: ignore
                     if hasattr(self, "tuning_encoder"):
                         inputs, tuning_inputs = self._split_inputs(
                             validation_batch.inputs, settings
@@ -238,11 +235,9 @@ class NN(nn.Module):
                     self.log.warning("No progress, stopping training")
                     return
 
-            # Display the layer weights
-            weights = self.get_layer_weights()
-            if weights is not None:
-                for i, w in enumerate(weights):
-                    self.summary_writer.add_histogram(f"weights_layer_{i}", w, i_log)
+            # Report the layer weights / histograms
+            for p in self.parameters():
+                self.summary_writer.add_histogram(f"weights{p}", p, i_log)
 
         self.log.info("... Done")
 

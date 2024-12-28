@@ -12,3 +12,4 @@ gym
 dataclasses-serialization
 ptan
 pyserde
+hydra-core

@@ -49,7 +49,7 @@
         "hidden_size": 128,
         "seq_length": 27,
         "dilated_conv": {
-            "dropout": 0.25
+            "dropout": 0.1
         },
         "mlp": {
             "inner_layers": 3
