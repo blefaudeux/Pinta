@@ -68,12 +68,12 @@
         "test_workers": 1
     },
     "training": {
-        "epoch": 5,
+        "epoch": 10,
         "optim": {
             "name": "adam_w",
-            "learning_rate": 0.01,
+            "learning_rate": 0.001,
             "scheduler": "reduce_plateau",
-            "scheduler_patience": 20,
+            "scheduler_patience": 10,
             "scheduler_factor": 0.8,
             "momentum": 0.9
         }
