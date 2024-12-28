@@ -9,6 +9,7 @@
             "python": "${command:python.interpreterPath}",
             "program": "${file}",
             "cwd": "${workspaceRoot}",
+            "env": {"DATA_PATH": "/home/lefaudeux/Dropbox/Pinta/imoca/malizia/convert"}
         },
         {
             "name": "Python A2C",

@@ -17,10 +17,14 @@ class Conv(NN):
         input_size: List[int],
         hidden_size: int,
         kernel_sizes: List[int],
+        strides: List[int] = [1, 1],
         output_size: int = 1,
         filename=None,
     ):
         super(Conv, self).__init__(logdir, "TemporalConv")
+
+        assert len(kernel_sizes) == 2, "Only two kernel sizes supported"
+        assert len(strides) == 2, "Only two strides supported"
 
         # ----
         # Define the model
@@ -28,14 +32,17 @@ class Conv(NN):
         self.output_size = output_size
 
         # Conv front end
-        # First conv is a depthwise convolution
-        # Remark: All inputs convolved to all outputs. This could be changed
-        # with the groups flag
-
         self.conv = nn.Sequential(
-            nn.Conv1d(input_size[0], hidden_size, kernel_size=kernel_sizes[0]),
+            nn.Conv1d(
+                input_size[0],
+                hidden_size,
+                kernel_size=kernel_sizes[0],
+                stride=strides[0],
+            ),
             nn.LeakyReLU(),
-            nn.Conv1d(hidden_size, hidden_size, kernel_size=kernel_sizes[1]),
+            nn.Conv1d(
+                hidden_size, hidden_size, kernel_size=kernel_sizes[1], stride=strides[1]
+            ),
             nn.LeakyReLU(),
         )
 
@@ -53,7 +60,7 @@ class Conv(NN):
             nn.Linear(256, self.output_size),
         )
 
-        # Load from trained NN if required
+        # Load from trained model if required
         try:
             if filename is not None and self.load(filename):
                 self._valid = True

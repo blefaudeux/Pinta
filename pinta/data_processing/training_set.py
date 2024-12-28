@@ -20,9 +20,11 @@ class TrainingSample(TrainingSample_base):
     and matching in between inputs and outputs are always respected
     """
 
-    def to(self, device: torch.device = None) -> TrainingSample:
+    def to(
+        self, device: torch.device, dtype: torch.dtype = torch.float32
+    ) -> TrainingSample:
         return TrainingSample(
-            inputs=self.inputs.to(device), outputs=self.outputs.to(device)
+            inputs=self.inputs.to(device, dtype), outputs=self.outputs.to(device, dtype)
         )
 
     def __str__(self):
@@ -212,7 +214,7 @@ class TrainingSetBundle(Dataset):
         """
 
         # Split the dataset in train/test instances
-        self.seq_length = params.trunk.seq_length
+        self.seq_length = params.model.seq_length
         self.set_transforms(transforms)
         train_len = int(params.data.training_ratio * len(self))
         test_len = len(self) - train_len

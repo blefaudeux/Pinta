@@ -8,10 +8,12 @@ from pinta.model.cnn import Conv
 from pinta.model.dilated_conv import TemporalModel
 from pinta.model.mlp import Mlp
 from pinta.model.rnn import ConvRNN
-from pinta.settings import ModelType, Settings
+from pinta.settings import ModelType
 from pinta.model.encoder import TuningEncoder
 from pinta.model.mixer import Mixer
 from pinta.model.transformer import Transformer
+from omegaconf import DictConfig
+import torch
 
 
 class SequenceLength(int, Enum):
@@ -22,7 +24,7 @@ class SequenceLength(int, Enum):
     large = 243
 
 
-def model_factory(params: Settings, model_path: str) -> NN:
+def model_factory(params: DictConfig, model_path: str) -> NN:
     """Given pipeline params, generate the appropriate model.
 
     Args:
@@ -33,9 +35,9 @@ def model_factory(params: Settings, model_path: str) -> NN:
         NN : inference model
     """
 
-    log_directory = "logs/" + str(params) + "_" + str(datetime.now())
-    model_type = params.trunk.model_type
-    input_size = [len(params.inputs), params.trunk.seq_length]
+    log_directory = "logs/" + model_path.replace(".pt", "") + "_" + str(datetime.now())
+    model_type = params.model.model_type
+    input_size = [len(params.inputs), params.model.seq_length]
 
     # This architecture requires a fixed sequence of convolutions
     # depending on the sequence length
@@ -43,7 +45,7 @@ def model_factory(params: Settings, model_path: str) -> NN:
         SequenceLength.small: [3, 3, 3],
         SequenceLength.medium: [3, 3, 3, 3],
         SequenceLength.large: [3, 3, 3, 3, 3],
-    }[SequenceLength(params.trunk.seq_length)]
+    }[SequenceLength(params.model.seq_length)]
 
     # Hack to make sure that the model are not actually instantiated in the dict
     def lazy(Constructor, args):
@@ -57,70 +59,59 @@ def model_factory(params: Settings, model_path: str) -> NN:
     # does not match a key will cause an assert
 
     trunk_outputs = (
-        params.trunk.embedding_dimensions
+        params.model.embedding_dimensions
         if len(params.tuning_inputs) > 0
         else len(params.outputs)
     )
 
-    trunk = {
-        ModelType.DILATED_CONV: lazy(
-            TemporalModel,
-            {
-                "logdir": log_directory,
-                "num_input_channels": len(params.inputs),
-                "num_output_channels": trunk_outputs,
-                "filter_widths": conv_widths,
-                "dropout": params.trunk.dilated_conv.dropout,
-                "channels": params.trunk.hidden_size,
-                "filename": model_path,
-            },
-        ),
-        ModelType.CONV: lazy(
-            Conv,
-            {
-                "logdir": log_directory,
-                "input_size": input_size,
-                "hidden_size": params.trunk.hidden_size,
-                "kernel_sizes": params.trunk.conv.kernel_sizes,
-                "output_size": trunk_outputs,
-                "filename": model_path,
-            },
-        ),
-        ModelType.RNN: lazy(
-            ConvRNN,
-            {
-                "logdir": log_directory,
-                "input_size": len(params.inputs),
-                "hidden_size": params.trunk.hidden_size,
-                "kernel_sizes": params.trunk.rnn.kernel_sizes,
-                "n_gru_layers": params.trunk.rnn.gru_layers,
-                "output_size": trunk_outputs,
-                "filename": model_path,
-            },
-        ),
-        ModelType.MLP: lazy(
-            Mlp,
-            {
-                "logdir": log_directory,
-                "input_size": len(params.inputs),
-                "hidden_size": params.trunk.hidden_size,
-                "number_hidden_layers": params.trunk.mlp.inner_layers,
-                "output_size": trunk_outputs,
-                "filename": model_path,
-            },
-        ),
-        ModelType.TRANSFORMER: lazy(
-            # TODO: Properly organize and forward params here, this is a mess
-            Transformer,
-            {
-                "logdir": log_directory,
-                "input_size": len(params.inputs),
-                "hidden_size": params.trunk.hidden_size,
-                "output_size": trunk_outputs,
-                "filename": model_path,
-            },
-        ),
-    }[model_type]()
+    if model_type == ModelType.DILATED_CONV:
+        trunk: torch.nn.Module = TemporalModel(
+            logdir=log_directory,
+            num_input_channels=len(params.inputs),
+            num_output_channels=trunk_outputs,
+            filter_widths=conv_widths,
+            dropout=params.model.dilated_conv.dropout,
+            channels=params.model.hidden_size,
+            filename=model_path,
+        )
+    elif model_type == ModelType.CONV:
+        trunk = Conv(
+            logdir=log_directory,
+            input_size=input_size,
+            hidden_size=params.model.hidden_size,
+            kernel_sizes=params.model.kernel_sizes,
+            output_size=trunk_outputs,
+            filename=model_path,
+        )
+    elif model_type == ModelType.RNN:
+        trunk = ConvRNN(
+            logdir=log_directory,
+            input_size=len(params.inputs),
+            hidden_size=params.model.hidden_size,
+            kernel_sizes=params.model.kernel_sizes,
+            n_gru_layers=params.model.gru_layers,
+            output_size=trunk_outputs,
+            filename=model_path,
+        )
+    elif model_type == ModelType.MLP:
+        trunk = Mlp(
+            logdir=log_directory,
+            input_size=len(params.inputs),
+            hidden_size=params.model.hidden_size,
+            number_hidden_layers=params.model.inner_layers,
+            output_size=trunk_outputs,
+            filename=model_path,
+        )
+    elif model_type == ModelType.TRANSFORMER:
+        trunk = Transformer(
+            logdir=log_directory,
+            input_size=len(params.inputs),
+            hidden_size=params.model.hidden_size,
+            output_size=trunk_outputs,
+            filename=model_path,
+        )
+    else:
+        raise ValueError(f"Model type {model_type} not supported")
 
     logging.info(f"Model used for the trunk:\n{trunk}")
 

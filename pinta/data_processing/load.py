@@ -55,6 +55,8 @@ def load_folder(
         if valid(os.path.join(folder_path, f))
     ]
 
+    print(f"Found {len(filelist)} files in {folder_path}")
+
     if max_number_sequences > 0:
         filelist = filelist[:max_number_sequences]
 
@@ -76,7 +78,7 @@ def load_folder(
 
 def to_training_set(raw_data: pd.DataFrame, settings: Settings):
     # Optionally replace the string settings by numerical tokens
-    for cat_tokenize in settings.tokens:
+    for cat_tokenize in getattr(settings, "tokens", []):
         for k, v in settings.tokens[cat_tokenize].items():
             raw_data[cat_tokenize] = raw_data[cat_tokenize].replace(k, v)
 

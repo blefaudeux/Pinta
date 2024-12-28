@@ -1,0 +1,45 @@
+defaults:
+  - model/conv
+  - _self_
+
+inputs:
+  - tws
+  - twa_x
+  - twa_y
+  - heel
+tuning_inputs: []
+outputs:
+  - sog
+transforms:
+  - [normalize, []]
+  - [random_flip, [[twa_y], 0.5]]
+  - [cut_sequence, [null, -1]]
+model:
+  path: ""
+  force_new_model: false
+  # Other parameters are set by the defaults
+
+data:
+  path: ""
+  train_batch_size: 8000
+  test_batch_size: 2000
+  training_ratio: 0.9
+  shuffle: true
+  train_workers: 6
+  test_workers: 1
+  parallel_load: true
+  max_number_sequences: 100000
+
+training:
+  epoch: 1
+  optim:
+    name: adam_w
+    learning_rate: 0.01
+    scheduler: reduce_plateau
+    scheduler_patience: 3
+    scheduler_factor: 0.8
+    momentum: 0.9
+plot: true
+evaluate: true
+log: pinta_imoca
+device: "cuda:0"

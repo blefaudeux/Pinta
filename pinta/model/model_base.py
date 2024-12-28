@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from pinta.settings import Scheduler, Optimizer, Settings
-from pinta.settings import device as _device
+from pinta.settings import device
 from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -56,7 +56,7 @@ class NN(nn.Module):
         losses = []
 
         for seq in dataloader:
-            seq = seq.to(_device)
+            seq = seq.to(device)
 
             out, _ = self(seq.inputs)
             loss = criterion(out, seq.outputs.view(out.size()[0], -1))
@@ -73,7 +73,9 @@ class NN(nn.Module):
         # Move the predictions to cpu() on the fly to save on GPU memory
         predictions = []
         for seq in dataloader:
-            predictions.append(self(seq.inputs.to(_device))[0].detach().cpu())
+            predictions.append(
+                self(seq.inputs.to(device, torch.float32))[0].detach().cpu()
+            )
             del seq
         predictions_tensor = torch.cat(predictions).squeeze()
 
@@ -124,12 +126,16 @@ class NN(nn.Module):
             tester = cycle(tester)  # type: ignore
 
         # If AMP is enabled, create an autocast context. Noop if normal full precision training
-        use_bf16 = settings.training.bf16 and _device.type == torch.device("cuda").type
+        use_bf16 = (
+            settings.training.get("bf16", False)
+            and device.type == torch.device("cuda").type
+        )
         precision_context = (
             torch.autocast(device_type="cuda", dtype=torch.bfloat16)
             if use_bf16
             else suppress()
         )
+        dtype = torch.bfloat16 if use_bf16 else torch.float32
 
         # Now to the actual training
         self.log.info(
@@ -148,13 +154,11 @@ class NN(nn.Module):
                 zip(trainer, tester)
             ):
                 batch_start = time.time()
-
-                # Eval computation on the training data
                 optimizer.zero_grad()
 
                 with precision_context:  # type: ignore
-                    train_batch = train_batch.to(_device)
-                    validation_batch = validation_batch.to(_device)
+                    train_batch = train_batch.to(device, dtype=dtype)
+                    validation_batch = validation_batch.to(device, dtype=dtype)
 
                     # Split inputs and training inputs, then go through the mode + mixer:
                     if hasattr(self, "tuning_encoder"):
@@ -255,7 +259,7 @@ class NN(nn.Module):
     def load(self, filename):
         try:
             with open(filename, "rb") as f:
-                self.load_state_dict(torch.load(f, map_location=_device))
+                self.load_state_dict(torch.load(f, map_location=device))
                 self.log.info("---\nNetwork {} loaded".format(filename))
                 self.log.info(self)
                 return True
