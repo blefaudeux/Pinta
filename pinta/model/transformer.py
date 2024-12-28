@@ -33,18 +33,19 @@ class Transformer(NN):
             dropout=dropout,
         )
 
-        # FIXME: MLP instead of linear projections ?
+        # FIXME: MLP on the way in ?
         self.model = nn.Sequential(
             OrderedDict(
                 **{
                     "proj_in": nn.Linear(input_size, hidden_size),
+                    "non_lin_in": nn.SiLU(),
                     "transformer": nn.TransformerEncoder(
                         encoder_layer=encoder_layer,
                         num_layers=num_layers,
                         enable_nested_tensor=False,
-                        norm=nn.RMSNorm(normalized_shape=hidden_size),
+                        # norm=nn.RMSNorm(normalized_shape=hidden_size),
                     ),
-                    "non_linearity": nn.SiLU(),
+                    "non_lin_out": nn.SiLU(),
                     "proj_out": nn.Linear(hidden_size, output_size),
                 }
             )
