@@ -1,6 +1,6 @@
 from pinta.model.model_factory import model_factory
-from pinta.settings import ModelType, Settings
-from serde import from_dict
+from pinta.settings import ModelType
+from omegaconf import OmegaConf
 
 
 def test_create_models():
@@ -12,15 +12,16 @@ def test_create_models():
             ("random_flip", [["heel", "twa_y"], 0.5]),
             ("single_precision", []),
         ],
-        "trunk": {
+        "tuning_inputs": [],
+        "model": {
             "model_type": "mlp",
-            "dilated_conv": {"dropout": 0.25},
-            "mlp": {"inner_layers": 3},
-            "rnn": {"gru_layers": 2, "kernel_sizes": [3, 3]},
-            "conv": {"kernel_sizes": [3, 3]},
+            "dropout": 0.25,
+            "inner_layers": 3,
+            "gru_layers": 2,
+            "kernel_sizes": [3, 3],
             "hidden_size": 256,
+            "seq_length": 27,
         },
-        "seq_length": 27,
         "data": {
             "training_ratio": 0.9,
             "train_batch_size": 100000,
@@ -36,8 +37,12 @@ def test_create_models():
         "amp": False,
     }
 
-    settings_struct = from_dict(Settings, settings)
-
     for m_type in ModelType:
         settings["model_type"] = m_type.value
-        _ = model_factory(settings_struct, model_path="")
+
+        cfg = OmegaConf.create(settings)
+        _ = model_factory(cfg, model_path="")
+
+
+if __name__ == "__main__":
+    test_create_models()

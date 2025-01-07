@@ -1,0 +1,36 @@
+defaults:
+  - model/conv
+  - _self_
+inputs:
+  - tws
+  - twa_x
+  - twa_y
+  - helm
+tuning_inputs: []
+outputs:
+  - sog
+  - twa_x
+  - twa_y
+transforms:
+  - [normalize, []]
+  - [random_flip, [[helm, twa_y], 0.5]]
+  - [offset_inputs_outputs, [10]]
+  - [cut_sequence, [null, -1]]
+data:
+  train_batch_size: 10000
+  test_batch_size: 1000
+  training_ratio: 0.9
+  shuffle: true
+  train_workers: 3
+  test_workers: 1
+training:
+  epoch: 40
+  optim:
+    name: adam_w
+    learning_rate: 0.01
+    scheduler: reduce_plateau
+    momentum: 0.99
+log: pinta_mini
+evaluate: true
+device: "cuda:0"
+plot: true

@@ -8,7 +8,7 @@ from pinta.data_processing.training_set import (
     TrainingSet,
     TrainingSetBundle,
 )
-from pinta.data_processing.transforms import Normalize, SinglePrecision
+from pinta.data_processing.transforms import Normalize
 from pinta.settings import device
 from torch.utils.data import DataLoader
 
@@ -69,9 +69,6 @@ def generate(
 
     # - get a dataloader from the ad-hoc dataset
     training_set, _ = dataset_bundle.get_training_set(seq_len)
-    training_set.set_transforms(
-        [SinglePrecision()]
-    )  # tensors from numpy can be doubles
     dataloader = DataLoader(training_set, batch_size=100, shuffle=False)
 
     # FW pass in the DNN.

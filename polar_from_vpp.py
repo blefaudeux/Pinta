@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-
-import argparse
 from pathlib import Path
 
 import pinta.settings as settings
@@ -9,25 +6,27 @@ from pinta.data_processing.plot import polar_plot
 from pinta.data_processing.training_set import TrainingSetBundle
 from pinta.model.model_factory import model_factory
 from pinta.synthetic import polar
+import hydra
+from omegaconf import DictConfig
 
 
-def run(args):
+@hydra.main(config_path="configs", config_name="mini_polar")
+def run(cfg: DictConfig):
     """
     Load a given engine, generate a couple of synthetic plots from it
     """
-    # Load the saved pytorch nn
-    training_settings = settings.load(args.settings_path)  # type:Settings
 
     # a bit hacky: get the normalization factors on the fly
+    print(cfg)
     data = load_folder(
-        Path(args.data_path),
+        Path(cfg.data.path),
         zero_mean_helm=False,
-        max_number_sequences=args.max_number_sequences,
+        max_number_sequences=cfg.data.get("max_number_sequences", -1),
     )
-    datasplits = load_sets(data, training_settings)
+    datasplits = load_sets(data, cfg)
     mean, std = TrainingSetBundle(datasplits).get_norm()
 
-    model = model_factory(training_settings, model_path=args.model_path)
+    model = model_factory(cfg, model_path=cfg.model.path)
     model = model.to(device=settings.device)
 
     if not model.valid:
@@ -40,10 +39,10 @@ def run(args):
         wind_range=[5, 25],
         wind_step=5,
         angular_step=0.1,
-        seq_len=training_settings.trunk.seq_length,
+        seq_len=cfg.model.seq_length,
         mean=mean,
         std=std,
-        inputs=training_settings.inputs,
+        inputs=cfg.inputs,
     )
 
     # Plot all that stuff
@@ -51,38 +50,4 @@ def run(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("Generate Polar plot from a trained model")
-
-    parser.add_argument(
-        "--data_path",
-        action="store",
-        help="path to the reference data, to get reasonable input estimates",
-        default="data",
-    )
-
-    parser.add_argument(
-        "--model_path",
-        action="store",
-        help="path to the .pt serialized model",
-        default=None,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--settings_path",
-        action="store",
-        help="path to the json settings for the run",
-        default=None,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--max_number_sequences",
-        action="store",
-        help="Maximum number of sequences to load",
-        default=-1,
-        type=int,
-    )
-
-    args = parser.parse_args()
-    run(args)
+    run()

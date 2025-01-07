@@ -2,19 +2,21 @@
 
 
 import logging
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Tuple
 
 import torch
 from numpy.random import random_sample
 from pinta.data_processing.training_set import TrainingSample
-from pinta.settings import Settings
+from omegaconf import DictConfig
 
 LOG = logging.getLogger("Transforms")
 
 EPSILON = 1e-3
 
 
-def transform_factory(params: Settings) -> List[Callable]:
+def transform_factory(
+    params: DictConfig, statistics: Tuple[TrainingSample, TrainingSample]
+) -> List[Callable]:
     "Given the requested serialized transform settings, return the corresponding transform sequence"
 
     transforms: List[Callable] = []
@@ -22,11 +24,12 @@ def transform_factory(params: Settings) -> List[Callable]:
     for transform_param in params.transforms:
         transform_name, transform_args = transform_param[0], transform_param[1]
 
+        # FIXME: norm/denorm is a complete clusterfuck
         def get_normalize():
-            return Normalize(*params.data.statistics)
+            return Normalize(*statistics)
 
         def get_denormalize():
-            return Denormalize(*params.data.statistics)
+            return Denormalize(*statistics)
 
         def get_random_flip():
             return RandomFlip(
@@ -47,8 +50,6 @@ def transform_factory(params: Settings) -> List[Callable]:
                 "denormalize": get_denormalize,
                 "normalize": get_normalize,
                 "random_flip": get_random_flip,
-                "half_precision": HalfPrecision,
-                "single_precision": SinglePrecision,
                 "offset_inputs_outputs": get_offset,
                 "cut_sequence": get_cut_sequence,
             }[transform_name]()
@@ -194,32 +195,6 @@ class RandomFlip:
             return TrainingSample(inputs=inputs, outputs=sample.outputs)
 
         return sample
-
-
-class SinglePrecision:
-    def __init__(self):
-        """
-        Move the sample to fp32. Noop if it's already of this type
-        """
-        pass
-
-    def __call__(self, sample: TrainingSample):
-        return TrainingSample(
-            inputs=sample.inputs.float(), outputs=sample.outputs.float()
-        )
-
-
-class HalfPrecision:
-    def __init__(self):
-        """
-        Move the sample to fp16. Noop if it's already of this type
-        """
-        pass
-
-    def __call__(self, sample: TrainingSample):
-        return TrainingSample(
-            inputs=sample.inputs.half(), outputs=sample.outputs.half()
-        )
 
 
 class OffsetInputsOutputs:

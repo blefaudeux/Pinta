@@ -7,6 +7,8 @@ from typing import List, Tuple, Any
 import logging
 from serde import deserialize, serialize
 from serde.json import to_json, from_json
+import omegaconf
+
 
 # Select our target at runtime
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -134,11 +136,19 @@ class TrainingSettings:
 @deserialize
 @dataclass
 class Settings:
-    inputs: List[str] = field(default_factory=lambda: ["tws", "twa_x", "twa_y", "helm"])
-    tuning_inputs: List[str] = field(default_factory=list)
-    outputs: List[str] = field(default_factory=lambda: ["sog"])
+    inputs: List[str] | omegaconf.listconfig.ListConfig = field(
+        default_factory=lambda: ["tws", "twa_x", "twa_y", "helm"]
+    )
+    tuning_inputs: List[str] | omegaconf.listconfig.ListConfig = field(
+        default_factory=list
+    )
+    outputs: List[str] | omegaconf.listconfig.ListConfig = field(
+        default_factory=lambda: ["sog"]
+    )
     tokens: Dict[str, Dict[str, int]] = field(default_factory=dict)
-    transforms: List[Tuple[str, List[Any]]] = field(default_factory=list)
+    transforms: List[Tuple[str, List[Any]]] | omegaconf.listconfig.ListConfig = field(
+        default_factory=list
+    )
     trunk: TrunkSettings = field(default_factory=TrunkSettings)
     encoder: EncoderSettings = field(default_factory=EncoderSettings)
     mixer: MixerSettings = field(default_factory=MixerSettings)
@@ -150,11 +160,11 @@ class Settings:
         use_bf16 = device.type == torch.device("cuda").type and self.training.bf16
 
         return (
-            self.trunk.model_type
+            self.model.model_type
             + "_seq_"
-            + str(self.trunk.seq_length)
+            + str(self.model.seq_length)
             + "_hidden_"
-            + str(self.trunk.hidden_size)
+            + str(self.model.hidden_size)
             + "_batch_"
             + str(self.data.train_batch_size)
             + "_lr_"

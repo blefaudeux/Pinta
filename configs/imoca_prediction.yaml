@@ -1,0 +1,59 @@
+defaults:
+  - model/dilated_conv
+  - _self_
+
+inputs:
+  - tws
+  - twa_x
+  - twa_y
+  - heel
+  - helm
+outputs:
+  - tws
+  - twa_x
+  - twa_y
+  - heel
+  - sog
+tuning_inputs:
+  - port_foil_rake
+  - port_foil_ext
+  - sails
+tokens:
+  sails:
+    1RJ2: 1
+    GVJ2: 2
+transforms:
+  - - normalize
+      - []
+  - - offset_inputs_outputs
+      - [10]
+  - - cut_sequence
+      - [null, -1]
+encoder:
+  hidden_size: 32
+  feature_size: 8
+model:
+  seq_length: 81
+  # Other parameters are set by the defaults
+mixer:
+  hidden_size: 32
+  hidden_layers: 2
+data:
+  train_batch_size: 1000
+  test_batch_size: 100
+  training_ratio: 0.9
+  shuffle: true
+  train_workers: 3
+  test_workers: 1
+
+training:
+  epoch: 2
+  mixed_precision: false
+  optim:
+    name: adam_w
+    learning_rate: 0.01
+    scheduler: reduce_plateau
+    scheduler_patience: 50
+    scheduler_factor: 0.8
+    momentum: 0.9
+log: pinta_imoca

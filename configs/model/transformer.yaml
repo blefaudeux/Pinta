@@ -1,0 +1,2 @@
+model_type: transformer
+hidden_size: 128

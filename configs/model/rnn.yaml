@@ -1,0 +1,4 @@
+model_type: rnn
+hidden_size: 128
+kernel_sizes: [3, 3]
+gru_layers: 2

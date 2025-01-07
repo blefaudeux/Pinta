@@ -1,0 +1,4 @@
+model_type: conv
+hidden_size: 128
+kernel_sizes: [13, 3]
+seq_length: 27
